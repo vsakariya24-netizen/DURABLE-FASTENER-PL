@@ -1,18 +1,46 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { Mail, Phone, MapPin, Facebook, Linkedin, Instagram, ArrowRight, ArrowUp } from 'lucide-react';
+import { supabase } from '../lib/supabase'; // 👈 1. Supabase Import
 
 const { Link } = ReactRouterDOM;
 
-// 👇 1. UPDATE YOUR IMAGE PATHS HERE
-const DURABLE_LOGO = "/dfpl.png";   
+// Static Images (Logo wagera change nahi hote usually, par inhe bhi DB mein daal sakte hain future mein)
+const DURABLE_LOGO = "/dfpl.png"; 
 const CLASSONE_LOGO = "/class.png";
-
 
 const Footer: React.FC = () => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // 👈 2. State for Contact Details
+  const [contactInfo, setContactInfo] = useState({
+    address: 'Plot No.16, Survey No.660, Surbhi Ind Zone-D, Ravki, Rajkot-360004, Gujarat, India', // Default Fallback
+    phone: '+91 87587 00709',
+    email: 'durablefastener@outlook.com'
+  });
+
+  // 👈 3. Fetch Data from Database
+  useEffect(() => {
+    const fetchContact = async () => {
+      // Sirf contact details fetch karenge taaki fast rahe
+      const { data } = await supabase
+        .from('site_content')
+        .select('contact_address, contact_phone, contact_email')
+        .eq('id', 1)
+        .single();
+
+      if (data) {
+        setContactInfo({
+          address: data.contact_address || contactInfo.address,
+          phone: data.contact_phone || contactInfo.phone,
+          email: data.contact_email || contactInfo.email
+        });
+      }
+    };
+    fetchContact();
+  }, []);
 
   return (
     <footer className="bg-brand-dark text-white relative overflow-hidden font-sans">
@@ -28,12 +56,10 @@ const Footer: React.FC = () => {
           {/* ---------------- COLUMN 1: BRANDING ---------------- */}
           <div className="space-y-6">
             
-            {/* 👇 MAIN LOGO WITH YOUR CUSTOM SIZE & ANIMATION */}
             <div className="flex flex-col items-start gap-2 group">
                <img 
                  src={DURABLE_LOGO} 
                  alt="Durable Fastener Pvt. Ltd." 
-                 // ✅ APPLIED: h-[175px] with hover zoom effect
                  className="h-[150px] w-auto object-contain transition-transform duration-300 group-hover:scale-110" 
                />
             </div>
@@ -64,7 +90,7 @@ const Footer: React.FC = () => {
                 { name: 'Manufacturing', path: '/manufacturing' },
                 { name: 'OEM Platform', path: '/oem-platform' },
                 { name: 'Blog', path: '/Blog' },
-                {name: 'Career', path: '/Careers' },
+                { name: 'Career', path: '/Careers' },
                 
               ].map((link, idx) => (
                 <li key={idx}>
@@ -76,31 +102,43 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* ---------------- COLUMN 3: CONTACT INFO ---------------- */}
+          {/* ---------------- COLUMN 3: CONTACT INFO (DYNAMIC NOW) ---------------- */}
           <div>
             <h3 className="text-lg font-bold mb-6 text-white flex items-center gap-2">
               <span className="w-1 h-5 bg-brand-yellow rounded-full"></span> Reach Us
             </h3>
             <ul className="space-y-4 text-sm text-gray-400">
+              {/* ADDRESS */}
               <li className="flex items-start gap-4 group">
                 <div className="mt-1 w-8 h-8 rounded bg-white/5 flex items-center justify-center text-brand-yellow flex-shrink-0 group-hover:bg-brand-yellow group-hover:text-brand-dark transition-colors">
                   <MapPin size={16} />
                 </div>
-                <span className="leading-relaxed">
-                  Plot No.16, Survey No.660, Surbhi Ind Zone-D, Ravki, Rajkot-360004, Gujarat, India
+                <span className="leading-relaxed whitespace-pre-line">
+                  {/* 👇 Dynamic Address */}
+                  {contactInfo.address}
                 </span>
               </li>
+
+              {/* PHONE */}
               <li className="flex items-center gap-4 group">
                 <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-brand-yellow flex-shrink-0 group-hover:bg-brand-yellow group-hover:text-brand-dark transition-colors">
                   <Phone size={16} />
                 </div>
-                <span>+91 87587 00709</span>
+                {/* 👇 Dynamic Phone with Click-to-Call */}
+                <a href={`tel:${contactInfo.phone}`} className="hover:text-white transition-colors">
+                    {contactInfo.phone}
+                </a>
               </li>
+
+              {/* EMAIL */}
               <li className="flex items-center gap-4 group">
                 <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-brand-yellow flex-shrink-0 group-hover:bg-brand-yellow group-hover:text-brand-dark transition-colors">
                   <Mail size={16} />
                 </div>
-                <span>durablefastener@outlook.com</span>
+                {/* 👇 Dynamic Email with Click-to-Email */}
+                <a href={`mailto:${contactInfo.email}`} className="hover:text-white transition-colors">
+                    {contactInfo.email}
+                </a>
               </li>
             </ul>
           </div>
@@ -133,10 +171,7 @@ const Footer: React.FC = () => {
                     className="h-[50px] w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity" 
                   />
                </div>
-               
                <div className="h-8 w-px bg-white/10"></div>
-               
-              
             </div>
           </div>
 
