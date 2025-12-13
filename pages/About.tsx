@@ -361,29 +361,112 @@ const About: React.FC = () => {
       </section>
 
       {/* 6. Why Choose Us (Bento Grid) */}
-      <section className="py-24 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-gray-50 border-t border-gray-200 relative overflow-hidden">
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" 
+             style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
            <div className="text-center mb-16">
-             <h2 className="text-3xl font-bold text-gray-900">Why Choose Durable Fastener?</h2>
+             <RevealSection>
+                <span className="text-brand-yellow font-bold tracking-widest uppercase text-sm">The Durable Advantage</span>
+                <h2 className="text-4xl font-bold text-gray-900 mt-2">Why the Industry Trusts Us</h2>
+             </RevealSection>
            </div>
 
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-             {[
-               { title: "13+ Years", desc: "Industry Experience", icon: Calendar },
-               { title: "Quality Assurance", desc: "Rigorous Testing", icon: CheckCircle2 },
-               { title: "After Sales", desc: "Dedicated Support", icon: Users },
-               { title: "Fair Dealing", desc: "Transparent Business", icon: Award },
-               { title: "Cost Effective", desc: "Factory Direct", icon: TrendingUp },
-               { title: "Inventory", desc: "Smart Control", icon: Factory },
-               { title: "Professional", desc: "Expert Team", icon: Award },
-               { title: "Follow Up", desc: "Pre & Post Service", icon: ArrowUpRight },
-             ].map((item, idx) => (
-               <RevealSection key={idx} className={`p-6 bg-white rounded-xl border border-gray-100 hover:shadow-lg hover:border-brand-yellow/30 transition-all group ${idx === 0 || idx === 7 ? 'md:col-span-2 bg-gradient-to-br from-white to-gray-50' : ''}`}>
-                 <item.icon className="w-8 h-8 text-gray-400 group-hover:text-brand-yellow mb-4 transition-colors" />
-                 <h3 className="text-lg font-bold text-gray-900 mb-1">{item.title}</h3>
-                 <p className="text-sm text-gray-500">{item.desc}</p>
-               </RevealSection>
-             ))}
+           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[minmax(180px,auto)]">
+             
+             {/* 1. HERO CARD: Experience (Large, Gradient) */}
+             <RevealSection className="md:col-span-2 row-span-2 relative group overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-gray-900 text-white shadow-xl p-8 flex flex-col justify-between">
+                <div className="absolute top-0 right-0 p-32 bg-brand-yellow/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all duration-700 group-hover:bg-brand-yellow/20"></div>
+                
+                <div className="relative z-10">
+                  <div className="inline-flex p-3 bg-white/10 rounded-xl mb-4 text-brand-yellow backdrop-blur-md border border-white/5">
+                    <Calendar size={32} />
+                  </div>
+                  <h3 className="text-5xl font-extrabold mb-2">13+ <span className="text-2xl font-medium text-gray-400">Years</span></h3>
+                  <p className="text-xl font-medium text-gray-200">of Unwavering Excellence</p>
+                </div>
+                
+                <div className="relative z-10 mt-8">
+                  <p className="text-gray-400 leading-relaxed max-w-sm">
+                    We don't just manufacture fasteners; we build legacies. Over a decade of defining industry standards.
+                  </p>
+                </div>
+                
+                {/* Decorative Icon in background */}
+                <Calendar className="absolute -bottom-8 -right-8 w-64 h-64 text-white opacity-5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
+             </RevealSection>
+
+
+             {/* 2. STANDARD CARD: Fair Dealing */}
+             <RevealSection className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Award size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Fair Dealing</h3>
+                <p className="text-sm text-gray-500">100% Transparent business practices with no hidden clauses.</p>
+             </RevealSection>
+
+             {/* 3. DARK CARD: Quality (Important) */}
+             <RevealSection className="bg-gray-900 text-white p-8 rounded-3xl shadow-xl hover:shadow-2xl hover:shadow-brand-blue/20 hover:-translate-y-1 transition-all duration-300 group border border-gray-800">
+                <div className="w-12 h-12 bg-brand-blue/20 text-brand-blue rounded-full flex items-center justify-center mb-4 group-hover:rotate-12 transition-transform">
+                  <CheckCircle2 size={24} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Quality First</h3>
+                <p className="text-sm text-gray-400">Rigorous multi-stage testing facilities to ensure zero defects.</p>
+             </RevealSection>
+
+             {/* 4. STANDARD CARD: Cost Effective */}
+             <RevealSection className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <TrendingUp size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Factory Direct</h3>
+                <p className="text-sm text-gray-500">Cost-effective pricing by eliminating unnecessary middlemen.</p>
+             </RevealSection>
+
+             {/* 5. STANDARD CARD: After Sales */}
+             <RevealSection className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Users size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">After Sales</h3>
+                <p className="text-sm text-gray-500">Dedicated support team to assist you even after delivery.</p>
+             </RevealSection>
+
+             {/* 6. WIDE CARD: Inventory (Smart Control) */}
+             <RevealSection className="md:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-brand-yellow/30 transition-all duration-300 group flex flex-col md:flex-row items-center gap-6">
+                <div className="w-16 h-16 bg-brand-yellow/10 text-brand-yellow rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <Factory size={32} />
+                </div>
+                <div className="text-center md:text-left">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Smart Inventory Control</h3>
+                  <p className="text-sm text-gray-500">
+                    We maintain optimized stock levels to ensure rapid dispatch and consistent availability for our partners.
+                  </p>
+                </div>
+             </RevealSection>
+
+             {/* 7. STANDARD CARD: Professional */}
+             <RevealSection className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Award size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Expert Team</h3>
+                <p className="text-sm text-gray-500">Highly skilled professionals managing every production stage.</p>
+             </RevealSection>
+
+             {/* 8. STANDARD CARD: Follow Up */}
+             <RevealSection className="bg-gray-50 p-8 rounded-3xl border-2 border-dashed border-gray-200 hover:border-brand-yellow hover:bg-yellow-50/50 transition-all duration-300 group">
+                <div className="w-12 h-12 bg-white text-gray-600 shadow-sm rounded-full flex items-center justify-center mb-4 group-hover:text-brand-yellow transition-colors">
+                  <ArrowUpRight size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Cycle</h3>
+                <p className="text-sm text-gray-500">Thorough pre & post-service follow-ups.</p>
+             </RevealSection>
+
            </div>
         </div>
       </section>

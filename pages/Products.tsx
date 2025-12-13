@@ -53,7 +53,10 @@ const Products: React.FC = () => {
         const { data: cats } = await supabase.from('categories').select('*').order('name');
         const { data: subs } = await supabase.from('sub_categories').select('*').order('name');
         const { data: childs } = await supabase.from('child_categories').select('*').order('name');
-        const { data: productData } = await supabase.from('products').select('*');
+      const { data: productData } = await supabase
+  .from('products')
+  .select('id, name, slug, category, sub_category, child_category, images') // Sirf ye columns aayenge
+  .order('name');
 
         // B. Build Tree Structure
         let tree: CategoryNode[] = [];
