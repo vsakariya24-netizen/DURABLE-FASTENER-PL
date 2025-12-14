@@ -7,7 +7,6 @@ import {
   Truck, Package, Download, Activity, Layers, Anchor, ShieldCheck, 
   Zap, Home, Grid, Briefcase, LayoutGrid, Droplets, Target 
 } from 'lucide-react';
-// Import Framer Motion
 import { motion, AnimatePresence } from 'framer-motion';
 import { PRODUCTS as STATIC_PRODUCTS } from '../constants';
 import MagicZoomClone from '../components/MagicZoomClone'; 
@@ -28,34 +27,20 @@ const blueprintGridStyle = {
   backgroundSize: '20px 20px'
 };
 
-// --- ANIMATION VARIANTS (New) ---
+// --- ANIMATION VARIANTS ---
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
-  }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1
-    }
-  }
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
 };
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.9 },
-  visible: { 
-    opacity: 1, 
-    scale: 1,
-    transition: { duration: 0.5 }
-  }
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } }
 };
 
 // --- COMPONENT: Technical Blueprint Screw ---
@@ -68,7 +53,6 @@ const CleanScrew = ({ lengthMm, isSelected }: { lengthMm: number, isSelected: bo
   const totalHeight = headHeight + bodyHeight + tipHeight;
 
   return (
-    // Added layout prop for smooth height animation
     <motion.div 
       layout 
       className="flex flex-col items-center justify-start transition-all duration-300 ease-out" 
@@ -218,17 +202,23 @@ const ProductDetail: React.FC = () => {
 
   const currentImage = displayImages[selectedImageIndex];
 
-  // --- EXPERT DATA EXTRACTION ---
-  const hardness = getSpecValue(product.specifications, 'hardness') || '240-450 HV';
-  const sst = getSpecValue(product.specifications, 'sst') || getSpecValue(product.specifications, 'salt') || '48 - 96 Hours';
-  const torque = getSpecValue(product.specifications, 'torque') || '> 28 kg-cm (Min)';
-  const standard = getSpecValue(product.specifications, 'standard') || 'ASTM C1002 / DIN 18182';
+  // --- EXPERT DATA EXTRACTION (DEFAULTS REMOVED) ---
+  // Agar database mein value nahi hai, toh ab default text nahi dikhega
+  const hardness = getSpecValue(product.specifications, 'hardness');
+  const sst = getSpecValue(product.specifications, 'sst') || getSpecValue(product.specifications, 'salt');
+  const torque = getSpecValue(product.specifications, 'torque');
+  const standard = getSpecValue(product.specifications, 'standard');
   
-  const packingBox = getSpecValue(product.specifications, 'box_qty') || '1000';
-  const packingCarton = getSpecValue(product.specifications, 'carton_qty') || '16 Boxes';
+  const packingBox = getSpecValue(product.specifications, 'box_qty');
+  const packingCarton = getSpecValue(product.specifications, 'carton_qty');
   
+  // Logic to hide sections if all data is missing
+  const showPerformance = hardness || sst || torque || standard;
+  const showLogistics = packingBox || packingCarton;
+  const showDimensions = product.technical_drawing || (product.dimensional_specifications && product.dimensional_specifications.length > 0);
+
   // Auto-Correction for Display
-  const displayMaterial = product.material ? product.material.replace(/Mild Steel/gi, 'C1022 Hardened Carbon Steel').replace(/1022/g, 'Grade 1022') : '';
+  const displayMaterial = product.material || '';
   const displayHeadType = product.head_type ? product.head_type.replace(/Buggel/gi, 'Bugle') : '';
 
   return (
@@ -257,15 +247,14 @@ const ProductDetail: React.FC = () => {
           {/* LEFT: IMAGES + PERFORMANCE METRICS */}
           <div className="lg:col-span-7 flex flex-col gap-6">
               
-              {/* Vertical Gallery Layout (Desktop) */}
+              {/* Vertical Gallery Layout */}
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6 }}
                 className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[500px]"
               >
-                  
-                  {/* Vertical Thumbnails (Hidden on Mobile) */}
+                  {/* Vertical Thumbnails */}
                   <div className="hidden md:flex flex-col gap-3 overflow-y-auto w-20 py-1 pr-1 custom-scrollbar">
                       {displayImages.map((img: string, idx: number) => (
                           <motion.button 
@@ -290,8 +279,8 @@ const ProductDetail: React.FC = () => {
                     className="flex-1 relative rounded-2xl overflow-visible bg-white shadow-lg border border-slate-200 p-8 flex items-center justify-center group z-10 h-[400px] md:h-full"
                   >
                       <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-none">
-                         <span className="px-3 py-1 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm">Factory Direct</span>
-                         <span className="px-3 py-1 bg-amber-500 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm flex items-center gap-1"><ShieldCheck size={12}/> {standard.split('/')[0]}</span>
+                          <span className="px-3 py-1 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm">Factory Direct</span>
+                          {standard && <span className="px-3 py-1 bg-amber-500 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm flex items-center gap-1"><ShieldCheck size={12}/> {standard.split('/')[0]}</span>}
                       </div>
                       <div className="relative z-10 w-full h-full flex items-center justify-center">
                           <AnimatePresence mode='wait'>
@@ -319,64 +308,69 @@ const ProductDetail: React.FC = () => {
                   ))}
               </div>
 
-              {/* --- PERFORMANCE METRICS DASHBOARD --- */}
-              <motion.div 
-                variants={staggerContainer}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                className="flex md:flex-row gap-4 mt-2"
-              > 
-                 {/* Spacer */}
-                 <div className="hidden md:block w-20 flex-shrink-0"></div>
+              {/* --- PERFORMANCE METRICS DASHBOARD (Only shows if data exists) --- */}
+              {showPerformance && (
+                <motion.div 
+                  variants={staggerContainer}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-100px" }}
+                  className="flex md:flex-row gap-4 mt-2"
+                > 
+                    {/* Spacer */}
+                    <div className="hidden md:block w-20 flex-shrink-0"></div>
 
-                 <motion.div variants={fadeInUp} className="flex-1 bg-white rounded-2xl border border-slate-200 p-8 pb-12 shadow-sm relative overflow-hidden group min-h-[400px] flex flex-col justify-center">
-                    {/* Decorative background element */}
-                    <motion.div 
-                        animate={{ scale: [1, 1.05, 1] }} 
-                        transition={{ repeat: Infinity, duration: 5 }} 
-                        className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-bl-full -mr-10 -mt-10"
-                    ></motion.div>
-                    
-                    <h3 className={`relative z-10 text-xl font-bold text-${BRAND_PRIMARY_TEXT} mb-8 flex items-center gap-3 uppercase tracking-wider`} style={fontHeading}>
-                        <Activity className={`text-${BRAND_ACCENT}`} size={24} /> Performance Metrics
-                    </h3>
+                    <motion.div variants={fadeInUp} className="flex-1 bg-white rounded-2xl border border-slate-200 p-8 pb-12 shadow-sm relative overflow-hidden group min-h-[300px] flex flex-col justify-center">
+                      <motion.div 
+                          animate={{ scale: [1, 1.05, 1] }} 
+                          transition={{ repeat: Infinity, duration: 5 }} 
+                          className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-bl-full -mr-10 -mt-10"
+                      ></motion.div>
+                      
+                      <h3 className={`relative z-10 text-xl font-bold text-${BRAND_PRIMARY_TEXT} mb-8 flex items-center gap-3 uppercase tracking-wider`} style={fontHeading}>
+                          <Activity className={`text-${BRAND_ACCENT}`} size={24} /> Performance Metrics
+                      </h3>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-12 gap-x-8 relative z-10">
-                        {/* Item 1: Core Hardness */}
-                        <motion.div variants={fadeInUp} className="flex flex-col border-l-2 border-slate-100 pl-5 hover:border-amber-400 transition-colors">
-                            <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mb-1.5">
-                                <Target size={14} className="text-slate-500" /> Core Hardness
-                            </div>
-                            <div className="text-2xl font-bold font-rajdhani text-slate-800 tracking-tight">{hardness}</div>
-                        </motion.div>
-                        
-                        {/* Item 2: Corrosion */}
-                        <motion.div variants={fadeInUp} className="flex flex-col border-l-2 border-slate-100 pl-5 hover:border-blue-400 transition-colors">
-                            <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mb-1.5">
-                                <Droplets size={14} className="text-slate-500" /> Corrosion (SST)
-                            </div>
-                            <div className="text-2xl font-bold font-rajdhani text-slate-800 tracking-tight">{sst}</div>
-                        </motion.div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-12 gap-x-8 relative z-10">
+                          {hardness && (
+                            <motion.div variants={fadeInUp} className="flex flex-col border-l-2 border-slate-100 pl-5 hover:border-amber-400 transition-colors">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mb-1.5">
+                                    <Target size={14} className="text-slate-500" /> Core Hardness
+                                </div>
+                                <div className="text-2xl font-bold font-rajdhani text-slate-800 tracking-tight">{hardness}</div>
+                            </motion.div>
+                          )}
+                          
+                          {sst && (
+                            <motion.div variants={fadeInUp} className="flex flex-col border-l-2 border-slate-100 pl-5 hover:border-blue-400 transition-colors">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mb-1.5">
+                                    <Droplets size={14} className="text-slate-500" /> Corrosion (SST)
+                                </div>
+                                <div className="text-2xl font-bold font-rajdhani text-slate-800 tracking-tight">{sst}</div>
+                            </motion.div>
+                          )}
 
-                        {/* Item 3: Torque */}
-                        <motion.div variants={fadeInUp} className="flex flex-col border-l-2 border-slate-100 pl-5 hover:border-amber-400 transition-colors">
-                            <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mb-1.5">
-                                <Zap size={14} className="text-slate-500" /> Torsional Strength
-                            </div>
-                            <div className="text-2xl font-bold font-rajdhani text-slate-800 tracking-tight">{torque}</div>
-                        </motion.div>
+                          {torque && (
+                            <motion.div variants={fadeInUp} className="flex flex-col border-l-2 border-slate-100 pl-5 hover:border-amber-400 transition-colors">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mb-1.5">
+                                    <Zap size={14} className="text-slate-500" /> Torsional Strength
+                                </div>
+                                <div className="text-2xl font-bold font-rajdhani text-slate-800 tracking-tight">{torque}</div>
+                            </motion.div>
+                          )}
 
-                        {/* Item 4: Standard */}
-                        <motion.div variants={fadeInUp} className="flex flex-col border-l-2 border-slate-100 pl-5 hover:border-emerald-400 transition-colors">
-                            <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mb-1.5">
-                                <ShieldCheck size={14} className="text-slate-500" /> Intl. Standard
-                            </div>
-                            <div className="text-xl font-bold font-rajdhani text-slate-800 tracking-tight break-words">{standard}</div>
-                        </motion.div>
-                    </div>
-                 </motion.div>
-              </motion.div>
+                          {standard && (
+                            <motion.div variants={fadeInUp} className="flex flex-col border-l-2 border-slate-100 pl-5 hover:border-emerald-400 transition-colors">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mb-1.5">
+                                    <ShieldCheck size={14} className="text-slate-500" /> Intl. Standard
+                                </div>
+                                <div className="text-xl font-bold font-rajdhani text-slate-800 tracking-tight break-words">{standard}</div>
+                            </motion.div>
+                          )}
+                      </div>
+                    </motion.div>
+                </motion.div>
+              )}
               {/* --- END METRICS --- */}
           </div>
 
@@ -421,7 +415,7 @@ const ProductDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 2. LENGTH (L) - TECHNICAL VISUALIZER */}
+                {/* 2. LENGTH (L) */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-end pl-1">
                       <span className="text-slate-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={fontHeading}><div className="w-4 h-1.5 bg-amber-500 rounded-sm"></div> Length (L)</span>
@@ -499,12 +493,24 @@ const ProductDetail: React.FC = () => {
                         <div className="grid grid-cols-[140px_1fr] p-5 hover:bg-slate-50 transition-colors group">
                           <div className="text-slate-400 text-xs font-bold uppercase tracking-widest pt-1">Material</div>
                           <div className="flex flex-col gap-1.5">
-                            {displayMaterial.split(/\|/g).map((mat: string, idx: number) => (
-                               <div key={idx} className="flex items-center gap-2">
-                                 <div className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? 'bg-slate-800' : 'bg-slate-400'}`}></div>
-                                 <span className="text-slate-800 font-semibold font-rajdhani text-lg">{mat.trim()}</span>
-                               </div>
-                            ))}
+                            {displayMaterial.split(/\|/g).map((mat: string, idx: number) => {
+                              const parts = mat.split('(Grade');
+                              const matName = parts[0].trim();
+                              const matGrade = parts[1] ? parts[1].replace(')', '').trim() : null;
+
+                              return (
+                                <div key={idx} className="flex flex-wrap items-center gap-2">
+                                  <span className="text-slate-900 font-bold font-rajdhani text-lg leading-tight">
+                                    {matName}
+                                  </span>
+                                  {matGrade && (
+                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wider rounded border border-slate-200">
+                                      Grade {matGrade}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -518,115 +524,124 @@ const ProductDetail: React.FC = () => {
                   </div>
               </motion.div>
 
-              {/* UPDATED: 3D Logistics Section (More Compact) */}
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-                variants={fadeInUp}
-              >
-                  <h3 className={`text-2xl font-bold text-${BRAND_PRIMARY_TEXT} mb-5 flex items-center gap-3 uppercase tracking-wider`} style={fontHeading}>
-                      <Layers className={`text-${BRAND_ACCENT}`} /> Logistics & Packing
-                  </h3>
-                  <div className="bg-slate-50/50 rounded-2xl border border-slate-200 p-6">
-                      <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" className="grid grid-cols-3 gap-4 text-center">
-                          {/* Box 1 */}
-                          <motion.div variants={scaleIn} className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
-                              <div className="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center mb-2 text-amber-600">
-                                  <Package size={20} />
-                              </div>
-                              <div className="text-2xl font-bold font-rajdhani text-slate-800">{packingBox}</div>
-                              <div className="text-[9px] font-bold uppercase text-slate-400 tracking-widest mt-1">Pcs / Small Box</div>
-                          </motion.div>
+              {/* UPDATED: Logistics Section (Hidden if empty) */}
+              {showLogistics && (
+                <motion.div
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-50px" }}
+                  variants={fadeInUp}
+                >
+                    <h3 className={`text-2xl font-bold text-${BRAND_PRIMARY_TEXT} mb-5 flex items-center gap-3 uppercase tracking-wider`} style={fontHeading}>
+                        <Layers className={`text-${BRAND_ACCENT}`} /> Logistics & Packing
+                    </h3>
+                    <div className="bg-slate-50/50 rounded-2xl border border-slate-200 p-6">
+                        <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" className="grid grid-cols-3 gap-4 text-center">
+                            {/* Box 1 */}
+                            {packingBox && (
+                                <motion.div variants={scaleIn} className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
+                                    <div className="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center mb-2 text-amber-600">
+                                        <Package size={20} />
+                                    </div>
+                                    <div className="text-2xl font-bold font-rajdhani text-slate-800">{packingBox}</div>
+                                    <div className="text-[9px] font-bold uppercase text-slate-400 tracking-widest mt-1">Pcs / Small Box</div>
+                                </motion.div>
+                            )}
 
-                          {/* Box 2 */}
-                          <motion.div variants={scaleIn} className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-slate-100 relative hover:shadow-md transition-all">
-                              <div className="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-1 border border-slate-200 text-slate-300">
-                                  <ArrowRight size={12} />
-                              </div>
-                              <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mb-2 text-slate-600">
-                                  <Grid size={20} />
-                              </div>
-                              <div className="text-2xl font-bold font-rajdhani text-slate-800">{packingCarton}</div>
-                              <div className="text-[9px] font-bold uppercase text-slate-400 tracking-widest mt-1">Master Carton</div>
-                          </motion.div>
+                            {/* Box 2 */}
+                            {packingCarton && (
+                                <motion.div variants={scaleIn} className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-slate-100 relative hover:shadow-md transition-all">
+                                    <div className="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-1 border border-slate-200 text-slate-300">
+                                        <ArrowRight size={12} />
+                                    </div>
+                                    <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mb-2 text-slate-600">
+                                        <Grid size={20} />
+                                    </div>
+                                    <div className="text-2xl font-bold font-rajdhani text-slate-800">{packingCarton}</div>
+                                    <div className="text-[9px] font-bold uppercase text-slate-400 tracking-widest mt-1">Master Carton</div>
+                                </motion.div>
+                            )}
 
-                          {/* Box 3 */}
-                          <motion.div variants={scaleIn} className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-slate-100 relative hover:shadow-md transition-all">
-                               <div className="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-1 border border-slate-200 text-slate-300">
-                                  <ArrowRight size={12} />
-                              </div>
-                              <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center mb-2 text-white">
-                                  <Anchor size={20} />
-                              </div>
-                              <div className="text-lg font-bold font-rajdhani text-slate-800 pt-1">Available</div>
-                              <div className="text-[9px] font-bold uppercase text-slate-400 tracking-widest mt-1">Pallet Shipping</div>
-                          </motion.div>
-                      </motion.div>
-                      
-                      <div className="mt-6 text-center">
-                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 text-[11px] font-bold uppercase tracking-widest rounded-full border border-amber-200">
-                              <ShieldCheck size={14}/> OEM / Private Labeling Available
-                          </div>
-                      </div>
-                  </div>
-              </motion.div>
+                            {/* Box 3 - General Info */}
+                            <motion.div variants={scaleIn} className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-slate-100 relative hover:shadow-md transition-all">
+                                <div className="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-1 border border-slate-200 text-slate-300">
+                                    <ArrowRight size={12} />
+                                </div>
+                                <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center mb-2 text-white">
+                                    <Anchor size={20} />
+                                </div>
+                                <div className="text-lg font-bold font-rajdhani text-slate-800 pt-1">Available</div>
+                                <div className="text-[9px] font-bold uppercase text-slate-400 tracking-widest mt-1">Pallet Shipping</div>
+                            </motion.div>
+                        </motion.div>
+                        
+                        <div className="mt-6 text-center">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 text-[11px] font-bold uppercase tracking-widest rounded-full border border-amber-200">
+                                <ShieldCheck size={14}/> OEM / Private Labeling Available
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+              )}
 
             </div>
 
-            {/* DIMENSIONS & DRAWING */}
-            <motion.div 
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-                variants={fadeInUp}
-                className="flex flex-col h-full"
-            >
-              <div className="flex items-center justify-between mb-5">
-                <h3 className={`text-2xl font-bold text-${BRAND_PRIMARY_TEXT} flex items-center gap-3 uppercase tracking-wider`} style={fontHeading}><Ruler className={`text-${BRAND_ACCENT}`} /> Dimensions</h3>
-                <span className="text-[10px] font-extrabold bg-amber-100 text-amber-700 px-3 py-1 rounded-full border border-amber-200 uppercase tracking-widest shadow-sm">ISO Standard</span>
-              </div>
-              <div className="bg-white rounded-2xl border border-slate-300 shadow-lg overflow-hidden ring-1 ring-slate-900/5">
-                <div className="relative h-[280px] border-b border-slate-200 overflow-hidden group flex items-center justify-center" style={blueprintGridStyle}>
-                   <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-300 opacity-50 border-l border-dashed border-slate-400"></div>
-                   <div className="absolute bottom-4 left-0 right-0 h-px bg-slate-300 opacity-50 border-t border-dashed border-slate-400"></div>
-                   {product.technical_drawing ? (
-                       <>
-                         <motion.img 
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.8 }}
-                            src={product.technical_drawing} alt="Dimensional Drawing" className="relative z-10 h-[180%] w-auto object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105" 
-                         />
-                         <button className="absolute bottom-3 right-3 bg-white p-2 rounded-lg shadow-sm text-slate-400 hover:text-slate-800 hover:shadow-md transition-all border border-slate-200"><Maximize2 size={18} /></button>
-                       </>
-                   ) : (<div className="text-sm text-slate-400 italic font-medium bg-white/50 px-4 py-2 rounded-lg backdrop-blur-sm border border-slate-200">No technical drawing available</div>)}
+            {/* DIMENSIONS & DRAWING (Hidden if empty) */}
+            {showDimensions && (
+                <motion.div 
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                    variants={fadeInUp}
+                    className="flex flex-col h-full"
+                >
+                <div className="flex items-center justify-between mb-5">
+                    <h3 className={`text-2xl font-bold text-${BRAND_PRIMARY_TEXT} flex items-center gap-3 uppercase tracking-wider`} style={fontHeading}><Ruler className={`text-${BRAND_ACCENT}`} /> Dimensions</h3>
+                    <span className="text-[10px] font-extrabold bg-amber-100 text-amber-700 px-3 py-1 rounded-full border border-amber-200 uppercase tracking-widest shadow-sm">ISO Standard</span>
                 </div>
-                <div className="bg-white">
-                  <div className="grid grid-cols-12 gap-2 px-6 py-3 bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    <div className="col-span-5">Feature</div><div className="col-span-3 text-center">Symbol</div><div className="col-span-4 text-right">Value (mm)</div>
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {product.dimensional_specifications && product.dimensional_specifications.length > 0 ? (
-                        product.dimensional_specifications.map((dim: any, idx: number) => (
-                            <motion.div 
-                                initial={{ opacity: 0, x: -10 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: idx * 0.05 }}
-                                key={idx} 
-                                className="grid grid-cols-12 gap-2 px-6 py-3 items-center hover:bg-amber-50/40 transition-colors group"
-                            >
-                                <div className="col-span-5 text-xs font-bold text-slate-700 uppercase tracking-wider group-hover:text-slate-900">{dim.label}</div>
-                                <div className="col-span-3 text-center text-sm font-serif italic text-slate-500 font-medium">{renderSymbol(dim.symbol)}</div>
-                                <div className="col-span-4 text-right text-sm font-bold text-slate-800" style={fontMono}>{dim.value}</div>
-                            </motion.div>
-                        ))
-                    ) : (<div className="p-8 text-center text-xs text-slate-400 italic">No dimensional specifications found.</div>)}
-                  </div>
+                <div className="bg-white rounded-2xl border border-slate-300 shadow-lg overflow-hidden ring-1 ring-slate-900/5">
+                    <div className="relative h-[280px] border-b border-slate-200 overflow-hidden group flex items-center justify-center" style={blueprintGridStyle}>
+                        <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-300 opacity-50 border-l border-dashed border-slate-400"></div>
+                        <div className="absolute bottom-4 left-0 right-0 h-px bg-slate-300 opacity-50 border-t border-dashed border-slate-400"></div>
+                        {product.technical_drawing ? (
+                            <>
+                            <motion.img 
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.8 }}
+                                src={product.technical_drawing} alt="Dimensional Drawing" className="relative z-10 h-[180%] w-auto object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105" 
+                            />
+                            <button className="absolute bottom-3 right-3 bg-white p-2 rounded-lg shadow-sm text-slate-400 hover:text-slate-800 hover:shadow-md transition-all border border-slate-200"><Maximize2 size={18} /></button>
+                            </>
+                        ) : (<div className="text-sm text-slate-400 italic font-medium bg-white/50 px-4 py-2 rounded-lg backdrop-blur-sm border border-slate-200">No technical drawing available</div>)}
+                    </div>
+                    <div className="bg-white">
+                    <div className="grid grid-cols-12 gap-2 px-6 py-3 bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                        <div className="col-span-5">Feature</div><div className="col-span-3 text-center">Symbol</div><div className="col-span-4 text-right">Value (mm)</div>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                        {product.dimensional_specifications && product.dimensional_specifications.length > 0 ? (
+                            product.dimensional_specifications.map((dim: any, idx: number) => (
+                                <motion.div 
+                                    initial={{ opacity: 0, x: -10 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: idx * 0.05 }}
+                                    key={idx} 
+                                    className="grid grid-cols-12 gap-2 px-6 py-3 items-center hover:bg-amber-50/40 transition-colors group"
+                                >
+                                    <div className="col-span-5 text-xs font-bold text-slate-700 uppercase tracking-wider group-hover:text-slate-900">{dim.label}</div>
+                                    <div className="col-span-3 text-center text-sm font-serif italic text-slate-500 font-medium">{renderSymbol(dim.symbol)}</div>
+                                    <div className="col-span-4 text-right text-sm font-bold text-slate-800" style={fontMono}>{dim.value}</div>
+                                </motion.div>
+                            ))
+                        ) : (<div className="p-8 text-center text-xs text-slate-400 italic">No dimensional specifications found.</div>)}
+                    </div>
+                    </div>
                 </div>
-              </div>
-            </motion.div>
+                </motion.div>
+            )}
+
           </div>
 
           {/* UPDATED: INTERACTIVE APPLICATIONS SECTION (ICONS) */}

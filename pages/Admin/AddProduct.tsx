@@ -184,11 +184,24 @@ const AddProduct: React.FC = () => {
   }, [id, isEditMode]);
 
   // --- MATERIAL LOGIC ---
-  useEffect(() => {
-      const combinedMaterials = materialRows.filter(r => r.name.trim() !== '').map(r => r.grades.trim() ? `${r.name} (Grade ${r.grades})` : r.name).join(' | '); 
-      setFormData(prev => ({ ...prev, material: combinedMaterials }));
-  }, [materialRows]);
-
+ // Find this inside AddProduct.tsx
+// --- MATERIAL LOGIC ---
+useEffect(() => {
+    const combinedMaterials = materialRows
+      .filter(r => r.name.trim() !== '')
+      .map(r => {
+        const name = r.name.trim();
+        const grade = r.grades.trim();
+        // Agar Grade hai to "(Grade X)" format mein save karo
+        if (grade) {
+           return `${name} (Grade ${grade})`;
+        }
+        return name;
+      })
+      .join(' | '); 
+      
+    setFormData(prev => ({ ...prev, material: combinedMaterials }));
+}, [materialRows]);
   const addMaterialRow = () => setMaterialRows([...materialRows, { name: '', grades: '' }]);
   const removeMaterialRow = (idx: number) => setMaterialRows(materialRows.filter((_, i) => i !== idx));
   const updateMaterialRow = (idx: number, field: 'name' | 'grades', val: string) => {
