@@ -1,160 +1,190 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Settings, ShieldCheck, Truck, Package, Factory } from 'lucide-react';
+import { 
+  Settings, ShieldCheck, Truck, Package, Factory, 
+  Cpu, Layers, Zap, Gauge, History, CheckCircle2,
+  ChevronRight, Box
+} from 'lucide-react';
 
 const Manufacturing: React.FC = () => {
   return (
-    // FIX: Added pt-24 to prevent the fixed Navbar from covering the content
-    <div className="bg-white min-h-screen pt-24 font-sans text-gray-800">
+    <div className="bg-[#0b0f19] min-h-screen pt-24 font-sans text-slate-300 overflow-x-hidden">
       
-      {/* Hero Section */}
-      <div className="bg-gray-50 border-b border-gray-200 py-20 text-center px-4 relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5"
-             style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+      {/* ---------------- 1. DYNAMIC HERO SECTION ---------------- */}
+      <div className="relative py-24 border-b border-white/5 overflow-hidden">
+        {/* Animated Background Grids */}
+        <div className="absolute inset-0 opacity-10"
+             style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }}>
         </div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-amber-500/10 blur-[120px] rounded-full"></div>
         
-        <div className="relative z-10 max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6">
-              Manufacturing Excellence
+        <div className="relative z-10 max-w-7xl mx-auto px-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold mb-6 tracking-[0.2em] uppercase">
+               Next-Gen Production Unit
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter">
+              PRECISION <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">ENGINEERING LAB.</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Combining advanced technology with strict quality control to deliver precision fasteners for global industries.
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light">
+              Where high-grade metallurgy meets automated cold-heading technology. 
+              Delivering <span className="text-white font-medium">zero-defect fasteners</span> for the world's most demanding sectors.
             </p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        
-        {/* Facility Section */}
-        <div className="flex flex-col lg:flex-row gap-12 items-center mb-24">
-           <div className="lg:w-1/2 w-full">
-             <div className="aspect-video bg-gray-900 rounded-2xl overflow-hidden relative group shadow-2xl border border-gray-800">
-               {/* Placeholder Image Area */}
-               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a]">
-                 <Factory size={64} className="text-gray-700 mb-4" />
-                 <span className="text-gray-500 font-medium">Factory Image Placeholder</span>
-               </div>
-               
-               {/* Overlay Info */}
-               <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 to-transparent p-6 pt-12 text-white">
-                 <p className="font-bold text-lg flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    7000 Sq. Ft. Integrated Facility
-                 </p>
-               </div>
-             </div>
-           </div>
-           
-           <div className="lg:w-1/2">
-             <div className="inline-block bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1 rounded-full text-xs font-bold mb-4 tracking-wider">
-               INFRASTRUCTURE
-             </div>
-             <h2 className="text-3xl font-bold text-gray-900 mb-6">State-of-the-Art Production</h2>
-             
-
-[Image of industrial cold heading machine operation diagram]
-
-             <p className="text-gray-600 mb-4 leading-relaxed">
-               Durable Fastener Pvt. Ltd. has expanded its operational footprint to a massive <strong>7000 square foot facility</strong> located in Rajkot, Gujarat. This expansion allows us to maintain high inventory levels and streamline our supply chain.
-             </p>
-             <p className="text-gray-600 mb-8 leading-relaxed">
-               Our facility is equipped to handle bulk requirements for OEM (Original Equipment Manufacturer) partners, ensuring consistency in specification and finish across large batches.
-             </p>
-
-             <div className="grid grid-cols-2 gap-4">
-               <div className="bg-gray-50 border border-gray-100 p-5 rounded-xl">
-                 <h4 className="text-2xl font-bold text-gray-900">350+</h4>
-                 <p className="text-sm font-medium text-gray-500 mt-1">Suppliers Network</p>
-               </div>
-               <div className="bg-gray-50 border border-gray-100 p-5 rounded-xl">
-                 <h4 className="text-2xl font-bold text-gray-900">Pan-India</h4>
-                 <p className="text-sm font-medium text-gray-500 mt-1">Logistics Reach</p>
-               </div>
-             </div>
-           </div>
-        </div>
-
-        {/* Quality Process */}
-        <div className="mb-24">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900">Our Quality Assurance</h2>
-            <p className="text-gray-500 mt-3 text-lg">Strict adherence to international standards.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Card 1 */}
-            <div className="p-8 border border-gray-100 rounded-2xl hover:shadow-xl hover:border-green-200 transition-all duration-300 bg-white group">
-              <div className="w-14 h-14 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:bg-green-600 group-hover:text-white transition-colors">
-                <ShieldCheck size={28} />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">Material Testing</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                We use strictly graded materials (Mild Steel Grade-1022, SS304, SS316) to ensure tensile strength and corrosion resistance.
-              </p>
-            </div>
-
-            {/* Card 2 */}
-            <div className="p-8 border border-gray-100 rounded-2xl hover:shadow-xl hover:border-blue-200 transition-all duration-300 bg-white group">
-              <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <Settings size={28} />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">Precision Engineering</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                Advanced heading and threading machinery ensures accurate dimensions (Diameter, Length) with zero tolerance for errors.
-              </p>
-            </div>
-
-            {/* Card 3 */}
-            <div className="p-8 border border-gray-100 rounded-2xl hover:shadow-xl hover:border-yellow-200 transition-all duration-300 bg-white group">
-              <div className="w-14 h-14 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center mb-6 group-hover:bg-yellow-500 group-hover:text-white transition-colors">
-                <Package size={28} />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">Inventory Control</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                Robust inventory methods are applied to ensure stock availability for immediate dispatch and order fulfillment.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Packing Section */}
-        {/* FIX: Used bg-[#1a1a1a] to match your header color instead of undefined bg-brand-dark */}
-        <div className="bg-[#1a1a1a] text-white rounded-3xl p-8 md:p-16 relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+      {/* ---------------- 2. INFRASTRUCTURE & SCALE ---------------- */}
+      <section className="py-24 max-w-7xl mx-auto px-6">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
           
-          <div className="flex flex-col md:flex-row justify-between items-center gap-12 relative z-10">
-            <div className="md:w-1/2">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Premium Shipment Packing</h2>
-              <p className="text-gray-400 mb-8 text-lg leading-relaxed">
-                We ensure your products arrive in perfect condition with our multi-tier packing solutions: Plastic Box, Corrugated Box, and Carton Pack.
+          {/* Facility Visualization */}
+          <div className="relative group">
+            <div className="absolute -inset-4 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-3xl blur-2xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+               {/* TIP: Use a real high-shutter speed photo of your machine line here */}
+               <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center grayscale opacity-40 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"></div>
+               <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-transparent to-transparent"></div>
+               
+               <div className="absolute bottom-8 left-8">
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 bg-amber-500 rounded-xl text-black">
+                      <Factory size={32} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <h4 className="text-2xl font-black text-white italic">7000 SQ. FT.</h4>
+                      <p className="text-amber-500 text-xs font-bold tracking-widest uppercase">Integrated Plant Capacity</p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-3xl font-bold text-white mb-6">Massive Production Footprint</h2>
+            <p className="text-slate-400 mb-6 leading-relaxed">
+              Based in the industrial heart of **Rajkot, Gujarat**, Durable Fastener Pvt. Ltd. operates a high-capacity unit designed for scale. Our expanded footprint allows us to process over **100+ tons** of material monthly.
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { label: "Suppliers Network", val: "350+", icon: Layers },
+                { label: "Logistics Fleet", val: "Pan-India", icon: Truck },
+                { label: "Inventory Stock", val: "Ready-to-Ship", icon: Package },
+                { label: "Workforce", val: "Skilled Engineers", icon: Settings },
+              ].map((item, i) => (
+                <div key={i} className="p-4 bg-white/5 border border-white/5 rounded-xl flex items-center gap-4 group hover:bg-white/10 transition-colors">
+                  <item.icon className="text-amber-500" size={24} />
+                  <div>
+                    <p className="text-lg font-bold text-white">{item.val}</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">{item.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- 3. TECHNICAL PROCESS GRID ---------------- */}
+      <section className="py-24 bg-black/30 border-y border-white/5">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-black text-white mb-4">The Precision Cycle</h2>
+            <div className="h-1.5 w-24 bg-amber-500 mx-auto rounded-full"></div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { 
+                icon: ShieldCheck, title: "Material Integrity", color: "text-green-500",
+                desc: "Strict sourcing of Grade-1022, SS304, and SS316 with chemical composition analysis before heading." 
+              },
+              { 
+                icon: Cpu, title: "Automated Cold Heading", color: "text-blue-500",
+                desc: "High-speed multi-station machines ensuring dimensional consistency with ±0.02mm tolerance levels." 
+              },
+              { 
+                icon: Gauge, title: "Stress & Load Testing", color: "text-amber-500",
+                desc: "Every batch is tested for tensile strength and core hardness to meet international ISO/DIN standards." 
+              }
+            ].map((step, i) => (
+              <div key={i} className="p-10 bg-slate-900/50 border border-white/5 rounded-3xl relative group hover:-translate-y-2 transition-all duration-500">
+                <div className={`mb-6 ${step.color} group-hover:scale-110 transition-transform`}>
+                  <step.icon size={48} strokeWidth={1.5} />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">{step.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{step.desc}</p>
+                <div className="mt-6 flex items-center gap-2 text-xs font-bold text-amber-500/50 group-hover:text-amber-500 transition-colors uppercase tracking-tighter">
+                  Phase 0{i+1} <ChevronRight size={14}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- 4. PACKAGING & LOGISTICS ---------------- */}
+      <section className="py-24 px-6">
+        <div className="max-w-7xl mx-auto bg-gradient-to-br from-slate-900 to-black rounded-[3rem] p-8 md:p-20 border border-white/10 relative overflow-hidden shadow-3xl">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 blur-[100px] rounded-full"></div>
+          
+          <div className="grid lg:grid-cols-2 gap-16 items-center relative z-10">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-black text-white mb-8">
+                Industrial-Grade <br/>
+                <span className="text-amber-500 tracking-tighter italic">Shield Packaging.</span>
+              </h2>
+              <p className="text-slate-400 text-lg mb-10 leading-relaxed">
+                Fasteners are heavy and prone to transit friction. We utilize a **Triple-Layer Protection** strategy to ensure your shipment arrives factory-fresh.
               </p>
               
-              {/* FIX: Used standard yellow-400 instead of bg-brand-yellow */}
-              <Link to="/contact" className="inline-flex items-center gap-2 bg-yellow-400 text-black px-8 py-4 rounded-xl font-bold hover:bg-white transition-all transform hover:-translate-y-1">
-                Partner With Us <Truck size={20} />
+              <div className="space-y-4">
+                {[
+                  "Moisture-proof Plastic Interior Sealing",
+                  "Double-Wall Corrugated Boxes (High GSM)",
+                  "Palletized Master Carton Packing for Export"
+                ].map((text, i) => (
+                  <div key={i} className="flex items-center gap-3 text-slate-200">
+                    <CheckCircle2 className="text-amber-500" size={20} />
+                    <span className="text-sm font-medium">{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link to="/contact" className="mt-12 inline-flex items-center gap-3 bg-amber-500 text-black px-10 py-5 rounded-2xl font-black hover:bg-white transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-amber-500/10 uppercase tracking-wider text-sm">
+                Request Capacity Audit <Truck size={20} />
               </Link>
             </div>
-            
-            <div className="grid grid-cols-3 gap-6">
-              {/* Visual representation of packing types */}
-              <div className="w-28 h-28 bg-white/10 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center text-center p-4 border border-white/10 hover:bg-white/20 transition-colors">
-                <Package size={32} className="text-yellow-400 mb-2"/>
-                <span className="text-xs font-bold text-gray-300">Plastic Box</span>
-              </div>
-               <div className="w-28 h-28 bg-white/10 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center text-center p-4 border border-white/10 hover:bg-white/20 transition-colors">
-                <div className="text-yellow-400 font-bold text-2xl mb-1">5+</div>
-                <span className="text-xs font-bold text-gray-300">Layers Corrugated</span>
-              </div>
-               <div className="w-28 h-28 bg-white/10 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center text-center p-4 border border-white/10 hover:bg-white/20 transition-colors">
-                <Truck size={32} className="text-yellow-400 mb-2"/>
-                <span className="text-xs font-bold text-gray-300">Master Carton</span>
-              </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {[
+                { icon: Box, label: "Plastic Box", sub: "Retail Ready" },
+                { icon: Zap, label: "5+ Layers", sub: "Corrugated" },
+                { icon: Package, label: "Eco-Friendly", sub: "Bulk Packs" },
+                { icon: History, label: "24h Ready", sub: "In-Stock" },
+              ].map((pack, i) => (
+                <div key={i} className="p-8 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 text-center flex flex-col items-center justify-center hover:bg-white/10 transition-colors border-b-4 border-b-amber-500">
+                  <pack.icon className="text-amber-500 mb-4" size={40} />
+                  <p className="text-white font-black text-lg">{pack.label}</p>
+                  <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">{pack.sub}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+      </section>
 
-      </div>
+      {/* ---------------- 5. BOTTOM CTA ---------------- */}
+      <section className="py-24 text-center">
+        <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-[0.3em]">Built in Rajkot. Delivered Worldwide.</h2>
+        <div className="w-20 h-1 bg-amber-500 mx-auto rounded-full mb-8"></div>
+        <p className="text-slate-500 max-w-xl mx-auto mb-10">
+          We welcome factory audits from OEM partners and procurement agencies. Contact our engineering team for a technical walkthrough.
+        </p>
+      </section>
+
     </div>
   );
 };

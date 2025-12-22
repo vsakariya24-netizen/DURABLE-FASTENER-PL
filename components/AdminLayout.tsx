@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 // 👇 1. Yahan 'Camera' icon add karein
-import { LayoutDashboard, Package, Briefcase, MessageSquare, LogOut, FileText, Image, Camera, Layers } from 'lucide-react';
+import { LayoutDashboard, Package, Briefcase, MessageSquare, LogOut, FileText, Image, Camera, Layers, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const AdminLayout = () => {
@@ -50,6 +50,12 @@ const AdminLayout = () => {
       label: 'Hiring & Jobs', 
       icon: <Briefcase size={20} /> 
     },
+    // menuItems array mein ye add karein:
+{ 
+  path: '/admin/oem-manager', 
+  label: 'OEM Specs & Logistics', 
+  icon: <Settings size={20} /> 
+},
     { 
       path: '/admin/enquiries', 
       label: 'Enquiries', 

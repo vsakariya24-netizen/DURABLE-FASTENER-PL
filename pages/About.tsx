@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Target, Eye, Heart, TrendingUp, Award, MapPin, Users, Calendar, ArrowUpRight, CheckCircle2, Factory, Crown, Star } from 'lucide-react';
+import { Target, Eye, Heart, TrendingUp, Award, MapPin, Users, Calendar, ArrowUpRight, CheckCircle2, Factory, Crown, Star, Sparkles, MoveRight } from 'lucide-react';
 
 // --- Helper Components for Animation ---
 
@@ -12,6 +12,7 @@ const RevealSection: React.FC<{ children: React.ReactNode; className?: string }>
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
+  // Note: Ensure your global CSS has .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s; } .reveal.active { opacity: 1; transform: translateY(0); }
   return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
 };
 
@@ -46,428 +47,246 @@ const useCounter = (end: number, duration: number = 2000, start: number = 0) => 
 const About: React.FC = () => {
   const [offsetY, setOffsetY] = useState(0);
   
-  // Parallax logic
   useEffect(() => {
     const handleScroll = () => setOffsetY(window.pageYOffset);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Growth Stats
   const statOfficeStart = useCounter(35, 1500);
   const statOfficeNow = useCounter(7000, 2500);
   const statSuppliers = useCounter(350, 2000);
 
   return (
-    <div className="bg-white min-h-screen overflow-x-hidden font-sans text-gray-900">
+    <div className="bg-[#fcfcfc] min-h-screen overflow-x-hidden font-sans text-gray-900">
       
-      {/* 1. Hero Section with Parallax */}
-      <div className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden bg-brand-dark text-white">
+      {/* 1. POWER HERO SECTION */}
+      <div className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-[#0a0f1a] text-white">
         <div 
-          className="absolute inset-0 opacity-40 z-0"
+          className="absolute inset-0 opacity-30 z-0 grayscale"
           style={{ 
-            backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')`,
+            backgroundImage: `url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=2000')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            transform: `translateY(${offsetY * 0.5}px)`
+            transform: `scale(${1 + offsetY * 0.0005}) translateY(${offsetY * 0.2}px)`
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-dark/50 to-brand-dark z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1a] via-transparent to-black/60 z-10" />
         
-        <div className="relative z-20 max-w-7xl mx-auto px-4 text-center">
+        {/* Animated Grid Overlay */}
+        <div className="absolute inset-0 z-10 opacity-20 pointer-events-none" 
+             style={{ backgroundImage: 'radial-gradient(circle, #444 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
+        <div className="relative z-20 max-w-7xl mx-auto px-6 text-center">
           <RevealSection>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow text-sm font-bold tracking-widest uppercase mb-6 backdrop-blur-md">
-               <Award size={16} /> Est. 2018
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-amber-500/20 bg-amber-500/5 text-amber-500 text-xs font-black tracking-[0.3em] uppercase mb-8 backdrop-blur-xl shadow-2xl">
+               Engineering Trust Since 2018
             </div>
-            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-tight">
-              Our Legacy of <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-yellow-200">
-                Unwavering Strength
+            <h1 className="text-6xl md:text-8xl font-black mb-8 tracking-tighter leading-[0.9]">
+              THE ART OF <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-600">
+                STRENGTH
               </span>
             </h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto font-light">
-              From a humble 35 sq. ft. office to a 7,000 sq. ft. manufacturing powerhouse, our journey is defined by quality, precision, and trust.
+            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+              We started in a 35 sq. ft. room with a big dream. Today, we anchor the infrastructure of a nation through <span className="text-white font-medium">Precision Fastening solutions.</span>
             </p>
           </RevealSection>
         </div>
       </div>
 
-      {/* 2. Growth Story (Animated Stats) */}
-      <section className="py-20 bg-white relative -mt-16 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Start Stat */}
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-b-4 border-gray-200 text-center transform hover:-translate-y-2 transition-transform duration-300">
-              <div className="text-gray-400 font-bold uppercase tracking-wider text-xs mb-2">Started In 2018</div>
-              <div className="text-5xl font-extrabold text-gray-300 mb-2 flex justify-center items-baseline gap-1" ref={statOfficeStart.ref}>
-                {statOfficeStart.count} <span className="text-xl">sq ft</span>
+      {/* 2. SCALE DASHBOARD (Animated Stats) */}
+      <section className="relative z-30 -mt-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-10 rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col items-center group transition-all duration-500 hover:border-amber-500/30">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 group-hover:text-amber-500 transition-colors">Foundation</div>
+              <div className="text-5xl font-black text-slate-900 mb-2" ref={statOfficeStart.ref}>
+                {statOfficeStart.count}<span className="text-lg text-slate-300 ml-1">SQ FT</span>
               </div>
-              <p className="text-gray-500 text-sm">Our Humble Beginning</p>
+              <div className="h-1 w-8 bg-slate-100 rounded-full group-hover:w-16 transition-all"></div>
+              <p className="mt-4 text-slate-500 text-sm font-medium">Initial Office (2018)</p>
             </div>
 
-            {/* Current Stat (Hero) */}
-            <div className="bg-brand-dark p-8 rounded-2xl shadow-2xl border-b-4 border-brand-yellow text-center transform scale-110 relative z-10">
-              <div className="text-brand-yellow font-bold uppercase tracking-wider text-xs mb-2">Facility Today</div>
-              <div className="text-6xl font-extrabold text-white mb-2 flex justify-center items-baseline gap-1" ref={statOfficeNow.ref}>
-                {statOfficeNow.count} <span className="text-2xl text-brand-yellow">sq ft</span>
+            <div className="bg-[#111827] p-10 rounded-[2.5rem] shadow-2xl border-t-4 border-amber-500 flex flex-col items-center transform scale-105 z-10 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-16 bg-amber-500/10 blur-[80px] rounded-full -mr-10 -mt-10"></div>
+              <div className="relative z-10 text-[10px] font-black uppercase tracking-widest text-amber-500 mb-4">Current Hub</div>
+              <div className="relative z-10 text-7xl font-black text-white mb-2" ref={statOfficeNow.ref}>
+                {statOfficeNow.count}<span className="text-xl text-amber-500 ml-1">FT²</span>
               </div>
-              <p className="text-gray-400 text-sm">State-of-the-art Manufacturing</p>
+              <p className="relative z-10 mt-4 text-slate-400 text-sm font-light tracking-wide uppercase">Industrial Powerhouse</p>
             </div>
 
-            {/* Network Stat */}
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-b-4 border-brand-blue text-center transform hover:-translate-y-2 transition-transform duration-300">
-              <div className="text-brand-blue font-bold uppercase tracking-wider text-xs mb-2">Network Strength</div>
-              <div className="text-5xl font-extrabold text-gray-900 mb-2 flex justify-center items-baseline gap-1" ref={statSuppliers.ref}>
-                {statSuppliers.count} <span className="text-xl">+</span>
+            <div className="bg-white p-10 rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col items-center group transition-all duration-500 hover:border-blue-500/30">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 group-hover:text-blue-500 transition-colors">Market Presence</div>
+              <div className="text-5xl font-black text-slate-900 mb-2" ref={statSuppliers.ref}>
+                {statSuppliers.count}<span className="text-amber-500 ml-1">+</span>
               </div>
-              <p className="text-gray-500 text-sm">Suppliers & Dealers</p>
+              <div className="h-1 w-8 bg-slate-100 rounded-full group-hover:w-16 transition-all"></div>
+              <p className="mt-4 text-slate-500 text-sm font-medium">B2B Network Partners</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. The Origin Story (Timeline) */}
-      <section className="py-24 bg-gray-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-           <RevealSection className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Journey</h2>
-              <div className="w-24 h-1 bg-brand-yellow mx-auto rounded-full"></div>
-              <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
-                A timeline of continuous evolution and strategic expansion.
-              </p>
-           </RevealSection>
+      {/* 3. EVOLUTION TIMELINE (High-End Industrial Design) */}
+      <section className="py-32 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col items-center text-center mb-24">
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter uppercase italic">The Evolution</h2>
+            <div className="h-2 w-24 bg-gradient-to-r from-amber-500 to-yellow-200 rounded-full"></div>
+          </div>
 
-           <div className="relative">
-             {/* Vertical Line */}
-             <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gray-200 hidden md:block"></div>
+          <div className="relative">
+            {/* Timeline Center Line */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-[2px] bg-slate-100 hidden md:block"></div>
 
-             {/* Timeline Item 1 */}
-             <div className="relative flex flex-col md:flex-row items-center justify-between mb-16 group">
-                 <div className="md:w-5/12 order-2 md:order-1 text-right pr-0 md:pr-10">
-                    <RevealSection>
-                      <span className="text-brand-blue font-bold text-lg">August 29, 2018</span>
-                      <h3 className="text-2xl font-bold text-gray-900 mt-2">The Foundation</h3>
-                      <p className="text-gray-600 mt-2">
-                        Established as "Durable Enterprise", a proprietorship firm with a vision to redefine hardware quality.
-                      </p>
-                    </RevealSection>
-                 </div>
-                 <div className="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-brand-blue rounded-full border-4 border-white shadow-lg z-10 hidden md:flex items-center justify-center order-1">
-                   <div className="w-3 h-3 bg-white rounded-full"></div>
-                 </div>
-                 <div className="md:w-5/12 order-3 md:order-2 pl-0 md:pl-10">
-                   <div className="w-full h-48 bg-gray-200 rounded-xl overflow-hidden shadow-md">
-                     <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500" alt="Office 2018" />
-                   </div>
-                 </div>
-             </div>
+            {/* Timeline Item 1 */}
+            <div className="relative flex flex-col md:flex-row items-center justify-between mb-32 group">
+              <div className="md:w-[45%] text-right pr-0 md:pr-12">
+                <span className="text-amber-600 font-black text-xs tracking-widest uppercase">Aug 2018</span>
+                <h3 className="text-3xl font-black text-slate-900 mt-2 mb-4">Durable Enterprise</h3>
+                <p className="text-slate-500 font-light leading-relaxed">
+                  The journey began as a proprietorship with one machine and a vision to fix the inconsistencies in the architectural hardware market.
+                </p>
+              </div>
+              <div className="absolute left-1/2 -translate-x-1/2 w-12 h-12 bg-white border-[6px] border-slate-100 rounded-full z-10 hidden md:flex items-center justify-center group-hover:border-amber-500 transition-colors">
+                <Sparkles size={16} className="text-amber-500" />
+              </div>
+              <div className="md:w-[45%] pl-0 md:pl-12 mt-8 md:mt-0">
+                <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden shadow-xl border border-white group-hover:scale-105 transition-all duration-500">
+                  <img src="https://images.unsplash.com/photo-1516937941344-00b4e0337589?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="Origin" />
+                </div>
+              </div>
+            </div>
 
-             {/* Timeline Item 2 */}
-             <div className="relative flex flex-col md:flex-row items-center justify-between mb-16 group">
-                 <div className="md:w-5/12 order-2 md:order-1 text-right pr-0 md:pr-10">
-                   <div className="w-full h-48 bg-gray-200 rounded-xl overflow-hidden shadow-md">
-                     <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500" alt="Incorporation" />
-                   </div>
-                 </div>
-                 <div className="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-brand-yellow rounded-full border-4 border-white shadow-lg z-10 hidden md:flex items-center justify-center order-1">
-                   <div className="w-3 h-3 bg-white rounded-full"></div>
-                 </div>
-                 <div className="md:w-5/12 order-3 md:order-2 pl-0 md:pl-10">
-                    <RevealSection>
-                      <span className="text-brand-yellow font-bold text-lg">Evolution</span>
-                      <h3 className="text-2xl font-bold text-gray-900 mt-2">Private Limited</h3>
-                      <p className="text-gray-600 mt-2">
-                        Transitioned to "Durable Fastener Pvt. Ltd.", formalizing our structure to support large-scale industrial demands.
-                      </p>
-                    </RevealSection>
-                 </div>
-             </div>
-
-             {/* Timeline Item 3 */}
-             <div className="relative flex flex-col md:flex-row items-center justify-between group">
-                 <div className="md:w-5/12 order-2 md:order-1 text-right pr-0 md:pr-10">
-                    <RevealSection>
-                      <span className="text-gray-900 font-bold text-lg">Present Day</span>
-                      <h3 className="text-2xl font-bold text-gray-900 mt-2">Rapid Expansion</h3>
-                      <p className="text-gray-600 mt-2">
-                        Operating from a 7,000 sq. ft. facility, focusing on our premium flagship brand: <span className="font-bold text-brand-blue">classone®</span>.
-                      </p>
-                    </RevealSection>
-                 </div>
-                 <div className="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gray-900 rounded-full border-4 border-white shadow-lg z-10 hidden md:flex items-center justify-center order-1">
-                   <div className="w-3 h-3 bg-white rounded-full"></div>
-                 </div>
-                 <div className="md:w-5/12 order-3 md:order-2 pl-0 md:pl-10">
-                   <div className="w-full h-48 bg-gray-200 rounded-xl overflow-hidden shadow-md">
-                     <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500" alt="Factory Today" />
-                   </div>
-                 </div>
-             </div>
-           </div>
+            {/* Timeline Item 2 - Reverse */}
+            <div className="relative flex flex-col md:flex-row items-center justify-between mb-32 group">
+              <div className="md:w-[45%] order-2 md:order-1 pr-0 md:pr-12 mt-8 md:mt-0">
+                <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden shadow-xl border border-white group-hover:scale-105 transition-all duration-500">
+                  <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="Scale" />
+                </div>
+              </div>
+              <div className="absolute left-1/2 -translate-x-1/2 w-12 h-12 bg-white border-[6px] border-slate-100 rounded-full z-10 hidden md:flex items-center justify-center group-hover:border-blue-500 transition-colors">
+                <TrendingUp size={16} className="text-blue-500" />
+              </div>
+              <div className="md:w-[45%] order-1 md:order-2 pl-0 md:pl-12 text-left">
+                <span className="text-blue-600 font-black text-xs tracking-widest uppercase">Transition Era</span>
+                <h3 className="text-3xl font-black text-slate-900 mt-2 mb-4">Pvt. Ltd. Incorporation</h3>
+                <p className="text-slate-500 font-light leading-relaxed">
+                  Expanding our horizons, we formalized as Durable Fastener Pvt. Ltd. This shift allowed us to handle bulk OEM contracts and global quality standards.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* 4. Vision & Mission (Glass Cards) */}
-      <section className="py-24 bg-brand-dark relative overflow-hidden">
-        {/* Background Accents */}
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-blue-900/20 blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-1/2 h-full bg-yellow-900/20 blur-3xl pointer-events-none"></div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-             
-             {/* Vision */}
-             <RevealSection>
-               <div className="glass-dark p-10 rounded-3xl h-full border border-white/10 hover:border-brand-blue/50 transition-colors group">
-                 <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                   <Eye size={36} />
-                 </div>
-                 <h3 className="text-3xl font-bold text-white mb-6">Our Vision</h3>
-                 <p className="text-gray-300 text-lg leading-relaxed mb-8">
-                   We dedicate ourselves to focus on the needs of users in the industry, enabling us to satisfy our customers by providing them with better solutions, while contributing to the creation of a prosperous society and future.
-                 </p>
-                 <div className="flex items-center gap-3 text-sm font-semibold text-blue-300 bg-blue-500/10 p-4 rounded-xl">
-                   <MapPin size={18} />
-                   Target: Pan-India presence in every city & district.
-                 </div>
-               </div>
-             </RevealSection>
-
-             {/* Mission */}
-             <RevealSection className="delay-200">
-               <div className="glass-dark p-10 rounded-3xl h-full border border-white/10 hover:border-brand-yellow/50 transition-colors group">
-                 <div className="w-16 h-16 bg-yellow-500/20 text-yellow-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                   <Target size={36} />
-                 </div>
-                 <h3 className="text-3xl font-bold text-white mb-6">Our Mission</h3>
-                 <ul className="space-y-6">
-                   {[
-                     "Explore industry-leading quality, safety, and performance.",
-                     "Provide customer-friendly products incorporating creative wisdom.",
-                     "Inherit the DNA of classone® to achieve Quality and Sustainable Growth."
-                   ].map((item, idx) => (
-                     <li key={idx} className="flex items-start gap-4">
-                       <div className="mt-1 min-w-[20px] text-brand-yellow">
-                         <CheckCircle2 size={20} />
-                       </div>
-                       <span className="text-gray-300 text-lg">{item}</span>
-                     </li>
-                   ))}
-                 </ul>
-               </div>
-             </RevealSection>
-
-           </div>
-        </div>
-      </section>
-
-      {/* 5. Aspiration & Brand (Redesigned for Single Brand) */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-           <RevealSection>
-             <div className="inline-block p-4 bg-red-50 text-red-500 rounded-full mb-6">
-               <Heart size={32} fill="currentColor" />
-             </div>
-             <h2 className="text-4xl font-bold text-gray-900 mb-6">Our Aspiration</h2>
-             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-16">
-               To be the No.1 premium brand that always places 'Customer First', creating a trusted environment that attracts and retains the best talent.
-             </p>
-           </RevealSection>
-
-           {/* --- NEW SINGLE BRAND DESIGN --- */}
-         <div className="flex justify-center">
-  <RevealSection className="w-full max-w-5xl">
-    <div className="relative group overflow-hidden rounded-[2.5rem] bg-gray-900 shadow-2xl transition-all duration-500 hover:shadow-brand-blue/20 hover:shadow-3xl">
-      
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-[#0a192f] to-gray-900 opacity-100"></div>
-      <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-      
-      <div className="relative z-10 px-8 py-20 md:py-24 flex flex-col items-center justify-center text-center">
+      {/* 4. BRAND ASPIRATION (Luxury Highlight) */}
+      <section className="py-32 bg-[#0a0f1a] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
         
-        {/* Badge */}
-        <div className="mb-12 flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-5 py-2 text-xs font-bold tracking-widest uppercase text-gray-400 backdrop-blur-sm">
-          <Crown size={14} className="text-brand-yellow" /> Flagship Brand
-        </div>
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-20">
+            <h2 className="text-amber-500 text-xs font-black tracking-[0.5em] uppercase mb-4">Our Flagship Jewel</h2>
+            <div className="flex justify-center mb-8">
+               <div className="w-20 h-[1px] bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+            </div>
+          </div>
 
-        {/* LOGO GROUP */}
-        <div className="relative transform group-hover:scale-105 transition-transform duration-500 mb-6">
-          
-          {/* 1. MAIN TEXT */}
-          <h3 className="relative z-10 text-7xl md:text-9xl font-normal text-white tracking-normal font-['Century_Gothic','Futura','sans-serif'] flex items-baseline leading-none">
-            class
-            {/* Custom 'o' with dot */}
-            <span className="relative inline-flex items-center justify-center mx-[2px]">
-              o
-              {/* UPDATED: -translate-y-1/2 puts it in the exact center */}
-              <span className="absolute w-[0.16em] h-[0.16em] bg-white rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/8 shadow-[0_0_10px_white]"></span>
-            </span>
-            ne
-            <sup className="text-2xl md:text-5xl text-brand-WHITE self-start ml-1 mt-2 md:mt-4">®</sup>
-          </h3>
+          <div className="relative group cursor-default">
+            {/* The Logo Design */}
+            <div className="text-center">
+                <h3 className="text-8xl md:text-[12rem] font-light text-white tracking-tighter leading-none opacity-90">
+                  class<span className="relative">o<span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-amber-500 rounded-full blur-[2px] animate-pulse"></span></span>ne<sup className="text-3xl md:text-6xl font-black text-amber-500">®</sup>
+                </h3>
+                <p className="text-amber-500/60 tracking-[1em] uppercase text-sm md:text-lg mt-4 font-black">Architectural Hardware</p>
+            </div>
 
-          {/* 2. REFLECTION EFFECT */}
-          <h3 
-            className="absolute top-[75%] left-0 w-full text-7xl md:text-9xl font-normal text-white tracking-normal font-['Century_Gothic','Futura','sans-serif'] flex items-baseline leading-none scale-y-[-1] opacity-10 select-none pointer-events-none"
-            style={{ maskImage: 'linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%)', WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%)' }}
-          >
-             class
-            <span className="relative inline-flex items-center justify-center mx-[2px]">
-              o
-              {/* UPDATED REFLECTION DOT TOO */}
-              <span className="absolute w-[0.16em] h-[0.16em] bg-white rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></span>
-            </span>
-            ne
-             <sup className="text-2xl md:text-5xl text-brand-WHITE self-start ml-1 mt-2 md:mt-4">®</sup>
-          </h3>
-       
+            {/* Glowing Backdrop */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-32 bg-amber-500/10 blur-[100px] -z-10"></div>
+          </div>
 
-          {/* 2. REFLECTION EFFECT */}
-          <h3 
-            className="absolute top-[75%] left-0 w-full text-7xl md:text-9xl font-normal text-white tracking-normal font-['Century_Gothic','Futura','sans-serif'] flex items-baseline leading-none scale-y-[-1] opacity-10 select-none pointer-events-none"
-            style={{ maskImage: 'linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%)', WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%)' }}
-          >
-             class
-            <span className="relative inline-flex items-center justify-center mx-[2px]">
-              o
-              <span className="absolute w-[0.16em] h-[0.16em] bg-white rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-[45%]"></span>
-            </span>
-            ne
-             <sup className="text-2xl md:text-5xl text-brand-blue self-start ml-1 mt-2 md:mt-4">®</sup>
-          </h3>
-        </div>
-
-                    {/* Divider */}
-                    <div className="w-24 h-1.5 bg-gradient-to-r from-brand-blue to-cyan-400 rounded-full my-8 group-hover:w-48 transition-all duration-500"></div>
-
-                    {/* Description */}
-                    <p className="text-gray-300 text-lg md:text-xl font-light tracking-wide uppercase max-w-lg">
-                      Premium Architectural Hardware
-                    </p>
-                    
-                    <div className="mt-8 flex gap-2">
-                       {[1,2,3,4,5].map(star => (
-                          <Star key={star} size={20} className="text-brand-yellow fill-brand-yellow animate-pulse" style={{animationDelay: `${star * 200}ms`}} />
-                       ))}
-                    </div>
-
-                  </div>
-                </div>
-              </RevealSection>
-           </div>
-           {/* --- END NEW DESIGN --- */}
-
+          <div className="grid md:grid-cols-3 gap-12 mt-32">
+            {[
+              { icon: Crown, title: "No.1 Aspiration", text: "Striving to be the gold standard in premium architectural fastening." },
+              { icon: Users, title: "Customer First", text: "Every thread and head we manufacture is centered around user safety." },
+              { icon: Heart, title: "Legacy Built", text: "Creating a workspace that attracts the finest engineering talent in India." }
+            ].map((item, i) => (
+              <div key={i} className="text-center p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+                <item.icon className="mx-auto text-amber-500 mb-6 group-hover:scale-110 transition-transform" size={40} />
+                <h4 className="text-white font-black mb-3">{item.title}</h4>
+                <p className="text-slate-400 text-sm font-light leading-relaxed">{item.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* 6. Why Choose Us (Bento Grid) */}
-      <section className="py-24 bg-gray-50 border-t border-gray-200 relative overflow-hidden">
-        {/* Subtle Background Pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" 
-             style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
-        </div>
+      {/* 5. BENTO ADVANTAGE GRID */}
+      <section className="py-32 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-end mb-16">
+            <div>
+              <span className="text-amber-600 font-black text-xs tracking-widest uppercase">The Durable Edge</span>
+              <h2 className="text-4xl md:text-5xl font-black text-slate-900 mt-2 tracking-tighter italic">Why Choose Us?</h2>
+            </div>
+            <div className="hidden md:block">
+               <div className="flex items-center gap-2 text-slate-400 text-sm italic">
+                  Scroll for more <MoveRight size={16} />
+               </div>
+            </div>
+          </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-           <div className="text-center mb-16">
-             <RevealSection>
-                <span className="text-brand-yellow font-bold tracking-widest uppercase text-sm">The Durable Advantage</span>
-                <h2 className="text-4xl font-bold text-gray-900 mt-2">Why the Industry Trusts Us</h2>
-             </RevealSection>
-           </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-2 bg-slate-900 p-12 rounded-[3rem] text-white relative overflow-hidden group">
+               <div className="relative z-10">
+                <Calendar size={48} className="text-amber-500 mb-8" />
+                <h3 className="text-5xl font-black mb-4 tracking-tighter">13+ Years</h3>
+                <p className="text-slate-400 text-lg font-light leading-relaxed max-w-sm">
+                  Decades of metallurgical expertise combined into every single fastener we produce.
+                </p>
+               </div>
+               <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:scale-110 transition-transform duration-700">
+                  <Factory size={300} />
+               </div>
+            </div>
 
-           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[minmax(180px,auto)]">
-             
-             {/* 1. HERO CARD: Experience (Large, Gradient) */}
-             <RevealSection className="md:col-span-2 row-span-2 relative group overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-gray-900 text-white shadow-xl p-8 flex flex-col justify-between">
-                <div className="absolute top-0 right-0 p-32 bg-brand-yellow/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all duration-700 group-hover:bg-brand-yellow/20"></div>
-                
-                <div className="relative z-10">
-                  <div className="inline-flex p-3 bg-white/10 rounded-xl mb-4 text-brand-yellow backdrop-blur-md border border-white/5">
-                    <Calendar size={32} />
-                  </div>
-                  <h3 className="text-5xl font-extrabold mb-2">13+ <span className="text-2xl font-medium text-gray-400">Years</span></h3>
-                  <p className="text-xl font-medium text-gray-200">of Unwavering Excellence</p>
-                </div>
-                
-                <div className="relative z-10 mt-8">
-                  <p className="text-gray-400 leading-relaxed max-w-sm">
-                    We don't just manufacture fasteners; we build legacies. Over a decade of defining industry standards.
-                  </p>
-                </div>
-                
-                {/* Decorative Icon in background */}
-                <Calendar className="absolute -bottom-8 -right-8 w-64 h-64 text-white opacity-5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
-             </RevealSection>
+            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl hover:shadow-2xl transition-all group">
+              <CheckCircle2 size={40} className="text-green-500 mb-6" />
+              <h4 className="text-2xl font-black text-slate-900 mb-3 tracking-tighter uppercase">Quality 1st</h4>
+              <p className="text-slate-500 text-sm leading-relaxed">Multi-stage testing ensuring zero-defect delivery for critical OEM lines.</p>
+            </div>
 
+            <div className="bg-amber-500 p-10 rounded-[3rem] shadow-xl hover:scale-[1.02] transition-all group">
+              <Target size={40} className="text-black mb-6" />
+              <h4 className="text-2xl font-black text-black mb-3 tracking-tighter uppercase">Factory Direct</h4>
+              <p className="text-black/70 text-sm leading-relaxed font-bold italic">Unbeatable pricing by eliminating every middleman from the supply chain.</p>
+            </div>
 
-             {/* 2. STANDARD CARD: Fair Dealing */}
-             <RevealSection className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Award size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Fair Dealing</h3>
-                <p className="text-sm text-gray-500">100% Transparent business practices with no hidden clauses.</p>
-             </RevealSection>
+            {/* Bottom Row */}
+            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl hover:shadow-2xl transition-all">
+              <Users size={32} className="text-blue-500 mb-6" />
+              <h4 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tighter">Expert Team</h4>
+              <p className="text-slate-500 text-xs leading-relaxed">Skilled engineers managing high-precision threading and heading.</p>
+            </div>
 
-             {/* 3. DARK CARD: Quality (Important) */}
-             <RevealSection className="bg-gray-900 text-white p-8 rounded-3xl shadow-xl hover:shadow-2xl hover:shadow-brand-blue/20 hover:-translate-y-1 transition-all duration-300 group border border-gray-800">
-                <div className="w-12 h-12 bg-brand-blue/20 text-brand-blue rounded-full flex items-center justify-center mb-4 group-hover:rotate-12 transition-transform">
-                  <CheckCircle2 size={24} />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Quality First</h3>
-                <p className="text-sm text-gray-400">Rigorous multi-stage testing facilities to ensure zero defects.</p>
-             </RevealSection>
+            <div className="md:col-span-2 bg-gradient-to-r from-blue-600 to-indigo-700 p-10 rounded-[3rem] text-white flex flex-col md:flex-row items-center gap-8 shadow-2xl">
+              <div className="p-6 bg-white/10 rounded-3xl backdrop-blur-md">
+                <MapPin size={40} className="text-white" />
+              </div>
+              <div>
+                <h4 className="text-2xl font-black mb-2 uppercase tracking-tighter italic">Pan-India Mission</h4>
+                <p className="text-white/80 text-sm font-light leading-relaxed">Our goal is to be present in every district of India through our vast dealer network by 2030.</p>
+              </div>
+            </div>
 
-             {/* 4. STANDARD CARD: Cost Effective */}
-             <RevealSection className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <TrendingUp size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Factory Direct</h3>
-                <p className="text-sm text-gray-500">Cost-effective pricing by eliminating unnecessary middlemen.</p>
-             </RevealSection>
+            <div className="bg-slate-100 p-10 rounded-[3rem] border-2 border-dashed border-slate-300 flex flex-col justify-center items-center text-center group hover:bg-white hover:border-amber-500 transition-all">
+               <ArrowUpRight size={40} className="text-slate-400 group-hover:text-amber-500 transition-colors" />
+               <h4 className="mt-4 text-slate-900 font-black uppercase tracking-tighter">Full Support</h4>
+            </div>
 
-             {/* 5. STANDARD CARD: After Sales */}
-             <RevealSection className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Users size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">After Sales</h3>
-                <p className="text-sm text-gray-500">Dedicated support team to assist you even after delivery.</p>
-             </RevealSection>
-
-             {/* 6. WIDE CARD: Inventory (Smart Control) */}
-             <RevealSection className="md:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-brand-yellow/30 transition-all duration-300 group flex flex-col md:flex-row items-center gap-6">
-                <div className="w-16 h-16 bg-brand-yellow/10 text-brand-yellow rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <Factory size={32} />
-                </div>
-                <div className="text-center md:text-left">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Smart Inventory Control</h3>
-                  <p className="text-sm text-gray-500">
-                    We maintain optimized stock levels to ensure rapid dispatch and consistent availability for our partners.
-                  </p>
-                </div>
-             </RevealSection>
-
-             {/* 7. STANDARD CARD: Professional */}
-             <RevealSection className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Award size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Expert Team</h3>
-                <p className="text-sm text-gray-500">Highly skilled professionals managing every production stage.</p>
-             </RevealSection>
-
-             {/* 8. STANDARD CARD: Follow Up */}
-             <RevealSection className="bg-gray-50 p-8 rounded-3xl border-2 border-dashed border-gray-200 hover:border-brand-yellow hover:bg-yellow-50/50 transition-all duration-300 group">
-                <div className="w-12 h-12 bg-white text-gray-600 shadow-sm rounded-full flex items-center justify-center mb-4 group-hover:text-brand-yellow transition-colors">
-                  <ArrowUpRight size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Cycle</h3>
-                <p className="text-sm text-gray-500">Thorough pre & post-service follow-ups.</p>
-             </RevealSection>
-
-           </div>
+          </div>
         </div>
       </section>
 
