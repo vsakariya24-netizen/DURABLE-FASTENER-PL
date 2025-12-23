@@ -66,21 +66,38 @@ const ManageCategories: React.FC = () => {
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
+    
     setActionLoading(true);
-    const { error } = await supabase.from('categories').insert([{ name: newCatName }]);
-    if (!error) { setNewCatName(''); fetchData(); }
+    // Error ko destructure karke check karein
+    const { data, error } = await supabase.from('categories').insert([{ name: newCatName }]).select();
+    
+    if (error) {
+        console.error("Supabase Error:", error.message);
+        alert("Error adding category: " + error.message); // User ko error dikhayein
+    } else {
+        setNewCatName(''); 
+        fetchData(); 
+    }
     setActionLoading(false);
   };
 
-  // Level 2: Sub Category
+  // Level 2: Sub Category (Updated)
   const handleAddSubCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubName.trim() || !selectedCatId) return;
+
     setActionLoading(true);
     const { error } = await supabase.from('sub_categories').insert([
       { name: newSubName, category_id: selectedCatId }
     ]);
-    if (!error) { setNewSubName(''); fetchData(); }
+
+    if (error) {
+        console.error("Supabase Error:", error.message);
+        alert("Error adding sub-category: " + error.message);
+    } else {
+        setNewSubName(''); 
+        fetchData(); 
+    }
     setActionLoading(false);
   };
 

@@ -3,37 +3,35 @@ import * as ReactRouterDOM from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { 
   ChevronRight, ShoppingCart, Loader2, Share2, Printer, 
-  Settings, FileText, Check, Ruler, Maximize2, Info, X,
-  ShieldCheck, ArrowRight, Lock, Activity, FileCheck, Scan, Zap, 
-  CheckCircle, CheckCircle2 // <--- Add this
+  Ruler, Maximize2, Info, X,
+  ArrowRight, Lock, Activity, FileCheck, Layers, Hash
 } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import MagicZoomClone from '../components/MagicZoomClone'; 
 
 const { useParams, Link } = ReactRouterDOM;
 
-// --- STYLING CONSTANTS ---
-const BRAND_ACCENT = "amber-500";
-const BRAND_PRIMARY_TEXT = "slate-900";
-const BRAND_SECONDARY_TEXT = "slate-600";
-
-const blueprintGridStyle = {
-    backgroundImage: 'linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px)',
-    backgroundSize: '20px 20px'
+// --- 1. DESIGN THEME CONSTANTS ---
+const THEME = {
+  bg: "bg-slate-950",
+  card: "bg-slate-900",
+  textPrimary: "text-slate-100",
+  textSecondary: "text-slate-400",
+  accent: "amber-500",
+  accentText: "text-amber-500",
+  border: "border-slate-800",
 };
 
-// --- PERFORMANCE KEYS TO LOOK FOR (ORDER MATTERS) ---
+const blueprintGridStyle = {
+  backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+  backgroundSize: '20px 20px'
+};
+
 const PERFORMANCE_KEYS_DISPLAY = [
-  "Core Hardness",
-  "Surface Hardness",
-  "Tensile Strength",
-  "Shear Strength",
-  "Salt Spray Resistance",
-  "Installation Speed",
-  "Temperature Range"
+  "Core Hardness", "Surface Hardness", "Tensile Strength",
+  "Shear Strength", "Salt Spray Resistance", "Installation Speed", "Temperature Range"
 ];
 
-// --- INTERNAL KEYS TO HIDE (Include Performance Keys here so they don't show in Attributes list) ---
 const HIDDEN_SPECS = [
     'hardness', 'sst', 'torque', 'salt', 'box_qty', 'carton_qty', 
     'standard', 'seo_keywords', 'tds_url', 'mtc_url',
@@ -41,90 +39,30 @@ const HIDDEN_SPECS = [
 ];
 
 // --- ANIMATION VARIANTS ---
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-};
-
 const containerVar = {
   hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1, 
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 } 
-  }
+  visible: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.1 } }
 };
 
 const itemVar = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { type: "spring", stiffness: 50, damping: 20 } 
-  }
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50, damping: 20 } }
 };
 
-const floatVar = {
-    animate: {
-        y: [0, -10, 0],
-        transition: {
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-        }
-    }
-};
+const SectionHeader = ({ icon: Icon, title }: { icon: any, title: string }) => (
+  <div className="flex items-center gap-2 mb-4 border-b border-slate-800 pb-2">
+    <Icon size={16} className={THEME.accentText} />
+    <span className={`text-xs font-bold uppercase tracking-[0.2em] ${THEME.textSecondary} font-rajdhani`}>
+      {title}
+    </span>
+  </div>
+);
 
-// --- HELPER FUNCTIONS ---
-const getSpecValue = (specs: any[], keyPart: string) => {
-    if (!specs) return null;
-    const found = specs.find((s: any) => s.key.toLowerCase() === keyPart.toLowerCase());
-    return found ? found.value : null;
-};
-
-// --- HELPER COMPONENTS ---
-
-interface TiltCardProps {
-    children: React.ReactNode;
-    className?: string;
-}
-
-const TiltCard: React.FC<TiltCardProps> = ({ children, className }) => {
-    const x = useMotionValue(0);
-    const y = useMotionValue(0);
-    const rotateX = useTransform(y, [-100, 100], [5, -5]);
-    const rotateY = useTransform(x, [-100, 100], [-5, 5]);
-
-    return (
-        <motion.div
-            style={{ x, y, rotateX, rotateY, z: 100 }}
-            drag
-            dragElastic={0.1}
-            dragConstraints={{ top: 0, left: 0, right: 0, bottom: 0 }}
-            whileHover={{ cursor: "grabbing" }}
-            className={`perspective-1000 ${className}`}
-        >
-            {children}
-        </motion.div>
-    );
-};
-
-const ShimmerButton = ({ children, onClick, className }: any) => {
-    return (
-        <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onClick}
-            className={`relative overflow-hidden ${className}`}
-        >
-            <motion.div
-                className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full"
-                animate={{ translateX: ['-100%', '200%'] }}
-                transition={{ repeat: Infinity, duration: 2.5, ease: "linear", repeatDelay: 1 }}
-            />
-            <span className="relative z-10 flex items-center justify-center gap-2">{children}</span>
-        </motion.button>
-    );
-};
+const TechBadge = ({ children }: { children: React.ReactNode }) => (
+  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-800 border ${THEME.border} text-[10px] font-mono uppercase text-slate-300`}>
+    {children}
+  </span>
+);
 
 const ProductDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -139,7 +77,6 @@ const ProductDetail: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [fullScreenAppImage, setFullScreenAppImage] = useState<string | null>(null);
 
-  // Check Mobile
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 1024px)").matches);
     checkMobile();
@@ -147,16 +84,14 @@ const ProductDetail: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load Fonts
   useEffect(() => {
     const link = document.createElement('link');
-    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
     return () => { document.head.removeChild(link); };
   }, []);
 
-  // Fetch Data
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
@@ -186,7 +121,6 @@ const ProductDetail: React.FC = () => {
     fetchProduct();
   }, [slug]);
 
-  // Derived Data
   const uniqueDiameters = useMemo(() => {
       if (!product?.variants) return [];
       const dias = new Set(product.variants.map((v: any) => v.diameter).filter(Boolean));
@@ -228,396 +162,439 @@ const ProductDetail: React.FC = () => {
 
   const fontHeading = { fontFamily: '"Rajdhani", sans-serif' };
   const fontBody = { fontFamily: '"Inter", sans-serif' };
-  const fontMono = { fontFamily: '"JetBrains Mono", monospace' };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className={`animate-spin text-${BRAND_ACCENT}`} size={48} /></div>;
-  if (!product) return <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50"><h2 className="text-3xl font-bold mb-4" style={fontHeading}>Product Not Found</h2><Link to="/products">Back to Catalog</Link></div>;
+  if (loading) return <div className={`h-screen flex items-center justify-center ${THEME.bg}`}><Loader2 className={`animate-spin ${THEME.accentText}`} size={48} /></div>;
+  if (!product) return <div className={`min-h-screen flex flex-col items-center justify-center ${THEME.bg}`}><h2 className={`text-3xl font-bold mb-4 ${THEME.textPrimary}`} style={fontHeading}>Product Not Found</h2><Link to="/products" className={THEME.accentText}>Back to Catalog</Link></div>;
 
   const currentImage = displayImages[selectedImageIndex];
-  const standard = getSpecValue(product.specifications, 'standard');
+  const standard = product.specifications?.find((s:any) => s.key.toLowerCase() === 'standard')?.value;
   const showDimensions = product.technical_drawing || (product.dimensional_specifications && product.dimensional_specifications.length > 0);
   const displayMaterial = product.material || '';
   const displayHeadType = product.head_type ? product.head_type.replace(/Buggel/gi, 'Bugle') : '';
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-24 selection:bg-amber-100 selection:text-amber-900" style={fontBody}>
-      {/* Header */}
-      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} transition={{ type: "spring", stiffness: 100 }} className="bg-white/90 border-b border-slate-200 sticky top-0 z-40 shadow-sm backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div className={`${THEME.bg} min-h-screen pb-24 selection:bg-amber-500/30 selection:text-amber-200`} style={fontBody}>
+      
+      {/* --- HEADER --- */}
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-slate-950/80 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div className="flex items-center text-xs font-bold uppercase tracking-widest text-slate-500" style={fontHeading}>
-              <Link to="/products" className={`hover:text-${BRAND_ACCENT} transition-colors`}>Catalog</Link> <ChevronRight size={12} className="mx-2" /> <span className="text-slate-900">{product.name}</span>
+              <Link to="/products" className="hover:text-amber-500 transition-colors">Catalog</Link> 
+              <ChevronRight size={12} className="mx-2 text-slate-700" /> 
+              <span className="text-slate-200">{product.name}</span>
             </div>
-            <div className="flex gap-2 text-slate-400">
-                <motion.button whileHover={{ scale: 1.1, color: '#f59e0b' }} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><Share2 size={18} /></motion.button>
-                <motion.button whileHover={{ scale: 1.1, color: '#f59e0b' }} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><Printer size={18} /></motion.button>
+            <div className="flex gap-3 text-slate-400">
+                <button className="p-2 hover:bg-slate-800 rounded-full transition-colors hover:text-amber-500"><Share2 size={16} /></button>
+                <button className="p-2 hover:bg-slate-800 rounded-full transition-colors hover:text-amber-500"><Printer size={16} /></button>
             </div>
         </div>
       </motion.div>
 
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
-        {/* Title Section with Stagger */}
-        <motion.div variants={containerVar} initial="hidden" animate="visible" className="mb-10 md:mb-14 max-w-4xl relative">
-            <motion.h1 variants={itemVar} className={`text-4xl md:text-5xl lg:text-6xl font-extrabold text-${BRAND_PRIMARY_TEXT} tracking-tight uppercase mb-4 leading-none`} style={fontHeading}>
-                {product.name}
-            </motion.h1>
+        
+        {/* --- TITLE BLOCK --- */}
+        <motion.div variants={containerVar} initial="hidden" animate="visible" className="mb-10 relative">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+                <div>
+                    <motion.div variants={itemVar} className="flex items-center gap-3 mb-2">
+                        <span className={`px-2 py-0.5 rounded-sm bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-widest`}>
+                            Industrial Series
+                        </span>
+                        {standard && <span className="text-slate-500 text-xs font-mono font-bold tracking-wider">{standard}</span>}
+                    </motion.div>
+                    <motion.h1 variants={itemVar} className={`text-4xl md:text-6xl font-extrabold ${THEME.textPrimary} tracking-tight uppercase leading-none`} style={fontHeading}>
+                        {product.name}
+                    </motion.h1>
+                </div>
+              
+            </div>
             <motion.div variants={itemVar} className="flex items-start gap-4">
-                <div className={`w-1 self-stretch bg-${BRAND_ACCENT} rounded-full`}></div>
-                <p className={`text-${BRAND_SECONDARY_TEXT} text-lg md:text-xl font-light leading-relaxed`}>{product.short_description}</p>
+                 <div className="w-1 self-stretch bg-amber-500 rounded-full"></div>
+                 <p className={`${THEME.textSecondary} text-lg font-light leading-relaxed max-w-3xl`}>
+                    {product.short_description}
+                 </p>
             </motion.div>
-            {/* Background Decoration */}
-            <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-100 rounded-full blur-[100px] opacity-50 -z-10 animate-pulse"></div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
           
-          {/* --- LEFT COLUMN: Images & Finish Options --- */}
-          <div className="lg:col-span-7 flex flex-col gap-8">
-              {/* Gallery */}
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[500px]">
+          {/* --- LEFT COLUMN: Visuals --- */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[750px]">
+                  
+                  {/* Thumbnails */}
                   <div className="hidden md:flex flex-col gap-3 overflow-y-auto w-20 py-1 pr-1 custom-scrollbar">
                       {displayImages.map((img: string, idx: number) => (
-                          <motion.button 
+                          <button 
                             key={idx} 
-                            whileHover={{ x: 2 }}
                             onClick={() => setSelectedImageIndex(idx)} 
-                            className={`relative w-full aspect-square rounded-lg bg-white overflow-hidden border transition-all ${selectedImageIndex === idx ? `border-${BRAND_ACCENT} ring-1 ring-${BRAND_ACCENT}` : 'border-slate-200 opacity-60 hover:opacity-100'}`}
+                            className={`relative w-full aspect-square rounded bg-white overflow-hidden border transition-all ${selectedImageIndex === idx ? 'border-amber-500 ring-1 ring-amber-500' : 'border-slate-700 opacity-50 hover:opacity-100'}`}
                           >
                               <img src={img} className="w-full h-full object-contain p-1" />
-                          </motion.button>
+                          </button>
                       ))}
                   </div>
-                  {/* MAIN IMAGE WITH FLOATING ANIMATION */}
-                  <motion.div 
-                    variants={floatVar}
-                    animate="animate"
-                    className="flex-1 relative rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-200 p-8 flex items-center justify-center h-[400px] md:h-full overflow-hidden"
-                  >
-                      {standard && (
-                          <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="absolute top-4 left-4 z-20">
-                              <span className="px-3 py-1 bg-amber-500 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-md flex items-center gap-1">
-                                  <ShieldCheck size={12}/> {standard.split('/')[0]}
-                              </span>
-                          </motion.div>
-                      )}
+
+                  {/* Main Viewer */}
+                  <div className="flex-1 relative rounded-lg bg-slate-900 border border-slate-800 p-8 flex items-center justify-center h-[400px] md:h-full overflow-hidden group">
+                      <div className="absolute inset-0 opacity-20 pointer-events-none" style={blueprintGridStyle}></div>
+                      <div className="absolute top-0 right-0 p-4 z-20">
+                          <Maximize2 className="text-slate-600 group-hover:text-amber-500 transition-colors" size={20} />
+                      </div>
+
                       <AnimatePresence mode='wait'>
                         <motion.div 
                             key={currentImage} 
-                            initial={{ opacity: 0, scale: 0.9 }} 
+                            initial={{ opacity: 0, scale: 0.95 }} 
                             animate={{ opacity: 1, scale: 1 }} 
-                            exit={{ opacity: 0 }} 
+                            exit={{ opacity: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="w-full h-full flex items-center justify-center"
+                            className="w-full h-full flex items-center justify-center relative z-10"
                         >
-                            <MagicZoomClone src={currentImage} zoomSrc={currentImage} alt={product.name} zoomLevel={2.5} glassSize={isMobile ? 120 : 200} className="max-h-full max-w-full object-contain" />
+                            <div className="absolute inset-0 bg-radial-gradient from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                            <MagicZoomClone src={currentImage} zoomSrc={currentImage} alt={product.name} zoomLevel={2.5} glassSize={isMobile ? 120 : 200} className="max-h-full max-w-full object-contain drop-shadow-2xl" />
                         </motion.div>
                       </AnimatePresence>
-                  </motion.div>
-              </motion.div>
-
-              {/* Finish Options (Staggered Entry) */}
-              <motion.div variants={containerVar} initial="hidden" animate="visible">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <motion.span variants={itemVar} className="text-slate-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2 mb-4" style={fontHeading}>
-                        <div className="w-1.5 h-1.5 bg-amber-500 rotate-45 rounded-sm"></div> Finish Options
-                    </motion.span>
-                    <div className="flex flex-wrap gap-3">
-                        {availableFinishes.map((finish: any, i) => (
-                            <motion.button 
-                                key={finish} 
-                                variants={itemVar}
-                                whileHover={{ y: -2, backgroundColor: "#fffbeb", borderColor: "#fcd34d" }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleFinishClick(finish)} 
-                                className={`px-6 py-3 text-sm font-bold uppercase tracking-wider border rounded-lg transition-all ${activeImageOverride === product.finish_images?.[finish] ? `border-${BRAND_ACCENT} text-${BRAND_PRIMARY_TEXT} bg-amber-50 ring-1 ring-${BRAND_ACCENT} shadow-md` : `border-slate-200 bg-white text-slate-600`}`} style={fontHeading}
-                            >
-                                {finish}
-                            </motion.button>
-                        ))}
-                    </div>
-                </div>
+                  </div>
               </motion.div>
           </div>
 
-          {/* --- RIGHT COLUMN --- */}
-          <div className="lg:col-span-5 flex flex-col h-full sticky top-24 space-y-6">
+          {/* --- RIGHT COLUMN: Configurator --- */}
+          <div className="lg:col-span-5 flex flex-col space-y-6 sticky top-24">
               
               <motion.div variants={containerVar} initial="hidden" animate="visible" className="space-y-6">
                 
-                {/* 1. CONFIGURATOR BOX */}
-                <motion.div variants={itemVar} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-10 relative overflow-hidden">
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full blur-3xl -z-10"></div>
+                {/* 1. CONFIG PANEL */}
+                <motion.div variants={itemVar} className={`bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-2xl relative overflow-hidden`}>
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -z-10"></div>
 
-                    {/* DIAMETER */}
-                    <div className="space-y-4">
-                      <span className={`text-slate-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2 pl-1`} style={fontHeading}>
-                          <div className="w-1.5 h-4 bg-amber-500 rounded-sm"></div> Diameter (Ø)
-                      </span>
-                      <div className="flex flex-wrap gap-4">
-                          {uniqueDiameters.map((dia: any) => {
-                              const isSelected = selectedDia === dia;
-                              return (
-                                <motion.button 
-                                    key={dia} 
-                                    onClick={() => setSelectedDia(dia)} 
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${isSelected ? `bg-slate-900 text-white shadow-lg shadow-slate-900/30` : `bg-white border border-slate-200 text-slate-500 hover:border-amber-300 hover:text-amber-500`}`}
-                                >
-                                    <div className={`absolute inset-1 rounded-full border border-dashed transition-colors ${isSelected ? 'border-slate-600' : 'border-slate-300'}`}></div>
-                                    <span className="font-bold text-sm font-rajdhani z-10">{dia}</span>
-                                    {isSelected && (
-                                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center shadow-md z-20">
-                                            <Check size={10} strokeWidth={4} className="text-white" />
-                                        </motion.div>
-                                    )}
-                                </motion.button>
-                              );
-                          })}
+                   {/* DIAMETER SELECTION */}
+                   <div className="mb-8">
+                      <SectionHeader icon={Ruler} title="Select Diameter" />
+                      <div className="flex flex-wrap gap-3">
+                        {uniqueDiameters.map((dia: any) => {
+                            const isSelected = selectedDia === dia;
+                            return (
+                              <button 
+                                  key={dia} 
+                                  onClick={() => setSelectedDia(dia)} 
+                                  className={`
+                                    relative w-12 h-12 rounded flex items-center justify-center text-sm font-mono font-bold transition-all duration-200 border
+                                    ${isSelected 
+                                      ? 'bg-amber-500 text-slate-900 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]' 
+                                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-600 hover:text-slate-200'}
+                                  `}
+                              >
+                                  {dia}
+                              </button>
+                            );
+                        })}
                       </div>
-                    </div>
+                   </div>
 
-                    {/* LENGTH */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-end pl-1">
-                          <span className="text-slate-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={fontHeading}>
-                              <div className="w-4 h-1.5 bg-amber-500 rounded-sm"></div> Length (L)
-                          </span>
-                          <span className="text-xs font-mono text-slate-400 font-bold">{selectedLen ? `${selectedLen}mm` : ''}</span>
-                      </div>
-                      <div className="relative w-full bg-white border border-slate-200 rounded-xl shadow-inner h-28 flex items-end px-4 py-2 overflow-hidden" style={blueprintGridStyle}>
-                          <div className="flex w-full items-end justify-between relative z-10">
-                              {availableLengths.length > 0 ? availableLengths.map((len: any) => {
-                                  const isSelected = selectedLen === len;
-                                  return (
-                                      <button key={len} onClick={() => setSelectedLen(len)} className="group relative flex-1 flex flex-col items-center justify-end outline-none min-w-0">
-                                          <span className={`mb-3 text-xs sm:text-sm font-bold font-mono transition-all duration-300 select-none whitespace-nowrap ${isSelected ? 'text-amber-500 scale-125 -translate-y-1' : 'text-slate-600 group-hover:text-slate-900'}`}>{parseInt(len)}</span>
-                                          <motion.div 
-                                            layoutId="ruler-mark"
-                                            className={`w-[2px] rounded-t-sm transition-all duration-300 ${isSelected ? 'h-10 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)] z-10' : 'h-5 bg-slate-300 group-hover:bg-slate-400 group-hover:h-6'}`}
-                                          ></motion.div>
-                                      </button>
-                                  )
-                              }) : (<div className="w-full text-center text-xs text-slate-400 italic pb-4">Select a Diameter first</div>)}
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-slate-200"></div>
-                      </div>
+                   {/* LENGTH SELECTION */}
+                   <div className="mb-8">
+                    <div className="flex justify-between items-end mb-4 border-b border-slate-800 pb-2">
+                        <SectionHeader icon={Maximize2} title="Select Length (mm)" />
+                        <span className="text-2xl font-mono text-amber-500 font-bold tracking-tighter drop-shadow-lg">
+                            {selectedLen ? selectedLen : '--'}<span className="text-xs text-slate-500 ml-1 font-sans font-medium">mm</span>
+                        </span>
                     </div>
-                </motion.div>
-
-                {/* 2. ATTRIBUTES BOX */}
-                <motion.div variants={itemVar} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="mb-4 flex items-center gap-2">
-                        <Settings className={`text-${BRAND_ACCENT}`} size={18} />
-                        <span className="text-slate-900 text-sm font-bold uppercase tracking-widest" style={fontHeading}>Attributes</span>
+                    
+                    <div className="bg-slate-950 border border-slate-800 rounded h-24 relative flex items-end px-3 w-full overflow-hidden" style={blueprintGridStyle}>
+                        <div className="flex w-full items-end justify-between relative z-10 h-full">
+                            {availableLengths.length > 0 ? availableLengths.map((len: any, index: number) => {
+                                const isSelected = selectedLen === len;
+                                const alignmentClass = index === 0 ? 'items-start' : (index === availableLengths.length - 1 ? 'items-end' : 'items-center');
+                                return (
+                                    <button 
+                                      key={len} 
+                                      onClick={() => setSelectedLen(len)} 
+                                      className={`group relative flex-1 flex flex-col justify-end outline-none h-full ${alignmentClass}`}
+                                    >
+                                        <span className={`
+                                            mb-2 font-mono text-xs transition-all duration-200 select-none whitespace-nowrap tracking-tight block
+                                            ${isSelected 
+                                                ? 'text-amber-400 font-black -translate-y-1 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]' 
+                                                : 'text-slate-500 font-medium group-hover:text-slate-300'
+                                            }
+                                        `}>
+                                            {parseInt(len)}
+                                        </span>
+                                        <div className={`
+                                              w-px rounded-t-sm transition-all duration-300 mx-auto
+                                              ${isSelected 
+                                                  ? 'h-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] opacity-100'
+                                                  : 'h-4 bg-slate-700 group-hover:bg-slate-500 group-hover:h-6 opacity-80'
+                                              }
+                                          `}
+                                        ></div>
+                                    </button>
+                                )
+                            }) : <div className="w-full text-center text-xs text-slate-600 font-mono italic self-center pb-4">Select Diameter first</div>}
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-slate-700 z-0"></div>
                     </div>
-                    <div className="rounded-xl border border-slate-100 divide-y divide-slate-100 bg-slate-50/50">
-                        {displayMaterial && (
-                            <div className="grid grid-cols-[140px_1fr] px-6 py-3.5 items-start">
-                              <div className="text-slate-400 text-xs font-bold uppercase tracking-widest pt-1.5">Material</div>
-                              <div className="flex flex-col gap-1.5">
-                                {displayMaterial.split(/\|/g).map((mat: string, idx: number) => {
-                                  const parts = mat.split('(Grade');
-                                  return (<div key={idx} className="flex flex-wrap items-center gap-2"><span className="text-slate-900 font-bold font-rajdhani text-lg leading-tight">{parts[0].trim()}</span>{parts[1] && <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded border border-slate-200">Grade {parts[1].replace(')', '').trim()}</span>}</div>);
-                                })}
-                              </div>
-                            </div>
-                        )}
-                        {displayHeadType && <SimpleSpecRow label="Head Type" value={displayHeadType} />}
-                        {product.drive_type && <SimpleSpecRow label="Drive Type" value={product.drive_type} />}
-                        {product.thread_type && <SimpleSpecRow label="Thread Type" value={product.thread_type} />}
-                        {product.specifications?.filter((s:any) => !HIDDEN_SPECS.includes(s.key.toLowerCase())).map((spec: any, idx: number) => (
-                            <SimpleSpecRow key={idx} label={spec.key} value={spec.value} />
-                        ))}
-                    </div>
-                </motion.div>
-
-              </motion.div>
-
-              {/* ACTION BUTTONS (With Shimmer Effect) */}
-              <motion.div variants={itemVar} initial="hidden" animate="visible" className="flex gap-4">
-                  <div className="flex-1">
-                      <ShimmerButton className={`w-full bg-${BRAND_ACCENT} text-white py-4 rounded-lg font-bold uppercase tracking-widest shadow-lg shadow-amber-200`} onClick={() => {}}>
-                          <Link to="/contact" className="flex items-center justify-center gap-3 w-full h-full" style={fontHeading}>
-                              <ShoppingCart size={20} /> Bulk Quote
-                          </Link>
-                      </ShimmerButton>
                   </div>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={`flex-1 bg-white border-2 border-slate-200 py-4 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:border-slate-400 text-slate-700`} style={fontHeading}>
-                      <FileText size={20} /> Spec Sheet
-                  </motion.button>
-              </motion.div>
 
+                   {/* FINISH SELECTION */}
+                   <div>
+                      <SectionHeader icon={Layers} title="Surface Finish" />
+                      <div className="flex flex-wrap gap-2">
+                          {availableFinishes.map((finish: any) => (
+                             <button 
+                                key={finish} 
+                                onClick={() => handleFinishClick(finish)} 
+                                className={`
+                                  px-4 py-2 text-xs font-bold uppercase tracking-wider border rounded transition-all
+                                  ${activeImageOverride === product.finish_images?.[finish] 
+                                    ? 'border-amber-500 text-amber-500 bg-amber-500/10' 
+                                    : 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600 hover:text-slate-200'}
+                                `}
+                              >
+                                  {finish}
+                              </button>
+                          ))}
+                      </div>
+                   </div>
+                </motion.div>
+                </motion.div>
+
+                {/* --- UPDATED ATTRIBUTES SUMMARY (Matches mat.PNG) --- */}
+                <motion.div variants={itemVar} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+                  {/* Card Header (Optional, removes if you want pure minimal look like image) */}
+                  <div className="bg-slate-950/50 px-5 py-3 border-b border-slate-800 flex items-center gap-2">
+                    <FileCheck size={14} className="text-amber-500" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Specification Details</span>
+                  </div>
+
+                  <div className="p-5 flex flex-col gap-0 divide-y divide-slate-800">
+                    
+                    {/* 1. MATERIAL SECTION (Handles Multiple Lines) */}
+                    {displayMaterial && (
+                      <div className="flex flex-row justify-between py-3 first:pt-0">
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
+                          Material
+                        </span>
+                        <div className="flex flex-col text-right gap-1">
+                          {/* Splits by '|' or ',' to create distinct lines for different grades */}
+                          {displayMaterial.split(/\|/g).map((mat: string, idx: number) => (
+                            <div key={idx} className="flex flex-col sm:flex-row sm:justify-end sm:items-center gap-1">
+                                <span className={`text-sm font-bold ${THEME.textPrimary} font-rajdhani`}>
+                                  {mat.split('(')[0].trim()}
+                                </span>
+                                {mat.includes('(') && (
+                                  <span className="text-[10px] text-slate-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                                    {mat.split('(')[1].replace(')', '')}
+                                  </span>
+                                )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 2. HEAD TYPE */}
+                    {displayHeadType && (
+                      <div className="flex flex-row justify-between py-3">
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
+                          Head Type
+                        </span>
+                        <span className={`text-sm font-medium ${THEME.textPrimary} font-rajdhani text-right`}>
+                          {displayHeadType}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 3. DRIVE TYPE */}
+                    {product.drive_type && (
+                      <div className="flex flex-row justify-between py-3">
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
+                          Drive
+                        </span>
+                        <span className={`text-sm font-medium ${THEME.textPrimary} font-rajdhani text-right`}>
+                          {product.drive_type}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 4. SURFACE FINISH (List View) */}
+                    {/* If you want to list ALL available finishes like the image, use availableFinishes.join */}
+                    {availableFinishes.length > 0 && (
+                      <div className="flex flex-row justify-between py-3 last:pb-0">
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
+                          Surface Finish
+                        </span>
+                        <div className="text-right w-2/3">
+                           <span className="text-sm font-medium text-slate-300 leading-relaxed">
+                              {/* Renders nicely as a comma separated list, matches the image style */}
+                              {availableFinishes.map((finish: any, i: number) => (
+                                <span key={i}>
+                                  <span className={activeImageOverride?.includes(finish) ? "text-amber-500" : "text-slate-300"}>
+                                    {finish}
+                                  </span>
+                                  {i < availableFinishes.length - 1 && <span className="text-slate-600 mx-1">, </span>}
+                                </span>
+                              ))}
+                           </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 5. OTHER SPECS (Dynamic) */}
+                    {product.specifications?.filter((s:any) => !HIDDEN_SPECS.includes(s.key.toLowerCase())).map((spec: any, idx: number) => (
+                      <div key={idx} className="flex flex-row justify-between py-3 last:pb-0">
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
+                          {spec.key}
+                        </span>
+                        <span className="text-sm font-medium text-slate-200 font-mono text-right">
+                          {spec.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+              {/* ACTION BUTTONS */}
+                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800">
+                     <button className="col-span-1 bg-amber-500 hover:bg-amber-400 text-slate-900 h-12 rounded font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-amber-900/20 transition-all text-xs">
+                         <ShoppingCart size={16} /> Bulk Quote
+                     </button>
+                     <button className="col-span-1 bg-slate-800 border border-slate-700 text-slate-300 hover:text-white h-12 rounded font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-xs hover:bg-slate-700">
+                         <FileCheck size={16} /> Spec Sheet
+                     </button>
+                 </div>
           </div>
         </div>
       </div>
       
-      {/* --- COMBINED TECHNICAL SECTION: DIMENSIONS + PERFORMANCE VAULT --- */}
-      <div className="bg-white border-t border-slate-100 relative z-20 shadow-sm overflow-hidden">
+      {/* --- TECHNICAL VAULT (UPDATED FONTS & STYLES) --- */}
+      <div className="bg-slate-900 border-t border-slate-800 relative z-20 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             {showDimensions && (
-                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={fadeInUp} className="w-full">
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={containerVar}>
                 
-                <div className="flex items-center justify-between mb-8">
-                    <h3 className={`text-3xl font-bold text-${BRAND_PRIMARY_TEXT} flex items-center gap-3 uppercase tracking-wider`} style={fontHeading}>
-                        <FileCheck className={`text-${BRAND_ACCENT}`} size={32} /> Technical Specifications
-                    </h3>
+                <div className="flex items-center gap-3 mb-8">
+                    <Activity className="text-amber-500" size={24} />
+                    <h3 className="text-2xl font-bold text-white uppercase tracking-wider" style={fontHeading}>Technical Specifications</h3>
                 </div>
 
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden ring-1 ring-slate-900/5 flex flex-col">
+                <div className="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col lg:flex-row shadow-2xl">
                     
-                    {/* TOP SECTION: SPLIT VIEW */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+                    {/* LEFT: Blueprint Viewer */}
+                    <div className="lg:w-2/3 relative p-10 bg-slate-950 flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800 group">
+                        <div className="absolute inset-0 opacity-10" style={blueprintGridStyle}></div>
                         
-                        {/* LEFT: Technical Drawing (Interactive Scanner Effect) */}
-                        <div className="lg:col-span-8 relative p-10 bg-slate-50 flex items-center justify-center group overflow-hidden" 
-                             style={{ backgroundImage: 'radial-gradient(#cbd5e1 1.5px, transparent 1.5px)', backgroundSize: '24px 24px' }}>
-                            
-                            {/* The Radar Scan Animation */}
-                            <motion.div 
-                                className="absolute inset-0 bg-gradient-to-b from-transparent via-amber-500/10 to-transparent z-10 pointer-events-none"
-                                animate={{ top: ['-100%', '200%'] }}
-                                transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                        <motion.div 
+                            className="absolute inset-0 bg-gradient-to-b from-transparent via-amber-500/5 to-transparent z-10 pointer-events-none border-b border-amber-500/20"
+                            animate={{ top: ['-100%', '200%'] }}
+                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                        />
+                        
+                        <div className="absolute top-6 left-6 z-20">
+                             <TechBadge>ISO View</TechBadge>
+                        </div>
+
+                        {product.technical_drawing ? (
+                            <motion.img 
+                                initial={{ opacity: 0, scale: 0.9 }} 
+                                whileInView={{ opacity: 1, scale: 1 }} 
+                                transition={{ duration: 0.8 }}
+                                src={product.technical_drawing} 
+                                className="relative z-10 max-h-[400px] w-auto object-contain invert mix-blend-lighten opacity-90 transition-transform duration-500 group-hover:scale-105" 
+                                alt="Technical Drawing"
                             />
-                            
-                            <div className="absolute top-6 left-6 flex gap-2">
-                                <span className="bg-white/80 backdrop-blur px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-500 rounded border border-slate-200">ISO View</span>
-                            </div>
-
-                            {product.technical_drawing ? (
-                                <>
-                                    <motion.img 
-                                        initial={{ opacity: 0, scale: 0.9 }} 
-                                        whileInView={{ opacity: 1, scale: 1 }} 
-                                        transition={{ duration: 0.8 }} 
-                                        src={product.technical_drawing} 
-                                        className="relative z-10 max-h-[350px] w-auto object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105" 
-                                    />
-                                    <motion.button whileHover={{ scale: 1.1 }} className="absolute bottom-6 right-6 bg-white p-3 rounded-xl shadow-md text-slate-500 hover:text-slate-900 border border-slate-200 z-20">
-                                        <Maximize2 size={24} />
-                                    </motion.button>
-                                </>
-                            ) : (<div className="text-sm text-slate-400 italic font-medium bg-white/50 px-6 py-3 rounded-full border border-slate-200">No technical drawing available</div>)}
-                        </div>
-
-                        {/* RIGHT: Performance Vault (Sidebar Style) */}
-                        <div className="lg:col-span-4 bg-white p-8 flex flex-col relative overflow-hidden">
-                             {/* Background Activity Icon */}
-                             <motion.div 
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 20, ease: "linear", repeat: Infinity }}
-                                className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none origin-center"
-                             >
-                                <Activity size={120} />
-                             </motion.div>
-                             
-                             <div className="mb-6 pb-4 border-b border-slate-100">
-                                 <h4 className="text-sm font-bold uppercase tracking-widest text-slate-900 flex items-center gap-2">
-                                     <Activity size={16} className={`text-${BRAND_ACCENT}`} /> Performance Data
-                                 </h4>
-                             </div>
-
-                             <div className="flex-1 space-y-4">
-                                {/* DYNAMIC PERFORMANCE DATA RENDERING */}
-                                {PERFORMANCE_KEYS_DISPLAY.map((key, i) => {
-                                    // CHECK IF THIS KEY EXISTS IN SPECS (Value doesn't matter, just presence)
-                                    const hasSpec = product.specifications.find((s:any) => s.key.toLowerCase() === key.toLowerCase());
-                                    if (!hasSpec) return null; // Hide if not enabled in Admin
-
-                                    return (
-                                        <motion.div 
-                                            key={i} 
-                                            initial={{ x: 20, opacity: 0 }}
-                                            whileInView={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: i * 0.1 }}
-                                            className="flex justify-between items-center group/item p-2 rounded hover:bg-slate-50 transition-colors"
-                                        >
-                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide group-hover/item:text-slate-800 transition-colors">{key}</span>
-                                            <div className="relative overflow-hidden rounded bg-green-50 px-3 py-1 flex items-center gap-1 border border-green-100">
-                                                <CheckCircle2 size={12} className="text-green-600" />
-                                                <span className="text-green-700 text-[10px] font-bold uppercase tracking-widest">Verified</span>
-                                            </div>
-                                        </motion.div>
-                                    );
-                                })}
-
-                                {PERFORMANCE_KEYS_DISPLAY.every(key => !product.specifications.find((s:any) => s.key.toLowerCase() === key.toLowerCase())) && (
-                                    <div className="text-center py-10">
-                                        <span className="text-xs text-slate-400 italic">Standard performance compliance.</span>
-                                    </div>
-                                )}
-                             </div>
-
-                             <div className="mt-8">
-                                <Link to="/contact" className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-4 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-amber-500 hover:shadow-lg hover:shadow-amber-100 transition-all group overflow-hidden relative">
-                                    <span className="relative z-10 flex items-center gap-2">
-                                        <Lock size={14} className="group-hover:hidden" /> 
-                                        <Zap size={14} className="hidden group-hover:block" />
-                                        Unlock Full Report
-                                    </span>
-                                </Link>
-                             </div>
-                        </div>
+                        ) : <div className="text-slate-500 font-mono text-sm tracking-wide border border-slate-800 px-4 py-2 rounded">[ DRAWING DATA UNAVAILABLE ]</div>}
                     </div>
 
-                    {/* BOTTOM: Specification Table (Full Width) */}
-                    <div className="w-full bg-white border-t border-slate-200">
-                        <div className="overflow-x-auto custom-scrollbar">
-                            <table className="w-full min-w-[600px] border-collapse">
-                                <thead>
-                                    <tr className="border-b border-slate-100 bg-slate-50/50">
-                                        <th className="text-left py-6 pl-10 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[180px]">Feature</th>
-                                        <th className="text-center py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-24">Symbol</th>
-                                        {uniqueDiameters.map((dia: any) => (
-                                            <th key={dia} className={`text-center py-6 px-4 text-[11px] font-bold uppercase tracking-widest min-w-[80px] ${selectedDia === dia ? `text-${BRAND_ACCENT} bg-amber-50/30` : 'text-slate-400'}`}>
-                                                Ø {dia}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {product.dimensional_specifications && product.dimensional_specifications.length > 0 ? (
-                                        product.dimensional_specifications.map((dim: any, idx: number) => {
+                    {/* RIGHT: Performance Data (Better Contrast) */}
+                    <div className="lg:w-1/3 bg-slate-900 p-8 flex flex-col border-l border-slate-800 relative">
+                         <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+                             <Activity size={120} />
+                         </div>
+
+                         <div className="mb-6 pb-4 border-b border-slate-800 flex items-center justify-between relative z-10">
+                             <h4 className="text-sm font-bold uppercase tracking-widest text-slate-100 flex items-center gap-2 font-rajdhani">
+                                 <Layers size={16} className="text-amber-500" /> Performance Data
+                             </h4>
+                             <div className="flex gap-1 items-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                <span className="text-[10px] text-green-400 font-mono uppercase font-bold">Verified</span>
+                             </div>
+                         </div>
+
+                         <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar relative z-10">
+                            {PERFORMANCE_KEYS_DISPLAY.map((key, i) => {
+                                const hasSpec = product.specifications.find((s:any) => s.key.toLowerCase() === key.toLowerCase());
+                                if (!hasSpec) return null;
+                                return (
+                                    <motion.div 
+                                        key={i} 
+                                        initial={{ x: 20, opacity: 0 }}
+                                        whileInView={{ x: 0, opacity: 1 }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className="flex justify-between items-center p-3 bg-slate-950/80 rounded border border-slate-800 hover:border-slate-600 transition-colors group"
+                                    >
+                                        {/* Label: Brighter and Better Font */}
+                                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-rajdhani group-hover:text-slate-200 transition-colors">{key}</span>
+                                        <div className="flex items-center gap-2">
+                                            {/* Value: White and Mono for readability */}
+                                            <span className="text-white font-mono text-sm font-medium">{hasSpec.value}</span>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                            {!product.specifications.some((s:any) => PERFORMANCE_KEYS_DISPLAY.map(k=>k.toLowerCase()).includes(s.key.toLowerCase())) && (
+                                <div className="text-center text-slate-500 text-xs italic py-4 font-mono">No specific performance data listed.</div>
+                            )}
+                         </div>
+
+                         <button className="w-full mt-6 flex items-center justify-center gap-2 bg-slate-800 text-slate-200 py-3 rounded text-xs font-bold uppercase tracking-widest hover:bg-amber-500 hover:text-slate-900 transition-all relative z-10 border border-slate-700 hover:border-amber-500">
+                             <Lock size={12} /> Unlock Engineering Report
+                         </button>
+                    </div>
+                </div>
+
+                {/* DIMENSIONS TABLE (High Contrast & Clear Fonts) */}
+                <div className="w-full bg-slate-900 border-t border-slate-800 mt-0">
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr className="border-b border-slate-800 bg-slate-950">
+                                    <th className="py-5 pl-8 text-xs font-bold text-slate-300 uppercase tracking-widest sticky left-0 z-10 bg-slate-950 border-r border-slate-800 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]">Feature</th>
+                                    <th className="py-5 text-center text-xs font-bold text-slate-400 uppercase tracking-widest w-24 bg-slate-950/50">Symbol</th>
+                                    {uniqueDiameters.map((dia: any) => (
+                                        <th key={dia} className={`py-5 px-4 text-center text-sm font-bold uppercase tracking-widest whitespace-nowrap font-rajdhani ${selectedDia === dia ? 'text-amber-500 bg-amber-500/10 border-b-2 border-amber-500' : 'text-slate-400'}`}>
+                                            Ø {dia}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800 text-sm font-mono">
+                                 {product.dimensional_specifications?.map((dim: any, idx: number) => (
+                                    <tr key={idx} className="hover:bg-slate-800/30 transition-colors group">
+                                        {/* Feature Label: High Contrast White */}
+                                        <td className="py-4 pl-8 text-slate-200 font-rajdhani font-semibold text-sm uppercase tracking-wider sticky left-0 bg-slate-900 group-hover:bg-slate-800 transition-colors border-r border-slate-800 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]">
+                                          {dim.label}
+                                        </td>
+                                        {/* Symbol: Amber for technical feel */}
+                                        <td className="py-4 text-center text-amber-500/80 font-serif italic font-bold bg-slate-900/30">{dim.symbol || '-'}</td>
+                                        {uniqueDiameters.map((dia: any) => {
+                                            let val = '-';
+                                            if (dim.values && typeof dim.values === 'object') val = dim.values[dia] || '-';
+                                            else if (dia === selectedDia) val = dim.value || '-';
+                                            
+                                            const isActive = selectedDia === dia;
                                             return (
-                                                <tr key={idx} className="group hover:bg-slate-50 transition-colors">
-                                                    <td className="py-5 pl-10">
-                                                        <span className="text-xs font-bold text-slate-700 uppercase tracking-widest group-hover:text-slate-900 transition-colors">{dim.label}</span>
-                                                    </td>
-                                                    <td className="py-5 text-center flex justify-center">
-                                                        <span className="w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-500 font-serif italic text-sm font-medium rounded-md border border-slate-200 group-hover:border-slate-300 transition-colors">
-                                                            {dim.symbol || '-'}
-                                                        </span>
-                                                    </td>
-                                                    {uniqueDiameters.map((dia: any) => {
-                                                        let val = '-';
-                                                        if (dim.values && typeof dim.values === 'object') {
-                                                            val = dim.values[dia] || '-';
-                                                        } else if (dia === selectedDia) { 
-                                                            val = dim.value || '-';
-                                                        }
-                                                        const isActive = selectedDia === dia;
-                                                        return (
-                                                            <td key={dia} className={`py-5 text-center px-4 transition-colors ${isActive ? 'bg-amber-50/50' : ''}`}>
-                                                                <span className={`text-sm font-bold ${val === '-' ? 'text-slate-300' : isActive ? 'text-slate-900' : 'text-slate-600'} transition-colors`} style={fontMono}>
-                                                                    {val}
-                                                                </span>
-                                                            </td>
-                                                        );
-                                                    })}
-                                                </tr>
-                                            );
-                                        })
-                                    ) : (
-                                        <tr><td colSpan={uniqueDiameters.length + 2} className="py-12 text-center text-sm text-slate-400 italic">No specifications found.</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="py-4 bg-slate-50 border-t border-slate-100 text-center">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                                <Info size={14} /> ISO 2768-m Standard Tolerances Apply
-                            </span>
-                        </div>
+                                                <td key={dia} className={`py-4 text-center transition-colors font-medium ${isActive ? 'bg-amber-500/10 text-white font-bold text-base shadow-[inset_0_0_20px_rgba(245,158,11,0.05)]' : 'text-slate-400'}`}>
+                                                    {val}
+                                                </td>
+                                            )
+                                        })}
+                                    </tr>
+                                 ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 </motion.div>
@@ -625,102 +602,77 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* --- INDUSTRY APPLICATIONS SECTION (3D TILT CARDS) --- */}
-  {product.applications && product.applications.length > 0 && (
-            <div className="mb-20">
-                <div className="text-center mb-12">
-                    <h3 className={`text-3xl font-bold text-${BRAND_PRIMARY_TEXT} uppercase tracking-wider`} style={fontHeading}>Industry Applications</h3>
-                    <div className={`w-24 h-1.5 bg-${BRAND_ACCENT} mx-auto mt-5 rounded-full`}></div>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {product.applications.map((app: any, idx: number) => {
-                        const appName = typeof app === 'string' ? app : app.name;
-                        const appImage = typeof app === 'object' ? app.image : null;
-                        const slugUrl = appName.toLowerCase().replace(/\s+/g, '-');
+      {/* --- APPLICATIONS --- */}
+      {product.applications && product.applications.length > 0 && (
+            <div className={`py-20 ${THEME.bg}`}>
+                <div className="max-w-7xl mx-auto px-4">
+                    <div className="flex items-center gap-4 mb-12">
+                        <div className="h-px bg-slate-800 flex-1"></div>
+                        <h3 className={`text-2xl font-bold ${THEME.textPrimary} uppercase tracking-wider`} style={fontHeading}>Industry Applications</h3>
+                        <div className="h-px bg-slate-800 flex-1"></div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                        {product.applications.map((app: any, idx: number) => {
+                            const appName = typeof app === 'string' ? app : app.name;
+                            const appImage = typeof app === 'object' ? app.image : null;
+                            const slugUrl = appName.toLowerCase().replace(/\s+/g, '-');
 
-                        return (
-                          <div key={idx} className="group h-64 [perspective:1000px]">
-                            <div className="relative h-full w-full transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                                
-                                {/* Front of Card */}
-                                <div className="absolute inset-0 h-full w-full bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center p-6 [backface-visibility:hidden]">
-                                    <div className={`w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-${BRAND_ACCENT} mb-4 border border-slate-100`}>
-                                        <Check size={28} strokeWidth={2.5} />
+                            return (
+                              <div key={idx} className="group h-64 [perspective:1000px]">
+                                <div className="relative h-full w-full transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                                    <div className="absolute inset-0 bg-slate-900 border border-slate-800 rounded-lg flex flex-col items-center justify-center p-6 [backface-visibility:hidden] hover:border-amber-500/50 transition-colors shadow-xl">
+                                        <Hash className="text-slate-700 mb-4 group-hover:text-amber-500 transition-colors" size={32} />
+                                        <h4 className="text-slate-200 text-sm font-bold uppercase tracking-widest text-center" style={fontHeading}>{appName}</h4>
+                                        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                                            Flip <ChevronRight size={10} />
+                                        </div>
                                     </div>
-                                    <h4 className={`text-${BRAND_PRIMARY_TEXT} text-sm font-bold uppercase tracking-widest text-center`} style={fontHeading}>
-                                        {appName}
-                                    </h4>
-                                    <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-400 font-medium flex items-center gap-1">
-                                        Flip for Image <ChevronRight size={12}/>
-                                    </div>
-                                </div>
-
-                                {/* Back of Card */}
-                                <div className="absolute inset-0 h-full w-full bg-slate-800 rounded-2xl overflow-hidden [transform:rotateY(180deg)] [backface-visibility:hidden] relative">
-                                    {appImage ? (
-                                        <>
-                                            <img src={appImage} alt={appName} className="h-full w-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-110" />
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); 
-                                                    e.preventDefault();
-                                                    setFullScreenAppImage(appImage);
-                                                }}
-                                                className="absolute top-3 right-3 z-30 bg-black/50 hover:bg-amber-500 text-white p-2 rounded-full backdrop-blur-sm transition-colors shadow-lg"
-                                                title="View Full Image"
-                                            >
-                                                <Maximize2 size={16} />
-                                            </button>
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 pointer-events-none">
-                                                <span className="text-white text-xs font-bold uppercase tracking-widest mb-1 opacity-80">{appName}</span>
-                                                <div className="pointer-events-auto">
-                                                    <Link to={`/applications/${slugUrl}`} className="inline-flex items-center gap-2 text-white font-bold text-sm hover:text-amber-400 transition-colors">
-                                                        View Details <ArrowRight size={16} />
+                                    <div className="absolute inset-0 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                                        {appImage ? (
+                                            <>
+                                                <img src={appImage} className="h-full w-full object-cover opacity-50 group-hover:opacity-80 transition-all duration-700 group-hover:scale-110" />
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 gap-3">
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setFullScreenAppImage(appImage); }}
+                                                        className="text-white hover:text-amber-500 transition-colors"
+                                                    >
+                                                        <Maximize2 size={24} />
+                                                    </button>
+                                                    <Link to={`/applications/${slugUrl}`} className="border border-white/30 bg-black/50 backdrop-blur px-4 py-2 rounded text-white text-xs font-bold uppercase tracking-widest hover:bg-amber-500 hover:border-amber-500 hover:text-slate-900 transition-all">
+                                                        View Case
                                                     </Link>
                                                 </div>
+                                            </>
+                                        ) : (
+                                            <div className="h-full w-full flex items-center justify-center bg-slate-900">
+                                                <Link to={`/applications/${slugUrl}`} className="text-amber-500 text-xs font-bold uppercase tracking-widest border-b border-amber-500 pb-1 hover:text-white hover:border-white transition-colors">Read More</Link>
                                             </div>
-                                        </>
-                                    ) : (
-                                        <div className="h-full w-full flex flex-col items-center justify-center bg-slate-900 p-6 text-center">
-                                            <span className="text-white text-sm font-bold uppercase tracking-widest mb-4">{appName}</span>
-                                            <Link to={`/applications/${slugUrl}`} className="px-4 py-2 bg-white text-slate-900 rounded-full text-xs font-bold uppercase tracking-wide hover:bg-amber-400 transition-colors">
-                                                Explore
-                                            </Link>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                          </div>
-                        );
-                    })}
+                              </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
-          )}
+      )}
        
-      
-      <footer className="bg-white py-10 border-t border-slate-200 text-center text-slate-400 text-sm font-medium" style={fontBody}>
-        <p>&copy; {new Date().getFullYear()} Durable Fastener Pvt. Ltd. All rights reserved.</p>
+      <footer className="bg-slate-950 py-10 border-t border-slate-900 text-center text-slate-600 text-xs font-mono uppercase tracking-widest">
+        <p>&copy; {new Date().getFullYear()} Durable Fastener Pvt. Ltd. // OEM Division</p>
       </footer>
+      
       <AnimatePresence>
         {fullScreenAppImage && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setFullScreenAppImage(null)}>
-                <button className="absolute top-6 right-6 z-[10000] bg-white text-slate-900 rounded-full p-2 hover:scale-110 shadow-xl" onClick={(e) => { e.stopPropagation(); setFullScreenAppImage(null); }}><X size={32} strokeWidth={3} /></button>
-                <motion.img initial={{ scale: 0.8 }} animate={{ scale: 1 }} src={fullScreenAppImage} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" onClick={(e) => e.stopPropagation()} />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setFullScreenAppImage(null)}>
+                <button className="absolute top-6 right-6 z-[10000] text-slate-400 hover:text-white bg-slate-800 p-2 rounded-full" onClick={() => setFullScreenAppImage(null)}><X size={24} /></button>
+                <img src={fullScreenAppImage} className="max-w-full max-h-[85vh] object-contain rounded border border-slate-800 shadow-2xl" onClick={(e) => e.stopPropagation()} />
             </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
 };
-
-const SimpleSpecRow: React.FC<{label: string, value: string}> = ({label, value}) => (
-    <motion.div whileHover={{ x: 5, backgroundColor: "#f8fafc" }} className="grid grid-cols-[140px_1fr] px-6 py-3.5 transition-colors items-start cursor-default">
-        <div className="text-slate-400 text-xs font-bold uppercase tracking-widest pt-1">{label}</div>
-        <div className="text-slate-800 font-semibold font-rajdhani text-lg leading-relaxed break-words">
-            {value.split(',').join(', ')}
-        </div>
-    </motion.div>
-);
 
 export default ProductDetail;
