@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { 
+  Hammer, Grid, Armchair, Wrench, ArrowUpRight,
   ChevronRight, ShoppingCart, Loader2, Share2, Printer, 
   Ruler, Maximize2, Info, X,
   ArrowRight, Lock, Activity, FileCheck, Layers, Hash
@@ -21,7 +22,14 @@ const THEME = {
   accentText: "text-amber-500",
   border: "border-slate-800",
 };
-
+const getAppIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('wood')) return Hammer;
+    if (n.includes('furniture')) return Armchair;
+    if (n.includes('metal') || n.includes('framing')) return Grid;
+    if (n.includes('gypsum') || n.includes('pop')) return Layers;
+    return Wrench; // Default fallback icon
+  };
 const blueprintGridStyle = {
   backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
   backgroundSize: '20px 20px'
@@ -172,23 +180,44 @@ const ProductDetail: React.FC = () => {
   const displayMaterial = product.material || '';
   const displayHeadType = product.head_type ? product.head_type.replace(/Buggel/gi, 'Bugle') : '';
 
+  // ... upar ka sara logic same rahega ...
+
+ // ... baaki upar ka code same rahega ...
+
   return (
-    <div className={`${THEME.bg} min-h-screen pb-24 selection:bg-amber-500/30 selection:text-amber-200`} style={fontBody}>
+    // CHANGE 1: Added 'pt-28' (padding-top) here. 
+    // Yeh content ko niche push karega taaki Fixed Header ke peeche na chhupe.
+    <div className={`${THEME.bg} min-h-screen pb-24 pt-28 lg:pt-32 selection:bg-amber-500/30 selection:text-amber-200`} style={fontBody}>
       
-      {/* --- HEADER --- */}
-      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="bg-slate-950/80 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div className="flex items-center text-xs font-bold uppercase tracking-widest text-slate-500" style={fontHeading}>
-              <Link to="/products" className="hover:text-amber-500 transition-colors">Catalog</Link> 
-              <ChevronRight size={12} className="mx-2 text-slate-700" /> 
-              <span className="text-slate-200">{product.name}</span>
-            </div>
-            <div className="flex gap-3 text-slate-400">
-                <button className="p-2 hover:bg-slate-800 rounded-full transition-colors hover:text-amber-500"><Share2 size={16} /></button>
-                <button className="p-2 hover:bg-slate-800 rounded-full transition-colors hover:text-amber-500"><Printer size={16} /></button>
-            </div>
+      {/* --- VISIBLE BREADCRUMB SECTION --- */}
+      {/* CHANGE 2: Changed bg-slate-950/50 to solid bg-slate-950 so it's not transparent */}
+      <div className="border-b border-slate-800 bg-slate-950 relative z-30">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+           <nav className="flex items-center gap-2 text-sm font-medium">
+              <Link 
+                to="/" 
+                className="text-slate-500 hover:text-amber-500 transition-colors flex items-center gap-1"
+              >
+                Home
+              </Link>
+              
+              <ChevronRight size={14} className="text-slate-700" />
+              
+              <Link 
+                to="/products" 
+                className="text-slate-500 hover:text-amber-500 transition-colors"
+              >
+                Products
+              </Link>
+              
+              <ChevronRight size={14} className="text-slate-700" />
+              
+              <span className="text-amber-500 font-bold tracking-wide">
+                {product.name}
+              </span>
+           </nav>
         </div>
-      </motion.div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
         
@@ -206,8 +235,17 @@ const ProductDetail: React.FC = () => {
                         {product.name}
                     </motion.h1>
                 </div>
-              
+                
+                <motion.div variants={itemVar} className="flex gap-3">
+                    <button className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-amber-500 transition-colors border border-slate-700">
+                        <Share2 size={20} />
+                    </button>
+                    <button className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-amber-500 transition-colors border border-slate-700">
+                        <Printer size={20} />
+                    </button>
+                </motion.div>
             </div>
+            
             <motion.div variants={itemVar} className="flex items-start gap-4">
                  <div className="w-1 self-stretch bg-amber-500 rounded-full"></div>
                  <p className={`${THEME.textSecondary} text-lg font-light leading-relaxed max-w-3xl`}>
@@ -216,11 +254,12 @@ const ProductDetail: React.FC = () => {
             </motion.div>
         </motion.div>
 
+        {/* --- GRID LAYOUT --- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
           
           {/* --- LEFT COLUMN: Visuals --- */}
           <div className="lg:col-span-7 flex flex-col gap-6">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[750px]">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[780px]">
                   
                   {/* Thumbnails */}
                   <div className="hidden md:flex flex-col gap-3 overflow-y-auto w-20 py-1 pr-1 custom-scrollbar">
@@ -322,11 +361,11 @@ const ProductDetail: React.FC = () => {
                                             {parseInt(len)}
                                         </span>
                                         <div className={`
-                                              w-px rounded-t-sm transition-all duration-300 mx-auto
-                                              ${isSelected 
-                                                  ? 'h-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] opacity-100'
-                                                  : 'h-4 bg-slate-700 group-hover:bg-slate-500 group-hover:h-6 opacity-80'
-                                              }
+                                            w-px rounded-t-sm transition-all duration-300 mx-auto
+                                            ${isSelected 
+                                                ? 'h-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] opacity-100'
+                                                : 'h-4 bg-slate-700 group-hover:bg-slate-500 group-hover:h-6 opacity-80'
+                                            }
                                           `}
                                         ></div>
                                     </button>
@@ -335,7 +374,7 @@ const ProductDetail: React.FC = () => {
                         </div>
                         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-slate-700 z-0"></div>
                     </div>
-                  </div>
+                   </div>
 
                    {/* FINISH SELECTION */}
                    <div>
@@ -351,18 +390,17 @@ const ProductDetail: React.FC = () => {
                                     ? 'border-amber-500 text-amber-500 bg-amber-500/10' 
                                     : 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600 hover:text-slate-200'}
                                 `}
-                              >
+                             >
                                   {finish}
-                              </button>
+                             </button>
                           ))}
                       </div>
                    </div>
                 </motion.div>
                 </motion.div>
 
-                {/* --- UPDATED ATTRIBUTES SUMMARY (Matches mat.PNG) --- */}
+                {/* --- ATTRIBUTES SUMMARY --- */}
                 <motion.div variants={itemVar} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-                  {/* Card Header (Optional, removes if you want pure minimal look like image) */}
                   <div className="bg-slate-950/50 px-5 py-3 border-b border-slate-800 flex items-center gap-2">
                     <FileCheck size={14} className="text-amber-500" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Specification Details</span>
@@ -370,19 +408,13 @@ const ProductDetail: React.FC = () => {
 
                   <div className="p-5 flex flex-col gap-0 divide-y divide-slate-800">
                     
-                    {/* 1. MATERIAL SECTION (Handles Multiple Lines) */}
                     {displayMaterial && (
                       <div className="flex flex-row justify-between py-3 first:pt-0">
-                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
-                          Material
-                        </span>
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">Material</span>
                         <div className="flex flex-col text-right gap-1">
-                          {/* Splits by '|' or ',' to create distinct lines for different grades */}
                           {displayMaterial.split(/\|/g).map((mat: string, idx: number) => (
                             <div key={idx} className="flex flex-col sm:flex-row sm:justify-end sm:items-center gap-1">
-                                <span className={`text-sm font-bold ${THEME.textPrimary} font-rajdhani`}>
-                                  {mat.split('(')[0].trim()}
-                                </span>
+                                <span className={`text-sm font-bold ${THEME.textPrimary} font-rajdhani`}>{mat.split('(')[0].trim()}</span>
                                 {mat.includes('(') && (
                                   <span className="text-[10px] text-slate-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
                                     {mat.split('(')[1].replace(')', '')}
@@ -394,81 +426,43 @@ const ProductDetail: React.FC = () => {
                       </div>
                     )}
 
-                    {/* 2. HEAD TYPE */}
                     {displayHeadType && (
                       <div className="flex flex-row justify-between py-3">
-                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
-                          Head Type
-                        </span>
-                        <span className={`text-sm font-medium ${THEME.textPrimary} font-rajdhani text-right`}>
-                          {displayHeadType}
-                        </span>
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">Head Type</span>
+                        <span className={`text-sm font-medium ${THEME.textPrimary} font-rajdhani text-right`}>{displayHeadType}</span>
                       </div>
                     )}
 
-                    {/* 3. DRIVE TYPE */}
                     {product.drive_type && (
                       <div className="flex flex-row justify-between py-3">
-                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
-                          Drive
-                        </span>
-                        <span className={`text-sm font-medium ${THEME.textPrimary} font-rajdhani text-right`}>
-                          {product.drive_type}
-                        </span>
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">Drive</span>
+                        <span className={`text-sm font-medium ${THEME.textPrimary} font-rajdhani text-right`}>{product.drive_type}</span>
                       </div>
                     )}
 
-                    {/* 4. SURFACE FINISH (List View) */}
-                    {/* If you want to list ALL available finishes like the image, use availableFinishes.join */}
-                    {availableFinishes.length > 0 && (
-                      <div className="flex flex-row justify-between py-3 last:pb-0">
-                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
-                          Surface Finish
-                        </span>
-                        <div className="text-right w-2/3">
-                           <span className="text-sm font-medium text-slate-300 leading-relaxed">
-                              {/* Renders nicely as a comma separated list, matches the image style */}
-                              {availableFinishes.map((finish: any, i: number) => (
-                                <span key={i}>
-                                  <span className={activeImageOverride?.includes(finish) ? "text-amber-500" : "text-slate-300"}>
-                                    {finish}
-                                  </span>
-                                  {i < availableFinishes.length - 1 && <span className="text-slate-600 mx-1">, </span>}
-                                </span>
-                              ))}
-                           </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 5. OTHER SPECS (Dynamic) */}
                     {product.specifications?.filter((s:any) => !HIDDEN_SPECS.includes(s.key.toLowerCase())).map((spec: any, idx: number) => (
                       <div key={idx} className="flex flex-row justify-between py-3 last:pb-0">
-                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">
-                          {spec.key}
-                        </span>
-                        <span className="text-sm font-medium text-slate-200 font-mono text-right">
-                          {spec.value}
-                        </span>
+                        <span className="text-slate-500 font-bold uppercase text-[10px] tracking-widest min-w-[100px] pt-1">{spec.key}</span>
+                        <span className="text-sm font-medium text-slate-200 font-mono text-right">{spec.value}</span>
                       </div>
                     ))}
                   </div>
                 </motion.div>
 
               {/* ACTION BUTTONS */}
-                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800">
-                     <button className="col-span-1 bg-amber-500 hover:bg-amber-400 text-slate-900 h-12 rounded font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-amber-900/20 transition-all text-xs">
-                         <ShoppingCart size={16} /> Bulk Quote
-                     </button>
-                     <button className="col-span-1 bg-slate-800 border border-slate-700 text-slate-300 hover:text-white h-12 rounded font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-xs hover:bg-slate-700">
-                         <FileCheck size={16} /> Spec Sheet
-                     </button>
-                 </div>
+                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800">
+                      <button className="col-span-1 bg-amber-500 hover:bg-amber-400 text-slate-900 h-12 rounded font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-amber-900/20 transition-all text-xs">
+                          <ShoppingCart size={16} /> Bulk Quote
+                      </button>
+                      <button className="col-span-1 bg-slate-800 border border-slate-700 text-slate-300 hover:text-white h-12 rounded font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-xs hover:bg-slate-700">
+                          <FileCheck size={16} /> Spec Sheet
+                      </button>
+                  </div>
           </div>
         </div>
       </div>
       
-      {/* --- TECHNICAL VAULT (UPDATED FONTS & STYLES) --- */}
+      {/* --- TECHNICAL VAULT --- */}
       <div className="bg-slate-900 border-t border-slate-800 relative z-20 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             {showDimensions && (
@@ -484,17 +478,14 @@ const ProductDetail: React.FC = () => {
                     {/* LEFT: Blueprint Viewer */}
                     <div className="lg:w-2/3 relative p-10 bg-slate-950 flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800 group">
                         <div className="absolute inset-0 opacity-10" style={blueprintGridStyle}></div>
-                        
                         <motion.div 
                             className="absolute inset-0 bg-gradient-to-b from-transparent via-amber-500/5 to-transparent z-10 pointer-events-none border-b border-amber-500/20"
                             animate={{ top: ['-100%', '200%'] }}
                             transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
                         />
-                        
                         <div className="absolute top-6 left-6 z-20">
                              <TechBadge>ISO View</TechBadge>
                         </div>
-
                         {product.technical_drawing ? (
                             <motion.img 
                                 initial={{ opacity: 0, scale: 0.9 }} 
@@ -507,13 +498,13 @@ const ProductDetail: React.FC = () => {
                         ) : <div className="text-slate-500 font-mono text-sm tracking-wide border border-slate-800 px-4 py-2 rounded">[ DRAWING DATA UNAVAILABLE ]</div>}
                     </div>
 
-                    {/* RIGHT: Performance Data (Better Contrast) */}
+                    {/* RIGHT: Performance Data */}
                     <div className="lg:w-1/3 bg-slate-900 p-8 flex flex-col border-l border-slate-800 relative">
-                         <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+                          <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
                              <Activity size={120} />
-                         </div>
+                          </div>
 
-                         <div className="mb-6 pb-4 border-b border-slate-800 flex items-center justify-between relative z-10">
+                          <div className="mb-6 pb-4 border-b border-slate-800 flex items-center justify-between relative z-10">
                              <h4 className="text-sm font-bold uppercase tracking-widest text-slate-100 flex items-center gap-2 font-rajdhani">
                                  <Layers size={16} className="text-amber-500" /> Performance Data
                              </h4>
@@ -521,9 +512,9 @@ const ProductDetail: React.FC = () => {
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                                 <span className="text-[10px] text-green-400 font-mono uppercase font-bold">Verified</span>
                              </div>
-                         </div>
+                          </div>
 
-                         <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar relative z-10">
+                          <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar relative z-10">
                             {PERFORMANCE_KEYS_DISPLAY.map((key, i) => {
                                 const hasSpec = product.specifications.find((s:any) => s.key.toLowerCase() === key.toLowerCase());
                                 if (!hasSpec) return null;
@@ -535,10 +526,8 @@ const ProductDetail: React.FC = () => {
                                         transition={{ delay: i * 0.1 }}
                                         className="flex justify-between items-center p-3 bg-slate-950/80 rounded border border-slate-800 hover:border-slate-600 transition-colors group"
                                     >
-                                        {/* Label: Brighter and Better Font */}
                                         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-rajdhani group-hover:text-slate-200 transition-colors">{key}</span>
                                         <div className="flex items-center gap-2">
-                                            {/* Value: White and Mono for readability */}
                                             <span className="text-white font-mono text-sm font-medium">{hasSpec.value}</span>
                                         </div>
                                     </motion.div>
@@ -547,15 +536,15 @@ const ProductDetail: React.FC = () => {
                             {!product.specifications.some((s:any) => PERFORMANCE_KEYS_DISPLAY.map(k=>k.toLowerCase()).includes(s.key.toLowerCase())) && (
                                 <div className="text-center text-slate-500 text-xs italic py-4 font-mono">No specific performance data listed.</div>
                             )}
-                         </div>
+                          </div>
 
-                         <button className="w-full mt-6 flex items-center justify-center gap-2 bg-slate-800 text-slate-200 py-3 rounded text-xs font-bold uppercase tracking-widest hover:bg-amber-500 hover:text-slate-900 transition-all relative z-10 border border-slate-700 hover:border-amber-500">
+                          <button className="w-full mt-6 flex items-center justify-center gap-2 bg-slate-800 text-slate-200 py-3 rounded text-xs font-bold uppercase tracking-widest hover:bg-amber-500 hover:text-slate-900 transition-all relative z-10 border border-slate-700 hover:border-amber-500">
                              <Lock size={12} /> Unlock Engineering Report
-                         </button>
+                          </button>
                     </div>
                 </div>
 
-                {/* DIMENSIONS TABLE (High Contrast & Clear Fonts) */}
+                {/* DIMENSIONS TABLE */}
                 <div className="w-full bg-slate-900 border-t border-slate-800 mt-0">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[600px]">
@@ -573,11 +562,9 @@ const ProductDetail: React.FC = () => {
                             <tbody className="divide-y divide-slate-800 text-sm font-mono">
                                  {product.dimensional_specifications?.map((dim: any, idx: number) => (
                                     <tr key={idx} className="hover:bg-slate-800/30 transition-colors group">
-                                        {/* Feature Label: High Contrast White */}
                                         <td className="py-4 pl-8 text-slate-200 font-rajdhani font-semibold text-sm uppercase tracking-wider sticky left-0 bg-slate-900 group-hover:bg-slate-800 transition-colors border-r border-slate-800 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]">
                                           {dim.label}
                                         </td>
-                                        {/* Symbol: Amber for technical feel */}
                                         <td className="py-4 text-center text-amber-500/80 font-serif italic font-bold bg-slate-900/30">{dim.symbol || '-'}</td>
                                         {uniqueDiameters.map((dia: any) => {
                                             let val = '-';
