@@ -182,7 +182,7 @@ const About: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. BRAND ASPIRATION (Luxury Highlight) */}
+      {/* 4. BRAND ASPIRATION (Luxury Highlight) - UPDATED WITH IMAGE */}
       <section className="py-32 bg-[#0a0f1a] relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
         
@@ -195,12 +195,18 @@ const About: React.FC = () => {
           </div>
 
           <div className="relative group cursor-default">
-            {/* The Logo Design */}
+            {/* LOGO IMAGE REPLACEMENT */}
             <div className="text-center">
-                <h3 className="text-8xl md:text-[12rem] font-light text-white tracking-tighter leading-none opacity-90">
-                  class<span className="relative">o<span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-amber-500 rounded-full blur-[2px] animate-pulse"></span></span>ne<sup className="text-3xl md:text-6xl font-black text-amber-500">®</sup>
-                </h3>
-                <p className="text-amber-500/60 tracking-[1em] uppercase text-sm md:text-lg mt-4 font-black">Architectural Hardware</p>
+                {/* IMPORTANT: 'filter invert brightness-0' turns the black logo white.
+                    Adjust 'max-w-[500px]' to change the size of the logo.
+                */}
+                <img s
+                  src="classone.png" 
+                  alt="Classone Logo" 
+                  className="mx-auto w-full max-w-[600px] h-auto filter invert brightness-0 opacity-90 mb-8"
+                />
+
+                <p className="text-amber-500/60 tracking-[1em] uppercase text-sm md:text-lg font-black">Architectural Hardware</p>
             </div>
 
             {/* Glowing Backdrop */}
@@ -224,7 +230,7 @@ const About: React.FC = () => {
       </section>
 
       {/* 5. BENTO ADVANTAGE GRID */}
-      <section className="py-32 px-6">
+      <section className="py-32 px-6">  
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-16">
             <div>
@@ -233,7 +239,7 @@ const About: React.FC = () => {
             </div>
             <div className="hidden md:block">
                <div className="flex items-center gap-2 text-slate-400 text-sm italic">
-                  Scroll for more <MoveRight size={16} />
+                 Scroll for more <MoveRight size={16} />
                </div>
             </div>
           </div>
@@ -248,7 +254,7 @@ const About: React.FC = () => {
                 </p>
                </div>
                <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:scale-110 transition-transform duration-700">
-                  <Factory size={300} />
+                 <Factory size={300} />
                </div>
             </div>
 

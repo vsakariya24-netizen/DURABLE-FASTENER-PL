@@ -64,7 +64,8 @@ const Manufacturing: React.FC = () => {
           <div>
             <h2 className="text-3xl font-bold text-white mb-6">Massive Production Footprint</h2>
             <p className="text-slate-400 mb-6 leading-relaxed">
-              Based in the industrial heart of **Rajkot, Gujarat**, Durable Fastener Pvt. Ltd. operates a high-capacity unit designed for scale. Our expanded footprint allows us to process over **100+ tons** of material monthly.
+              Based in the industrial heart of Rajkot, Gujarat
+              , Durable Fastener Pvt. Ltd. operates a high-capacity unit designed for scale. Our expanded footprint allows us to process over 100+ tons of material monthly.
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -137,7 +138,7 @@ const Manufacturing: React.FC = () => {
                 <span className="text-amber-500 tracking-tighter italic">Shield Packaging.</span>
               </h2>
               <p className="text-slate-400 text-lg mb-10 leading-relaxed">
-                Fasteners are heavy and prone to transit friction. We utilize a **Triple-Layer Protection** strategy to ensure your shipment arrives factory-fresh.
+                Fasteners are heavy and prone to transit friction. We utilize a Triple-Layer Protection strategy to ensure your shipment arrives factory-fresh.
               </p>
               
               <div className="space-y-4">

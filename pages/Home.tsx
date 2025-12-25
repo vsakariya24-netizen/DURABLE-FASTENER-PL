@@ -131,7 +131,7 @@ const Home: React.FC = () => {
               Where Desire <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">Meets</span> <br/> Value
             </h1>
             <p className="text-lg text-gray-300 max-w-xl leading-relaxed mb-10 border-l-2 border-yellow-400 pl-6">
-              Durable Fastener Pvt. Ltd. manufactures international-grade **high-tensile hardware** for automotive, construction, and heavy machinery industries.
+              Durable Fastener Pvt. Ltd. manufactures international-grade high-tensile hardware for automotive, construction, and heavy machinery industries.
             </p>
             <div className="flex flex-wrap gap-4">
               <a href={siteContent.catalogue_pdf || "#"} target="_blank" className="bg-white text-black px-8 py-4 rounded-sm font-bold uppercase tracking-wider hover:bg-yellow-400 transition-all flex items-center gap-2">
@@ -170,10 +170,11 @@ const Home: React.FC = () => {
             <span className="text-blue-600 font-bold tracking-wider uppercase text-sm">Industrial Fastener Experts</span>
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mt-2 mb-6">Building the world, one fastener at a time.</h2>
             <p className="text-gray-600 text-lg mb-6 leading-relaxed">
-              Founded in 2018 in **Rajkot, Gujarat**, we have evolved into a leading Private Limited company. Our 7,000 sq. ft. facility is a testament to our commitment to growth and quality.
+              Founded in 2018 in Rajkot, Gujarat, we have evolved into a leading Private Limited company. Our 7,000 sq. ft. facility is a testament to our commitment to growth and quality.
             </p>
             <Link to="/about" className="text-blue-600 font-bold flex items-center gap-2 hover:gap-4 transition-all">Read Our Full Story <ChevronRight size={18} /></Link>
           </div>
+          
           <div className="lg:w-1/2">
              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
                 <img src={siteContent.about_img} alt="Durable Fastener Manufacturing Floor" className="w-full object-cover" />
