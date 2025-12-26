@@ -12,14 +12,15 @@ import MagicZoomClone from '../components/MagicZoomClone';
 
 const { useParams, Link } = ReactRouterDOM;
 
-// --- 1. REFINED THEME CONSTANTS (High Contrast & Professional) ---
+// --- 1. REFINED THEME CONSTANTS ---
 const THEME = {
-  bg: "bg-white",
+  // CHANGED: Main background to Light Gray to make white cards pop (Like Image 2 style)
+  bg: "bg-[#dbdbdc]", 
   sectionBg: "bg-neutral-50",
-  // Typography Colors - Optimized for User Friendliness
-  textPrimary: "text-neutral-900",    // Pure black for headings
-  textSecondary: "text-neutral-700",  // Darker gray for readability
-  textMuted: "text-neutral-500",      // Labels only
+  // Typography Colors
+  textPrimary: "text-neutral-900",    
+  textSecondary: "text-neutral-700",  
+  textMuted: "text-neutral-500",      
   
   // Accents - Industrial Yellow
   accent: "bg-yellow-500",            
@@ -30,15 +31,9 @@ const THEME = {
   // Borders & Surfaces
   border: "border-neutral-200",       
   surface: "bg-white shadow-sm",
-  
-  // Dark Mode Sections (Technical Vault)
-  darkSection: "bg-[#0a0a0a]", // Deeper black
-  darkBorder: "border-neutral-800",
-  darkText: "text-neutral-300"
 };
 
-// --- 2. UPDATED FONT STYLES (Clean & Industrial Standard) ---
-// Using Oswald for strong headings and Roboto for excellent readability
+// --- 2. FONTS ---
 const fontHeading = { fontFamily: '"Oswald", sans-serif', letterSpacing: '0.03em' };
 const fontBody = { fontFamily: '"Roboto", sans-serif' };
 const fontMono = { fontFamily: '"Roboto Mono", monospace' };
@@ -54,11 +49,6 @@ const getAppIcon = (name: string) => {
 
 const blueprintGridStyleLight = {
   backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px)',
-  backgroundSize: '24px 24px'
-};
-
-const blueprintGridStyleDark = {
-  backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
   backgroundSize: '24px 24px'
 };
 
@@ -114,10 +104,9 @@ const ProductDetail: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // --- NEW FONT LOADER (Optimized for Industrial Readability) ---
+  // --- NEW FONT LOADER ---
   useEffect(() => {
     const link = document.createElement('link');
-    // Loaded: Oswald (Headings), Roboto (Body), Roboto Mono (Data)
     link.href = 'https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
@@ -205,6 +194,7 @@ const ProductDetail: React.FC = () => {
     <div className={`${THEME.bg} min-h-screen pb-24 pt-28 lg:pt-32 selection:bg-yellow-500/30 selection:text-black`} style={fontBody}>
       
       {/* --- BREADCRUMB SECTION --- */}
+      {/* Kept bg-white to contrast with the gray page body */}
       <div className="border-b border-neutral-200 bg-white relative z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3">
            <nav className="flex items-center gap-2 text-[14px] font-medium tracking-wide">
@@ -233,10 +223,9 @@ const ProductDetail: React.FC = () => {
                         <span className={`px-3 py-1 rounded bg-yellow-100 border border-yellow-200 text-yellow-900 text-[12px] font-bold uppercase tracking-widest`}>
                             Industrial Series
                         </span>
-                        {standard && <span className="text-neutral-600 text-[12px] font-mono font-bold tracking-wider px-2 py-1 bg-neutral-100 rounded border border-neutral-200">{standard}</span>}
+                        {standard && <span className="text-neutral-600 text-[12px] font-mono font-bold tracking-wider px-2 py-1 bg-white rounded border border-neutral-200">{standard}</span>}
                     </motion.div>
                     
-                    {/* Typography Update: Oswald for Stronger Impact */}
                     <motion.h1 variants={itemVar} className={`text-4xl md:text-5xl lg:text-6xl font-semibold ${THEME.textPrimary} uppercase leading-tight tracking-wide`} style={fontHeading}>
                         {product.name}
                     </motion.h1>
@@ -253,7 +242,6 @@ const ProductDetail: React.FC = () => {
             </div>
             
             <motion.div variants={itemVar} className="flex items-start gap-5 mt-6 border-l-4 border-yellow-500 pl-6">
-                 {/* Typography Update: Roboto for clean readability */}
                  <p className={`${THEME.textSecondary} text-lg font-normal leading-relaxed max-w-4xl tracking-normal`}>
                     {product.short_description}
                  </p>
@@ -273,15 +261,15 @@ const ProductDetail: React.FC = () => {
                           <button 
                             key={idx} 
                             onClick={() => setSelectedImageIndex(idx)} 
-                            className={`relative w-full aspect-square rounded-lg bg-white overflow-hidden border-2 transition-all duration-200 ${selectedImageIndex === idx ? 'border-yellow-500 shadow-md scale-100' : 'border-neutral-100 opacity-70 hover:opacity-100 hover:border-neutral-300 scale-95'}`}
+                            className={`relative w-full aspect-square rounded-lg bg-white overflow-hidden border-2 transition-all duration-200 ${selectedImageIndex === idx ? 'border-yellow-500 shadow-md scale-100' : 'border-neutral-200 opacity-70 hover:opacity-100 hover:border-neutral-300 scale-95'}`}
                           >
                               <img src={img} className="w-full h-full object-contain p-1" />
                           </button>
                       ))}
                   </div>
 
-                  {/* Main Viewer */}
-                  <div className="flex-1 relative rounded-2xl bg-white border border-neutral-200 p-8 flex items-center justify-center h-[400px] md:h-full overflow-hidden group shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  {/* Main Viewer - White Card on Gray Bg */}
+                  <div className="flex-1 relative rounded-2xl bg-white border border-neutral-200 p-8 flex items-center justify-center h-[400px] md:h-full overflow-hidden group shadow-lg">
                       <div className="absolute inset-0 opacity-100 pointer-events-none" style={blueprintGridStyleLight}></div>
                       <div className="absolute top-4 right-4 z-20">
                           <button className="p-2 bg-white/80 backdrop-blur rounded-full text-neutral-400 hover:text-neutral-900 transition-colors shadow-sm border border-neutral-100">
@@ -311,8 +299,8 @@ const ProductDetail: React.FC = () => {
               
               <motion.div variants={containerVar} initial="hidden" animate="visible" className="space-y-8">
                 
-                {/* 1. CONFIG PANEL */}
-                <motion.div variants={itemVar} className={`bg-white border border-neutral-200 p-8 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] relative overflow-hidden`}>
+                {/* 1. CONFIG PANEL - White Card on Gray Bg */}
+                <motion.div variants={itemVar} className={`bg-white border border-neutral-200 p-8 rounded-2xl shadow-lg relative overflow-hidden`}>
                     
                     {/* DIAMETER SELECTION */}
                     <div className="mb-8">
@@ -328,7 +316,7 @@ const ProductDetail: React.FC = () => {
                                     relative w-14 h-12 rounded-lg flex items-center justify-center text-lg transition-all duration-200 border-2
                                     ${isSelected 
                                       ? 'bg-yellow-500 text-neutral-900 border-yellow-500 shadow-md font-bold' 
-                                      : 'bg-white text-neutral-600 border-neutral-100 hover:border-neutral-300 hover:text-neutral-900 hover:bg-neutral-50 font-medium'}
+                                      : 'bg-neutral-50 text-neutral-600 border-neutral-100 hover:border-neutral-300 hover:text-neutral-900 hover:bg-white font-medium'}
                                   `}
                                   style={fontMono}
                               >
@@ -340,48 +328,65 @@ const ProductDetail: React.FC = () => {
                     </div>
 
                     {/* LENGTH SELECTION */}
-                    <div className="mb-8">
-                     <div className="flex justify-between items-end mb-4 border-b border-neutral-100 pb-2">
-                        <SectionHeader icon={Maximize2} title="Select Length (mm)" />
-                        <span className="text-3xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
-                            {selectedLen ? selectedLen : '--'}<span className="text-sm text-neutral-400 ml-1 font-sans font-medium">mm</span>
-                        </span>
+                  {/* LENGTH SELECTION - UPDATED FOR BETTER VISIBILITY */}
+<div className="mb-8">
+  <div className="flex justify-between items-end mb-4 border-b border-neutral-100 pb-2">
+    <SectionHeader icon={Maximize2} title="Select Length (mm)" />
+    <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
+        {selectedLen ? selectedLen : '--'}<span className="text-sm text-neutral-400 ml-1 font-sans font-medium">mm</span>
+    </span>
+  </div>
+  
+  {/* NEW RULER VISUALIZATION */}
+  <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-5 relative overflow-hidden">
+    
+    {/* Faint Background Grid */}
+     <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)',
+        backgroundSize: '12px 12px'
+     }}></div>
+
+     <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
+         {availableLengths.length > 0 ? availableLengths.map((len: any) => {
+             const isSelected = selectedLen === len;
+             
+             return (
+                 <button 
+                   key={len} 
+                   onClick={() => setSelectedLen(len)} 
+                   className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
+                 >
+                     {/* Number Label - MADE LARGER AND CLEARER */}
+                     <span className={`
+                        font-mono transition-all duration-200 whitespace-nowrap block
+                        ${isSelected 
+                            ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110' 
+                            : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900 group-hover:font-bold'}
+                     `}>
+                         {parseInt(len)}
+                     </span>
+                     
+                     {/* The Ruler Bar */}
+                     <div className={`
+                        w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ease-out relative
+                        ${isSelected 
+                            ? 'h-full bg-yellow-500 shadow-md' 
+                            : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'}
+                     `}>
                      </div>
                      
-                     <div className="bg-neutral-50 border border-neutral-200 rounded-lg h-28 relative flex items-end px-4 w-full overflow-hidden" style={blueprintGridStyleLight}>
-                        <div className="flex w-full items-end justify-between relative z-10 h-full">
-                            {availableLengths.length > 0 ? availableLengths.map((len: any, index: number) => {
-                                const isSelected = selectedLen === len;
-                                const alignmentClass = index === 0 ? 'items-start' : (index === availableLengths.length - 1 ? 'items-end' : 'items-center');
-                                return (
-                                    <button 
-                                      key={len} 
-                                      onClick={() => setSelectedLen(len)} 
-                                      className={`group relative flex-1 flex flex-col justify-end outline-none h-full ${alignmentClass}`}
-                                    >
-                                        <span className={`
-                                            mb-3 font-mono text-xs transition-all duration-200 select-none whitespace-nowrap tracking-tight block
-                                            ${isSelected 
-                                                ? 'text-neutral-900 font-bold -translate-y-1 scale-110' 
-                                                : 'text-neutral-400 font-medium group-hover:text-neutral-600'
-                                            }
-                                        `}>
-                                            {parseInt(len)}
-                                        </span>
-                                        <div className={`
-                                            w-1.5 rounded-t-sm transition-all duration-300 mx-auto
-                                            ${isSelected 
-                                                ? 'h-full bg-yellow-500 shadow-sm opacity-100'
-                                                : 'h-4 bg-neutral-300 group-hover:bg-neutral-400 group-hover:h-8 opacity-60'
-                                            }
-                                        `}></div>
-                                    </button>
-                                )
-                            }) : <div className="w-full text-center text-sm text-neutral-400 font-medium italic self-center pb-4">Select Diameter first</div>}
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-neutral-200 z-0"></div>
-                     </div>
-                    </div>
+                     {/* Bottom baseline marker */}
+                     <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10"></div>
+                 </button>
+             )
+         }) : (
+            <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm italic">
+                Select Diameter to view lengths
+            </div>
+         )}
+     </div>
+  </div>
+</div>
 
                     {/* FINISH SELECTION */}
                     <div>
@@ -395,7 +400,7 @@ const ProductDetail: React.FC = () => {
                                   px-5 py-2.5 text-[14px] font-medium uppercase tracking-wide border rounded-md transition-all
                                   ${activeImageOverride === product.finish_images?.[finish] 
                                     ? 'border-yellow-500 text-neutral-900 bg-yellow-400 shadow-sm font-bold' 
-                                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-400 hover:text-neutral-900 hover:bg-neutral-50'}
+                                    : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-400 hover:text-neutral-900 hover:bg-white'}
                                 `}
                                 style={fontHeading}
                              >
@@ -408,7 +413,7 @@ const ProductDetail: React.FC = () => {
                 </motion.div>
 
                 {/* --- ATTRIBUTES SUMMARY --- */}
-                <motion.div variants={itemVar} className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-[0_2px_10px_rgb(0,0,0,0.03)]">
+                <motion.div variants={itemVar} className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-md">
                   <div className="bg-neutral-100 px-6 py-4 border-b border-neutral-200 flex items-center gap-2">
                     <FileCheck size={18} className="text-yellow-600" />
                     <span className="text-sm font-bold uppercase tracking-widest text-neutral-800" style={fontHeading}>Specification Details</span>
@@ -470,32 +475,29 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* --- TECHNICAL VAULT (Kept Dark for Contrast) --- */}
-      {/* --- TECHNICAL VAULT (UPDATED TO GRAY) --- */}
-      <div className={`${THEME.darkSection} border-t ${THEME.darkBorder} relative z-20 overflow-hidden text-white`}>
+      {/* --- TECHNICAL VAULT (Light Gray / Black Font) --- */}
+      <div className="bg-[#aaaaab] border-t border-neutral-300 relative z-20 overflow-hidden text-neutral-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             {showDimensions && (
                 <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={containerVar}>
                 
                 <div className="flex items-center gap-3 mb-10">
-                    <Activity className="text-yellow-500" size={32} />
-                    <h3 className="text-4xl font-bold text-white uppercase tracking-wider" style={fontHeading}>Technical Specifications</h3>
+                    <Activity className="text-yellow-600" size={32} />
+                    <h3 className="text-4xl font-bold text-neutral-900 uppercase tracking-wider" style={fontHeading}>Technical Specifications</h3>
                 </div>
 
-                {/* CHANGED: Container background to bg-neutral-800 */}
-                <div className="bg-neutral-800 rounded-2xl border border-neutral-700 overflow-hidden flex flex-col lg:flex-row shadow-2xl">
+                <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden flex flex-col lg:flex-row shadow-xl">
                     
                     {/* LEFT: Blueprint Viewer */}
-                    {/* CHANGED: Background to bg-neutral-900 */}
-                    <div className="lg:w-2/3 relative p-12 bg-neutral-900 flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-neutral-700 group">
-                        <div className="absolute inset-0 opacity-100" style={blueprintGridStyleDark}></div>
+                    <div className="lg:w-2/3 relative p-12 bg-white flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-neutral-200 group">
+                        <div className="absolute inset-0 opacity-100" style={blueprintGridStyleLight}></div>
                         <motion.div 
                             className="absolute inset-0 bg-gradient-to-b from-transparent via-yellow-500/5 to-transparent z-10 pointer-events-none border-b border-yellow-500/20"
                             animate={{ top: ['-100%', '200%'] }}
                             transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
                         />
                         <div className="absolute top-6 left-6 z-20">
-                             <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded bg-neutral-800 border border-neutral-600 text-[11px] font-mono uppercase text-neutral-300 font-bold tracking-wider`}>
+                             <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded bg-neutral-100 border border-neutral-300 text-[11px] font-mono uppercase text-neutral-600 font-bold tracking-wider`}>
                                 ISO View
                              </span>
                         </div>
@@ -505,26 +507,25 @@ const ProductDetail: React.FC = () => {
                                 whileInView={{ opacity: 1, scale: 1 }} 
                                 transition={{ duration: 0.8 }}
                                 src={product.technical_drawing} 
-                                className="relative z-10 max-h-[450px] w-auto object-contain invert mix-blend-lighten opacity-90 transition-transform duration-500 group-hover:scale-105" 
+                                className="relative z-10 max-h-[450px] w-auto object-contain opacity-90 transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
                                 alt="Technical Drawing"
                             />
-                        ) : <div className="text-neutral-500 font-mono text-sm tracking-wide border border-neutral-700 px-6 py-3 rounded">[ DRAWING DATA UNAVAILABLE ]</div>}
+                        ) : <div className="text-neutral-500 font-mono text-sm tracking-wide border border-neutral-200 px-6 py-3 rounded bg-neutral-50">[ DRAWING DATA UNAVAILABLE ]</div>}
                     </div>
 
-                    {/* RIGHT: Performance Data (Gray Mode) */}
-                    {/* CHANGED: Background to bg-neutral-800 */}
-                    <div className="lg:w-1/3 bg-neutral-800 p-8 flex flex-col border-l border-neutral-700 relative">
-                          <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+                    {/* RIGHT: Performance Data */}
+                    <div className="lg:w-1/3 bg-neutral-50 p-8 flex flex-col border-l border-neutral-200 relative">
+                          <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none text-neutral-900">
                              <Activity size={140} />
                           </div>
 
-                          <div className="mb-6 pb-4 border-b border-neutral-700 flex items-center justify-between relative z-10">
-                             <h4 className="text-lg font-bold uppercase tracking-widest text-neutral-100 flex items-center gap-2" style={fontHeading}>
-                                  <Layers size={18} className="text-yellow-500" /> Performance Data
+                          <div className="mb-6 pb-4 border-b border-neutral-200 flex items-center justify-between relative z-10">
+                             <h4 className="text-lg font-bold uppercase tracking-widest text-neutral-900 flex items-center gap-2" style={fontHeading}>
+                                  <Layers size={18} className="text-yellow-600" /> Performance Data
                              </h4>
-                             <div className="flex gap-2 items-center bg-neutral-900 px-3 py-1 rounded border border-neutral-700">
+                             <div className="flex gap-2 items-center bg-white px-3 py-1 rounded border border-neutral-200 shadow-sm">
                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span className="text-[10px] text-green-400 font-mono uppercase font-bold">Verified</span>
+                                <span className="text-[15px] text-green-700 font-mono uppercase font-bold">Verified</span>
                              </div>
                           </div>
 
@@ -538,12 +539,11 @@ const ProductDetail: React.FC = () => {
                                         initial={{ x: 20, opacity: 0 }}
                                         whileInView={{ x: 0, opacity: 1 }}
                                         transition={{ delay: i * 0.1 }}
-                                        // CHANGED: bg-neutral-900 for items
-                                        className="flex justify-between items-center p-3.5 bg-neutral-900/50 rounded border border-neutral-700 hover:border-neutral-500 transition-colors group"
+                                        className="flex justify-between items-center p-3.5 bg-white rounded border border-neutral-200 hover:border-neutral-400 transition-colors group shadow-sm"
                                     >
-                                        <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider group-hover:text-neutral-200 transition-colors" style={fontHeading}>{key}</span>
+                                        <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider group-hover:text-neutral-800 transition-colors" style={fontHeading}>{key}</span>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-white font-mono text-sm font-bold tracking-wide">{hasSpec.value}</span>
+                                            <span className="text-neutral-900 font-mono text-sm font-bold tracking-wide">{hasSpec.value}</span>
                                         </div>
                                     </motion.div>
                                 );
@@ -553,35 +553,34 @@ const ProductDetail: React.FC = () => {
                             )}
                           </div>
 
-                          <button className="w-full mt-6 flex items-center justify-center gap-2 bg-neutral-900 text-neutral-200 py-3.5 rounded text-sm font-bold uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all relative z-10 border border-neutral-700 hover:border-yellow-500" style={fontHeading}>
+                          <button className="w-full mt-6 flex items-center justify-center gap-2 bg-neutral-900 text-white py-3.5 rounded text-sm font-bold uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all relative z-10 border border-neutral-900 hover:border-yellow-500 shadow-md" style={fontHeading}>
                              <Lock size={14} /> Unlock Engineering Report
                           </button>
                     </div>
                 </div>
 
-                {/* DIMENSIONS TABLE (Gray Mode) */}
-                {/* CHANGED: Background to bg-neutral-800 */}
-                <div className="w-full bg-neutral-800 border-t border-neutral-700 mt-0">
+                {/* DIMENSIONS TABLE */}
+                <div className="w-full bg-white border border-t-0 border-neutral-200 mt-0 rounded-b-2xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[600px]">
                             <thead>
-                                <tr className="border-b border-neutral-700 bg-neutral-900">
-                                    <th className="py-6 pl-8 text-sm font-bold text-neutral-300 uppercase tracking-widest sticky left-0 z-10 bg-neutral-900 border-r border-neutral-700 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]" style={fontHeading}>Feature</th>
-                                    <th className="py-6 text-center text-sm font-bold text-neutral-400 uppercase tracking-widest w-28 bg-neutral-900/50 border-r border-neutral-700" style={fontHeading}>Symbol</th>
+                                <tr className="border-b border-neutral-200 bg-neutral-100">
+                                    <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>Feature</th>
+                                    <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>Symbol</th>
                                     {uniqueDiameters.map((dia: any) => (
-                                        <th key={dia} className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-500 bg-yellow-500/10 border-b-2 border-yellow-500' : 'text-neutral-500'}`} style={fontHeading}>
-                                            Ø {dia}
+                                        <th key={dia} className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'}`} style={fontHeading}>
+                                             {dia}
                                         </th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-neutral-700 text-sm font-mono">
+                            <tbody className="divide-y divide-neutral-100 text-sm font-mono">
                                  {product.dimensional_specifications?.map((dim: any, idx: number) => (
-                                    <tr key={idx} className="hover:bg-neutral-700/30 transition-colors group">
-                                        <td className="py-5 pl-8 text-neutral-200 font-bold text-sm uppercase tracking-wider sticky left-0 bg-neutral-800 group-hover:bg-neutral-700 transition-colors border-r border-neutral-700 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]" style={fontHeading}>
+                                    <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
+                                        <td className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 transition-colors border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]" style={fontHeading}>
                                           {dim.label}
                                         </td>
-                                        <td className="py-5 text-center text-yellow-500/90 font-serif italic font-bold bg-neutral-900/30 border-r border-neutral-700">{dim.symbol || '-'}</td>
+                                        <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">{dim.symbol || '-'}</td>
                                         {uniqueDiameters.map((dia: any) => {
                                             let val = '-';
                                             if (dim.values && typeof dim.values === 'object') val = dim.values[dia] || '-';
@@ -589,7 +588,7 @@ const ProductDetail: React.FC = () => {
                                             
                                             const isActive = selectedDia === dia;
                                             return (
-                                                <td key={dia} className={`py-5 text-center transition-colors font-medium ${isActive ? 'bg-yellow-500/10 text-white font-bold text-base shadow-[inset_0_0_20px_rgba(234,179,8,0.05)]' : 'text-neutral-500'}`}>
+                                                <td key={dia} className={`py-5 text-center transition-colors font-medium ${isActive ? 'bg-yellow-50 text-neutral-900 font-bold text-base shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]' : 'text-neutral-500'}`}>
                                                     {val}
                                                 </td>
                                             )
@@ -662,8 +661,6 @@ const ProductDetail: React.FC = () => {
             </div>
       )}
        
-      
-      
       <AnimatePresence>
         {fullScreenAppImage && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setFullScreenAppImage(null)}>

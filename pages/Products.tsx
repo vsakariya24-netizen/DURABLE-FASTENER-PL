@@ -131,7 +131,7 @@ const Products: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#fcfcfd] min-h-screen pt-20">
+    <div className="bg-[#dbdbdc] min-h-screen pt-20">
       <Helmet>
         <title>{`${activeFilter.name} | Premium Industrial Fasteners`}</title>
         <script type="application/ld+json">
