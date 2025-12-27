@@ -10,41 +10,40 @@ import { Link } from 'react-router-dom';
 
 const OEMPlatform: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-slate-200 font-sans selection:bg-amber-500 selection:text-black overflow-x-hidden">
+    <div className="min-h-screen bg-[#0b0f19] text-slate-200 font-sans selection:bg-blue-600 selection:text-white overflow-x-hidden">
       
       {/* 1. HERO SECTION */}
       <section className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[#020617]/85 z-10"></div> 
+          <div className="absolute inset-0 bg-[#020617]/90 z-10"></div> 
           <video 
             autoPlay loop muted playsInline 
-            className="w-full h-full object-cover opacity-40 grayscale"
+            className="w-full h-full object-cover opacity-30 grayscale"
             poster="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=2070" 
           >
           </video>
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-10 mix-blend-overlay"></div>
         </div>
 
         <div className="relative z-20 max-w-7xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 border border-amber-500/30 bg-amber-500/5 rounded-full mb-8 backdrop-blur-md animate-pulse">
-            <span className="text-xs font-mono text-amber-500 tracking-widest uppercase">
-              Precision Fastening Platform
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 border border-blue-500/30 bg-blue-500/5 rounded-full mb-8 backdrop-blur-md">
+            <span className="text-xs font-mono text-blue-400 tracking-widest uppercase font-bold">
+              Durable Fasteners Pvt Ltd | Precision Engineering
             </span>
           </div>
 
           <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-white mb-6 leading-[0.9]">
             OEM FOUNDATION <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-yellow-200 to-amber-600">
-              ENGINEERED TO LAST.
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-white to-blue-600">
+              BUILT FOR STRENGTH.
             </span>
           </h1>
 
           <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10 font-light leading-relaxed">
-            Rajkot's premier OEM platform for custom cold-forged fasteners. We don't just supply parts; we provide the <span className="text-white font-medium italic">structural integrity</span> your product depends on.
+            Rajkot's premier platform for custom cold-forged fasteners. Delivering professional-grade structural integrity for industrial buyers worldwide.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/rfq" className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-sm transition-all flex items-center justify-center gap-2 group">
+            <Link to="/rfq" className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-sm transition-all flex items-center justify-center gap-2 group shadow-lg shadow-blue-500/20">
               <FileCog size={20} className="group-hover:rotate-90 transition-transform duration-500"/> 
               GET TECHNICAL QUOTE
             </Link>
@@ -55,12 +54,12 @@ const OEMPlatform: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. PRODUCTION SCOPE (Enhanced Grid) */}
+      {/* 2. PRODUCTION SCOPE */}
       <section className="py-24 px-6 relative bg-[#0F172A] border-y border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-l-4 border-amber-500 pl-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-l-4 border-blue-600 pl-6">
             <div>
-              <h2 className="text-amber-500 font-mono text-sm mb-2 uppercase tracking-tighter">Manufacturing Limits</h2>
+              <h2 className="text-blue-500 font-mono text-sm mb-2 uppercase tracking-tighter font-bold">Manufacturing Limits</h2>
               <h3 className="text-4xl font-black text-white">Technical Baseline.</h3>
             </div>
           </div>
@@ -68,13 +67,13 @@ const OEMPlatform: React.FC = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-800 border border-slate-800">
             {[
               { icon: Layers, label: "DIAMETER", value: "M1.2 — M24", sub: "Micro to Heavy Duty" },
-              { icon: Activity, label: "TOLERANCE", value: "±0.01mm", sub: "Precision Precision" },
+              { icon: Activity, label: "TOLERANCE", value: "±0.01mm", sub: "Precision Engineering" },
               { icon: Settings, label: "GRADES", value: "4.8 - 12.9", sub: "High Tensile Options" },
               { icon: ShieldCheck, label: "COATING", value: "1000h SST", sub: "Salt Spray Tested" },
             ].map((spec, i) => (
               <div key={i} className="p-10 bg-[#020617] hover:bg-slate-900 transition-colors group">
-                <spec.icon className="text-amber-500 mb-6 group-hover:scale-110 transition-transform" size={24} />
-                <p className="text-xs font-mono text-slate-500 mb-2 uppercase">{spec.label}</p>
+                <spec.icon className="text-blue-500 mb-6 group-hover:scale-110 transition-transform" size={24} />
+                <p className="text-xs font-mono text-slate-500 mb-2 uppercase font-bold">{spec.label}</p>
                 <p className="text-3xl font-bold text-white font-mono">{spec.value}</p>
                 <p className="text-sm text-slate-600 mt-2">{spec.sub}</p>
               </div>
@@ -83,35 +82,58 @@ const OEMPlatform: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. HEAD & DRIVE PLATFORM (New Visual Section) */}
+      {/* 3. HEAD & DRIVE PLATFORM (Optimized Section) */}
       <section className="py-24 px-6 bg-[#0b0f19]">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12">
-            <div className="p-8 bg-slate-900/50 border border-white/5 rounded-2xl">
-              <h4 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <Component className="text-amber-500" /> Head Styles
-              </h4>
-              <div className="grid grid-cols-3 gap-4 text-xs font-mono text-slate-400">
+          <div className="grid lg:grid-cols-2 gap-8">
+            
+            {/* Head Styles Card */}
+            <div className="p-10 bg-slate-900/40 border border-white/10 rounded-xl backdrop-blur-sm">
+              <div className="flex items-center gap-3 mb-10 border-b border-white/5 pb-6">
+                <div className="p-3 bg-blue-600/10 rounded-lg">
+                  <Component className="text-blue-500" size={28} />
+                </div>
+                <h4 className="text-3xl font-black text-white tracking-tight uppercase">
+                  Head Styles
+                </h4>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {['Hexagon', 'Pan Head', 'Countersunk', 'Truss', 'Button', 'Socket Cap', 'Flange', 'Bugle', 'Custom'].map(h => (
-                  <div key={h} className="p-3 border border-white/5 bg-black/40 text-center rounded hover:border-amber-500/50 transition-colors">{h}</div>
+                  <div key={h} className="group flex items-center justify-center p-5 border border-white/10 bg-white/5 text-center rounded-lg hover:border-blue-500 hover:bg-blue-600/10 transition-all duration-300">
+                    <span className="text-sm md:text-base font-bold text-slate-300 group-hover:text-white uppercase tracking-wider">
+                      {h}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>
-            <div className="p-8 bg-slate-900/50 border border-white/5 rounded-2xl">
-              <h4 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <Cpu className="text-blue-500" /> Drive Systems
-              </h4>
-              <div className="grid grid-cols-3 gap-4 text-xs font-mono text-slate-400">
-                {['Phillips', 'Torx/Star', 'Allen/Hex', 'Slotted', 'Square', 'Pozi', 'Tri-Wing', 'One-Way', 'Security'].map(d => (
-                  <div key={d} className="p-3 border border-white/5 bg-black/40 text-center rounded hover:border-blue-500/50 transition-colors">{d}</div>
+
+            {/* Drive Systems Card */}
+            <div className="p-10 bg-slate-900/40 border border-white/10 rounded-xl backdrop-blur-sm">
+              <div className="flex items-center gap-3 mb-10 border-b border-white/5 pb-6">
+                <div className="p-3 bg-blue-600/10 rounded-lg">
+                  <Cpu className="text-blue-400" size={28} />
+                </div>
+                <h4 className="text-3xl font-black text-white tracking-tight uppercase">
+                  Drive Systems
+                </h4>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {['Phillips', 'Torx / Star', 'Allen / Hex', 'Slotted', 'Square', 'Pozi', 'Tri-Wing', 'One-Way', 'Security'].map(d => (
+                  <div key={d} className="group flex items-center justify-center p-5 border border-white/10 bg-white/5 text-center rounded-lg hover:border-blue-400 hover:bg-blue-600/10 transition-all duration-300">
+                    <span className="text-sm md:text-base font-bold text-slate-300 group-hover:text-white uppercase tracking-wider">
+                      {d}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* 4. QUALITY CONTROL HUB (Simulated Lab) */}
+      {/* 4. QUALITY CONTROL HUB */}
       <section className="py-24 bg-black relative">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
           <div>
@@ -121,40 +143,40 @@ const OEMPlatform: React.FC = () => {
             </div>
             <h2 className="text-4xl font-black text-white mb-6">Zero-Defect Philosophy.</h2>
             <p className="text-slate-400 mb-8 leading-relaxed">
-              Our OEM platform includes an integrated quality lab. Every shipment is backed by a <span className="text-white">Full Dimensional Inspection Report</span> and <span className="text-white">Chemical Analysis.</span>
+              Every shipment is backed by a <span className="text-white font-bold">Full Dimensional Inspection Report</span> and <span className="text-white font-bold">Chemical Analysis</span> conducted in our in-house lab.
             </p>
             <div className="space-y-4">
               {["Material Traceability (MTC)", "Optical Sorting (100% sorting)", "Profile Projector Measurement", "Thread Ring/Plug Gauging"].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 text-slate-300 bg-white/5 p-3 rounded-lg border border-white/5">
-                  <CheckCircle2 className="text-green-500" size={18} /> {item}
+                <div key={i} className="flex items-center gap-3 text-slate-200 bg-white/5 p-4 rounded-lg border border-white/5 font-medium">
+                  <CheckCircle2 className="text-blue-500" size={20} /> {item}
                 </div>
               ))}
             </div>
           </div>
           
-          <div className="bg-[#0F172A] p-8 rounded-3xl border border-white/10 shadow-3xl">
+          <div className="bg-[#0F172A] p-8 rounded-3xl border border-white/10 shadow-2xl">
               <div className="flex justify-between items-center mb-8">
-                <div className="text-xs font-mono text-slate-500">REAL-TIME QC DATA</div>
-                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse"></div>
+                <div className="text-xs font-mono text-slate-500 font-bold uppercase tracking-widest">Live Quality Analytics</div>
+                <div className="h-3 w-3 rounded-full bg-blue-500 animate-pulse"></div>
               </div>
               <div className="space-y-8">
                 <div>
-                   <div className="flex justify-between mb-2"><span className="text-sm">Batch Hardness (HRC)</span><span className="text-amber-500">32-38 OK</span></div>
-                   <div className="h-1 bg-slate-800"><div className="h-full bg-amber-500 w-[88%]"></div></div>
+                   <div className="flex justify-between mb-2"><span className="text-sm font-bold">Batch Hardness (HRC)</span><span className="text-blue-400 font-mono">32-38 OK</span></div>
+                   <div className="h-2 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-blue-500 w-[88%] transition-all duration-1000"></div></div>
                 </div>
                 <div>
-                   <div className="flex justify-between mb-2"><span className="text-sm">Thread Pitch Accuracy</span><span className="text-blue-500">99.9%</span></div>
-                   <div className="h-1 bg-slate-800"><div className="h-full bg-blue-500 w-[99%]"></div></div>
+                   <div className="flex justify-between mb-2"><span className="text-sm font-bold">Thread Pitch Accuracy</span><span className="text-blue-400 font-mono">99.9%</span></div>
+                   <div className="h-2 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-blue-400 w-[99.9%] transition-all duration-1000"></div></div>
                 </div>
               </div>
               <div className="mt-10 grid grid-cols-2 gap-4">
-                 <div className="bg-black/50 p-4 rounded border border-white/5 text-center">
-                    <div className="text-2xl font-bold">1.67</div>
-                    <div className="text-[10px] text-slate-500">Cpk INDEX</div>
+                 <div className="bg-black/50 p-6 rounded-xl border border-white/5 text-center">
+                    <div className="text-3xl font-black text-white">1.67</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">Cpk INDEX</div>
                  </div>
-                 <div className="bg-black/50 p-4 rounded border border-white/5 text-center">
-                    <div className="text-2xl font-bold">12.9</div>
-                    <div className="text-[10px] text-slate-500">MAX CLASS</div>
+                 <div className="bg-black/50 p-6 rounded-xl border border-white/5 text-center">
+                    <div className="text-3xl font-black text-white">12.9</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">MAX CLASS</div>
                  </div>
               </div>
           </div>
@@ -162,16 +184,16 @@ const OEMPlatform: React.FC = () => {
       </section>
 
       {/* 5. CALL TO ACTION */}
-      <section className="py-20 bg-amber-500">
+      <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-black text-black mb-6">READY TO SCALE YOUR PRODUCTION?</h2>
-          <p className="text-black/70 text-lg mb-10 font-medium italic">"High precision fasteners delivered from Rajkot to the world."</p>
+          <h2 className="text-4xl md:text-6xl font-black text-[#0b0f19] mb-6">READY TO SCALE?</h2>
+          <p className="text-slate-600 text-xl mb-12 font-medium">"Premium fasteners delivered from Durable Fasteners Pvt Ltd (Rajkot) to the global market."</p>
           <div className="flex flex-col md:flex-row gap-4 justify-center">
-            <button className="px-12 py-5 bg-black text-white font-bold rounded shadow-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2">
-              <Phone size={20}/> TALK TO AN ENGINEER
+            <button className="px-12 py-5 bg-blue-600 text-white font-black rounded-sm shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 text-lg">
+              <Phone size={22}/> TALK TO AN ENGINEER
             </button>
-            <button className="px-12 py-5 border-2 border-black text-black font-bold rounded hover:bg-black/5 transition-all">
-              REQUEST FREE SAMPLE KIT
+            <button className="px-12 py-5 border-2 border-[#0b0f19] text-[#0b0f19] font-black rounded-sm hover:bg-[#0b0f19] hover:text-white transition-all text-lg">
+              REQUEST SAMPLE KIT
             </button>
           </div>
         </div>

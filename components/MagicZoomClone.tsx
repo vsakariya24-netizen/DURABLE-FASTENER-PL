@@ -63,7 +63,7 @@ const MagicZoomClone: React.FC<MagicZoomProps> = ({
   return (
     <div 
       ref={imgRef}
-      className="relative overflow-hidden cursor-crosshair group select-none w-full h-full flex items-center justify-center bg-white"
+      className="relative overflow-hidden cursor-crosshair group select-none w-full h-full flex items-center justify-center bg-[#dbdbdc]"
       style={{ touchAction: 'none' }} // Prevents scrolling on mobile
       onMouseEnter={() => setShowMagnifier(true)}
       onMouseLeave={() => setShowMagnifier(false)}

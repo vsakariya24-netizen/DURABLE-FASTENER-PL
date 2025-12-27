@@ -252,48 +252,56 @@ const ProductDetail: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
           
           {/* --- LEFT COLUMN: Visuals --- */}
+     {/* --- LEFT COLUMN: Visuals --- */}
           <div className="lg:col-span-7 flex flex-col gap-6">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[950px]">
                   
-                  {/* Thumbnails */}
+                  {/* Thumbnails - Isko bhi thoda clean kiya hai taaki match kare */}
                   <div className="hidden md:flex flex-col gap-3 overflow-y-auto w-24 py-1 pr-1 custom-scrollbar">
                       {displayImages.map((img: string, idx: number) => (
                           <button 
                             key={idx} 
                             onClick={() => setSelectedImageIndex(idx)} 
-                            className={`relative w-full aspect-square rounded-lg bg-white overflow-hidden border-2 transition-all duration-200 ${selectedImageIndex === idx ? 'border-yellow-500 shadow-md scale-100' : 'border-neutral-200 opacity-70 hover:opacity-100 hover:border-neutral-300 scale-95'}`}
+                            className={`relative w-full aspect-square rounded-xl overflow-hidden transition-all duration-200 ${selectedImageIndex === idx ? 'ring-2 ring-yellow-500 opacity-100 scale-100' : 'opacity-60 hover:opacity-100 scale-90'}`}
                           >
-                              <img src={img} className="w-full h-full object-contain p-1" />
+                              <img src={img} className="w-full h-full object-contain bg-transparent" />
                           </button>
                       ))}
                   </div>
 
-                  {/* Main Viewer - White Card on Gray Bg */}
-                  <div className="flex-1 relative rounded-2xl bg-white border border-neutral-200 p-8 flex items-center justify-center h-[400px] md:h-full overflow-hidden group shadow-lg">
-                      <div className="absolute inset-0 opacity-100 pointer-events-none" style={blueprintGridStyleLight}></div>
+                  {/* Main Viewer - MODIFIED FOR "NO BOX" LOOK (Image 2 Style) */}
+                  {/* Changes: Removed border, removed shadow, removed background color, removed padding (p-8 -> p-0/p-4) */}
+                  <div className="flex-1 relative flex items-center justify-center h-[400px] md:h-full overflow-visible group">
+                      
                       <div className="absolute top-4 right-4 z-20">
-                          <button className="p-2 bg-white/80 backdrop-blur rounded-full text-neutral-400 hover:text-neutral-900 transition-colors shadow-sm border border-neutral-100">
-                             <Maximize2 size={20} />
+                          <button className="p-2 bg-neutral-200/50 hover:bg-white/80 backdrop-blur rounded-full text-neutral-600 hover:text-neutral-900 transition-all">
+                             <Maximize2 size={24} />
                           </button>
                       </div>
 
                       <AnimatePresence mode='wait'>
                         <motion.div 
                             key={currentImage} 
-                            initial={{ opacity: 0, scale: 0.95 }} 
+                            initial={{ opacity: 0, scale: 0.9 }} 
                             animate={{ opacity: 1, scale: 1 }} 
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
+                            transition={{ duration: 0.4 }}
                             className="w-full h-full flex items-center justify-center relative z-10"
                         >
-                            <div className="absolute inset-0 bg-radial-gradient from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                            <MagicZoomClone src={currentImage} zoomSrc={currentImage} alt={product.name} zoomLevel={2.5} glassSize={isMobile ? 120 : 200} className="max-h-full max-w-full object-contain drop-shadow-xl" />
+                            {/* MagicZoomClone - Zoom level badha diya aur padding hata di taaki screw bada dikhe */}
+                            <MagicZoomClone 
+                                src={currentImage} 
+                                zoomSrc={currentImage} 
+                                alt={product.name} 
+                                zoomLevel={2.5} 
+                                glassSize={isMobile ? 120 : 200} 
+                                className="max-h-full max-w-full object-contain drop-shadow-2xl" 
+                            />
                         </motion.div>
                       </AnimatePresence>
                   </div>
               </motion.div>
           </div>
-
           {/* --- RIGHT COLUMN: Configurator --- */}
           <div className="lg:col-span-5 flex flex-col space-y-8 sticky top-24">
               

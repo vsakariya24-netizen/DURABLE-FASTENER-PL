@@ -281,52 +281,58 @@ const Products: React.FC = () => {
                 <AnimatePresence mode='wait'>
                   {filteredProducts.map((product) => (
                     <motion.div 
-                      layout
-                      variants={itemVars}
-                      key={product.id}
-                      className="group bg-white rounded-[1.5rem] border border-zinc-100 p-3 hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-300"
-                    >
-                      <Link to={`/product/${product.slug}`}>
-                        {/* Image Area */}
-                        <div className="relative aspect-square rounded-[1.2rem] bg-zinc-50 overflow-hidden mb-4 flex items-center justify-center">
-                          {product.images && product.images[0] ? (
-                            <img 
-                              src={product.images[0]} 
-                              alt={product.name}
-                              className="w-4/5 h-4/5 object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
-                            />
-                          ) : (
-                             <div className="text-zinc-300 font-bold">No Image</div>
-                          )}
-                          
-                          {/* Hover Overlay */}
-                          <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
-                             <span className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                               View Details
-                             </span>
-                          </div>
-                        </div>
+  layout
+  variants={itemVars}
+  key={product.id}
+  // CHANGE 1: Padding 'p-3' hataya, 'overflow-hidden' add kiya taaki image corners cut na ho
+  className="group bg-white rounded-[1.5rem] border border-zinc-200 overflow-hidden hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-300 flex flex-col"
+>
+                   <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
+    
+    {/* Image Area - TOP HALF (Grey Background) */}
+    {/* CHANGE 2: Background color 'bg-[#f2f2f2]' dala hai. 
+        NOTE: Agar screw ke background se match na ho, toh Color Picker se exact code lekar yahan paste karein (e.g., bg-[#ebebeb]) */}
+    <div className="relative aspect-[1.1/1] bg-[#f2f2f2] flex items-center justify-center p-6">
+      {product.images && product.images[0] ? (
+        <img 
+          src={product.images[0]} 
+          alt={product.name}
+          // CHANGE 3: mix-blend-multiply hata diya taaki screw natural dikhe grey background pe
+          className="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-500 ease-out"
+        />
+      ) : (
+         <div className="text-zinc-300 font-bold">No Image</div>
+      )}
+      
+      {/* Hover Overlay */}
+      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+         <span className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
+           View Details
+         </span>
+      </div>
+    </div>
 
-                        {/* Text Area */}
-                        <div className="px-2 pb-2">
-                          <span className="inline-block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">
-                            {product.category}
-                          </span>
-                          <h3 className="text-lg font-bold text-zinc-900 leading-tight group-hover:text-yellow-600 transition-colors line-clamp-2">
-                            {product.name}
-                          </h3>
-                          
-                          <div className="mt-4 flex items-center justify-between border-t border-zinc-50 pt-3">
-                            <span className="text-xs font-medium text-green-600 flex items-center gap-1.5">
-                              <ShoppingBag size={12} fill="currentColor" /> In Stock
-                            </span>
-                            <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors">
-                               <ArrowRight size={14} />
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    </motion.div>
+    {/* Text Area - BOTTOM HALF (White Background) */}
+    {/* CHANGE 4: Yahan padding 'p-5' add ki hai kyunki main card se padding hata di thi */}
+    <div className="p-5 flex flex-col flex-grow bg-white relative z-10">
+      <span className="inline-block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">
+        {product.category}
+      </span>
+      <h3 className="text-lg font-bold text-zinc-900 leading-tight group-hover:text-yellow-600 transition-colors line-clamp-2 mb-4">
+        {product.name}
+      </h3>
+      
+      <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
+        <span className="text-xs font-medium text-green-600 flex items-center gap-1.5">
+          <ShoppingBag size={12} fill="currentColor" /> In Stock
+        </span>
+        <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+           <ArrowRight size={14} />
+        </div>
+      </div>
+    </div>
+  </Link>
+</motion.div>
                   ))}
                 </AnimatePresence>
               </motion.div>
