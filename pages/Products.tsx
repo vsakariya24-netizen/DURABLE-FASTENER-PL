@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
@@ -29,7 +29,8 @@ const generateSchema = (categoryName: string, products: any[]) => {
 };
 
 const Products: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+const { category: urlCategory, subcategory: urlSubCategory } = useParams();
+  const navigate = useNavigate();
   
   // STATE
   const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; name: string }>({ 
@@ -68,18 +69,24 @@ const Products: React.FC = () => {
   // STEP 2: SET FILTER FROM URL (Run when URL or Tree changes)
   // -------------------------------------------
   useEffect(() => {
-    // We only need CategoryTree to be ready, NOT products
     if (categoryTree.length === 0) return;
 
+    // OLD Logic (Query Params) - REMOVE
+    /*
     const catParam = searchParams.get('category');
     const subParam = searchParams.get('sub');
+    */
+
+    // NEW Logic (Clean URL Params)
+    // URL mein jo dash (-) hai usko space mein convert karein compare karne ke liye
+    const catParam = urlCategory ? urlCategory.replace(/-/g, ' ') : null;
+    const subParam = urlSubCategory ? urlSubCategory.replace(/-/g, ' ') : null;
 
     if (catParam) {
       // Find matching category (Case Insensitive)
       const matchedCat = categoryTree.find(c => c.name.toLowerCase() === catParam.toLowerCase());
       
       if (matchedCat) {
-        // Prepare new filter state
         let newFilter = { type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name };
         let shouldExpand = matchedCat.id;
 
@@ -92,14 +99,14 @@ const Products: React.FC = () => {
         }
 
         setActiveFilter(newFilter);
-        // Expand the accordion for this category
         setExpandedCats(prev => prev.includes(shouldExpand) ? prev : [...prev, shouldExpand]);
       }
     } else {
        setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
     }
-  }, [searchParams, categoryTree]); // <--- REMOVED 'products' dependency to fix deadlock
-
+    
+    // Dependency array update karein
+  }, [urlCategory, urlSubCategory, categoryTree]);
   // -------------------------------------------
   // STEP 3: FETCH PRODUCTS (Run when Filter Changes)
   // -------------------------------------------
@@ -147,16 +154,28 @@ const Products: React.FC = () => {
     );
   };
 
+  // Helper function to create URL slug (spaces -> hyphens)
+  const toSlug = (text: string) => text.toLowerCase().replace(/ /g, '-');
+
   const handleMainCategoryClick = (catName: string) => {
-    setSearchParams({ category: catName.toLowerCase() });
+    // OLD: setSearchParams({ category: catName.toLowerCase() });
+    
+    // NEW: Navigate to /products/category-name
+    navigate(`/products/${toSlug(catName)}`);
   };
 
   const handleSubCategoryClick = (catName: string, subId: string, subName: string) => {
-    setSearchParams({ category: catName.toLowerCase(), sub: subName.toLowerCase() });
+    // OLD: setSearchParams({ category: catName.toLowerCase(), sub: subName.toLowerCase() });
+    
+    // NEW: Navigate to /products/category-name/sub-name
+    navigate(`/products/${toSlug(catName)}/${toSlug(subName)}`);
   };
 
   const resetFilter = () => {
-    setSearchParams({});
+    // OLD: setSearchParams({});
+    
+    // NEW: Back to main products page
+    navigate('/products');
     setSearchTerm('');
   };
 
