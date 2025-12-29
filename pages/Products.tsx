@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom'; // CHANGED: Added useParams, useNavigate
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
@@ -21,7 +21,7 @@ const generateSchema = (categoryName: string, products: any[]) => {
       "itemListElement": products.slice(0, 10).map((p, i) => ({
         "@type": "ListItem",
         "position": i + 1,
-        "url": `https://yourdomain.com/product/${p.slug}`,
+        "url": `https://durablefastener.com/product/${p.slug}`,
         "name": p.name
       }))
     }
@@ -29,11 +29,10 @@ const generateSchema = (categoryName: string, products: any[]) => {
 };
 
 const Products: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  // CHANGED: Use params instead of searchParams
+  const { category: urlCategory, subcategory: urlSubCategory } = useParams();
+  const navigate = useNavigate();
   
-  // --- NEW FILTER STATE ---
-  // type: 'ALL' | 'CATEGORY' (Main) | 'SUB_CATEGORY' (Sub)
-  // value: Name for Category, ID for Sub-Category
   const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; name: string }>({ 
     type: 'ALL', 
     value: '', 
@@ -83,30 +82,61 @@ const Products: React.FC = () => {
     fetchData();
   }, []);
 
-  // 2. TOGGLE ACCORDION
+  // 2. SYNC URL WITH FILTER STATE (New Logic)
+  useEffect(() => {
+    if (!categoryTree.length) return; // Wait for data to load
+
+    if (urlCategory) {
+      // Find the Category Object (Case Insensitive Match)
+      const matchedCat = categoryTree.find(c => 
+        c.name.toLowerCase() === urlCategory.toLowerCase()
+      );
+
+      if (matchedCat) {
+        // If there is also a Subcategory in URL
+        if (urlSubCategory) {
+          const matchedSub = matchedCat.sub_categories.find((s: any) => 
+            s.name.toLowerCase() === urlSubCategory.toLowerCase()
+          );
+
+          if (matchedSub) {
+            setActiveFilter({ type: 'SUB_CATEGORY', value: matchedSub.id, name: matchedSub.name });
+            // Auto expand the parent category
+            setExpandedCats(prev => prev.includes(matchedCat.id) ? prev : [...prev, matchedCat.id]);
+          }
+        } else {
+          // Only Main Category
+          setActiveFilter({ type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name });
+        }
+      }
+    } else {
+      // No URL params = All Products
+      setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
+    }
+  }, [urlCategory, urlSubCategory, categoryTree]);
+
+  // 3. TOGGLE ACCORDION
   const toggleCategory = (catId: string) => {
     setExpandedCats(prev => 
       prev.includes(catId) ? prev.filter(c => c !== catId) : [...prev, catId]
     );
   };
 
-  // 3. FILTER LOGIC (Revised for AddProduct structure)
+  // 4. FILTER LOGIC
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      // 1. Search Filter
+      // Search Filter
       const searchMatch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
       if (!searchMatch) return false;
 
-      // 2. Category Filter
+      // Category Filter
       if (activeFilter.type === 'ALL') return true;
 
       if (activeFilter.type === 'CATEGORY') {
-        // AddProduct saves Main Category as NAME
         return p.category === activeFilter.value; 
       }
 
       if (activeFilter.type === 'SUB_CATEGORY') {
-        // AddProduct saves Sub Category as ID (UUID)
         return p.sub_category === activeFilter.value; 
       }
 
@@ -114,26 +144,26 @@ const Products: React.FC = () => {
     });
   }, [products, activeFilter, searchTerm]);
 
-  // 4. HANDLE CLICKS
+  // 5. HANDLE CLICKS (Updated to use Navigate)
   const handleMainCategoryClick = (catName: string) => {
-    setActiveFilter({ type: 'CATEGORY', value: catName, name: catName });
-    setSearchParams({ category: catName.toLowerCase() });
+    // Navigate to clean URL
+    navigate(`/products/${catName.toLowerCase()}`);
   };
 
-  const handleSubCategoryClick = (subId: string, subName: string) => {
-    setActiveFilter({ type: 'SUB_CATEGORY', value: subId, name: subName });
-    setSearchParams({ sub: subName.toLowerCase() });
+  const handleSubCategoryClick = (catName: string, subName: string) => {
+    // Navigate to clean URL (Requires passing parent cat name to this function)
+    navigate(`/products/${catName.toLowerCase()}/${subName.toLowerCase()}`);
   };
 
   const resetFilter = () => {
-    setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
-    setSearchParams({});
+    navigate('/products');
   };
 
   return (
     <div className="bg-[#dbdbdc] min-h-screen pt-20">
       <Helmet>
-        <title>{`${activeFilter.name} | Premium Industrial Fasteners`}</title>
+        <title>{`${activeFilter.name} | Durable Fasteners Pvt Ltd`}</title>
+        <link rel="canonical" href={`https://durablefastener.com/products/${urlCategory || ''}`} />
         <script type="application/ld+json">
           {JSON.stringify(generateSchema(activeFilter.name, filteredProducts))}
         </script>
@@ -194,11 +224,10 @@ const Products: React.FC = () => {
                   </button>
 
                   {categoryTree.map((cat) => {
-                     // Check if this category matches current filter (by Name)
-                     const isActiveCat = activeFilter.type === 'CATEGORY' && activeFilter.value === cat.name;
-                     const isExpanded = expandedCats.includes(cat.id) || isActiveCat;
+                      const isActiveCat = activeFilter.value === cat.name || (activeFilter.type === 'SUB_CATEGORY' && expandedCats.includes(cat.id));
+                      const isExpanded = expandedCats.includes(cat.id);
 
-                     return (
+                      return (
                       <div key={cat.id} className="space-y-1">
                         {/* Main Category Row */}
                         <div className={`flex items-center justify-between group rounded-lg px-3 py-2 transition-colors ${isActiveCat ? 'bg-yellow-50' : 'hover:bg-zinc-50'}`}>
@@ -226,13 +255,13 @@ const Products: React.FC = () => {
                             >
                               <div className="ml-4 pl-4 border-l-2 border-zinc-100 py-1 space-y-1">
                                 {cat.sub_categories.map((sub: any) => {
-                                  // Check if this sub-cat matches current filter (by ID)
                                   const isActiveSub = activeFilter.type === 'SUB_CATEGORY' && activeFilter.value === sub.id;
                                   
                                   return (
                                     <button
                                       key={sub.id}
-                                      onClick={() => handleSubCategoryClick(sub.id, sub.name)}
+                                      // CHANGED: We now pass Parent Name too for URL construction
+                                      onClick={() => handleSubCategoryClick(cat.name, sub.name)}
                                       className={`w-full text-left text-xs py-2 px-2 rounded-md transition-colors font-medium flex items-center justify-between ${isActiveSub ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'}`}
                                     >
                                       {sub.name}
@@ -245,7 +274,7 @@ const Products: React.FC = () => {
                           )}
                         </AnimatePresence>
                       </div>
-                     );
+                      );
                   })}
                 </div>
               </div>
@@ -281,58 +310,52 @@ const Products: React.FC = () => {
                 <AnimatePresence mode='wait'>
                   {filteredProducts.map((product) => (
                     <motion.div 
-  layout
-  variants={itemVars}
-  key={product.id}
-  // CHANGE 1: Padding 'p-3' hataya, 'overflow-hidden' add kiya taaki image corners cut na ho
-  className="group bg-white rounded-[1.5rem] border border-zinc-200 overflow-hidden hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-300 flex flex-col"
->
-                   <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
-    
-    {/* Image Area - TOP HALF (Grey Background) */}
-    {/* CHANGE 2: Background color 'bg-[#f2f2f2]' dala hai. 
-        NOTE: Agar screw ke background se match na ho, toh Color Picker se exact code lekar yahan paste karein (e.g., bg-[#ebebeb]) */}
-    <div className="relative aspect-[1.1/1] bg-[#f2f2f2] flex items-center justify-center p-6">
-      {product.images && product.images[0] ? (
-        <img 
-          src={product.images[0]} 
-          alt={product.name}
-          // CHANGE 3: mix-blend-multiply hata diya taaki screw natural dikhe grey background pe
-          className="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-500 ease-out"
-        />
-      ) : (
-         <div className="text-zinc-300 font-bold">No Image</div>
-      )}
-      
-      {/* Hover Overlay */}
-      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
-         <span className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
-           View Details
-         </span>
-      </div>
-    </div>
+                      layout
+                      variants={itemVars}
+                      key={product.id}
+                      className="group bg-white rounded-[1.5rem] border border-zinc-200 overflow-hidden hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-300 flex flex-col"
+                    >
+                       <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
+            
+            {/* Image Area */}
+            <div className="relative aspect-[1.1/1] bg-[#f2f2f2] flex items-center justify-center p-6">
+              {product.images && product.images[0] ? (
+                <img 
+                  src={product.images[0]} 
+                  alt={product.name}
+                  className="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-500 ease-out"
+                />
+              ) : (
+                 <div className="text-zinc-300 font-bold">No Image</div>
+              )}
+              
+              <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                 <span className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                   View Details
+                 </span>
+              </div>
+            </div>
 
-    {/* Text Area - BOTTOM HALF (White Background) */}
-    {/* CHANGE 4: Yahan padding 'p-5' add ki hai kyunki main card se padding hata di thi */}
-    <div className="p-5 flex flex-col flex-grow bg-white relative z-10">
-      <span className="inline-block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">
-        {product.category}
-      </span>
-      <h3 className="text-lg font-bold text-zinc-900 leading-tight group-hover:text-yellow-600 transition-colors line-clamp-2 mb-4">
-        {product.name}
-      </h3>
-      
-      <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
-        <span className="text-xs font-medium text-green-600 flex items-center gap-1.5">
-          <ShoppingBag size={12} fill="currentColor" /> In Stock
-        </span>
-        <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-           <ArrowRight size={14} />
-        </div>
-      </div>
-    </div>
-  </Link>
-</motion.div>
+            {/* Text Area */}
+            <div className="p-5 flex flex-col flex-grow bg-white relative z-10">
+              <span className="inline-block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">
+                {product.category}
+              </span>
+              <h3 className="text-lg font-bold text-zinc-900 leading-tight group-hover:text-yellow-600 transition-colors line-clamp-2 mb-4">
+                {product.name}
+              </h3>
+              
+              <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
+                <span className="text-xs font-medium text-green-600 flex items-center gap-1.5">
+                  <ShoppingBag size={12} fill="currentColor" /> In Stock
+                </span>
+                <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                   <ArrowRight size={14} />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
                   ))}
                 </AnimatePresence>
               </motion.div>

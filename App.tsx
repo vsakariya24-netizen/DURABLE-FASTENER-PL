@@ -57,7 +57,22 @@ const App: React.FC = () => {
               {/* --- Public Website Routes --- */}
               <Route path="/" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Home /></main><Footer /></div></>} />
               <Route path="/about" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><About /></main><Footer /></div></>} />
-              <Route path="/products" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Products /></main><Footer /></div></>} />
+             <Route 
+  path="/products" 
+  element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Products /></main><Footer /></div></>} 
+/>
+
+{/* 2. Category Route (e.g. /products/fasteners) */}
+<Route 
+  path="/products/:category" 
+  element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Products /></main><Footer /></div></>} 
+/>
+
+{/* 3. Sub-Category Route (e.g. /products/fasteners/bolts) */}
+<Route 
+  path="/products/:category/:subcategory" 
+  element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Products /></main><Footer /></div></>} 
+/>
               <Route path="/product/:slug" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><ProductDetail /></main><Footer /></div></>} />
               <Route path="/manufacturing" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Manufacturing /></main><Footer /></div></>} />
               <Route path="/industrial" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Industrial /></main><Footer /></div></>} />
