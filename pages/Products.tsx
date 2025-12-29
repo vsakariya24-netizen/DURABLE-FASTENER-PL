@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
@@ -8,28 +8,21 @@ import {
   ArrowRight, LayoutGrid, ShoppingBag, Sparkles
 } from 'lucide-react';
 
-// --- SCHEMA GENERATOR ---
-const generateSchema = (categoryName: string, products: any[]) => {
-  return {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": `${categoryName} - Industrial Fasteners Catalogue`,
-    "description": `Browse our premium collection of ${categoryName}.`,
-    "mainEntity": {
-      "@type": "ItemList",
-      "numberOfItems": products.length,
-      "itemListElement": products.slice(0, 10).map((p, i) => ({
-        "@type": "ListItem",
-        "position": i + 1,
-        "url": `https://durablefastener.com/product/${p.slug}`,
-        "name": p.name
-      }))
-    }
-  };
+// --- HELPER: Slugify ---
+const toSlug = (text: string) => {
+  if (!text) return '';
+  return text.toLowerCase().trim().replace(/[\s/]+/g, '-');
+};
+
+// --- HELPER: Un-Slugify ---
+const fromSlug = (slug: string) => {
+  if (!slug) return '';
+  return slug.replace(/-/g, ' ').toLowerCase();
 };
 
 const Products: React.FC = () => {
-const { category: urlCategory, subcategory: urlSubCategory } = useParams();
+  const { category: urlCategory, subcategory: urlSubCategory } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
   // STATE
@@ -46,7 +39,17 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
   const [searchTerm, setSearchTerm] = useState('');
 
   // -------------------------------------------
-  // STEP 1: LOAD CATEGORIES (Run Once)
+  // STEP 0: LEGACY REDIRECT
+  // -------------------------------------------
+  useEffect(() => {
+    const queryCat = searchParams.get('category');
+    if (queryCat && !urlCategory) {
+      navigate(`/products/${toSlug(queryCat)}`, { replace: true });
+    }
+  }, [searchParams, urlCategory, navigate]);
+
+  // -------------------------------------------
+  // STEP 1: LOAD CATEGORIES
   // -------------------------------------------
   useEffect(() => {
     const fetchCategories = async () => {
@@ -66,33 +69,41 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
   }, []);
 
   // -------------------------------------------
-  // STEP 2: SET FILTER FROM URL (Run when URL or Tree changes)
+  // STEP 2: SET FILTER FROM URL (SMART MATCHING ADDED)
   // -------------------------------------------
   useEffect(() => {
     if (categoryTree.length === 0) return;
 
-    // OLD Logic (Query Params) - REMOVE
-    /*
-    const catParam = searchParams.get('category');
-    const subParam = searchParams.get('sub');
-    */
+    if (urlCategory) {
+      const cleanUrlCat = fromSlug(urlCategory); // e.g., "fasteners"
 
-    // NEW Logic (Clean URL Params)
-    // URL mein jo dash (-) hai usko space mein convert karein compare karne ke liye
-    const catParam = urlCategory ? urlCategory.replace(/-/g, ' ') : null;
-    const subParam = urlSubCategory ? urlSubCategory.replace(/-/g, ' ') : null;
+      // 1. Exact Match Try karo (e.g. "fasteners segment" === "fasteners segment")
+      let matchedCat = categoryTree.find(c => 
+        c.name.toLowerCase().trim() === cleanUrlCat
+      );
 
-    if (catParam) {
-      // Find matching category (Case Insensitive)
-      const matchedCat = categoryTree.find(c => c.name.toLowerCase() === catParam.toLowerCase());
+      // 2. Agar Exact Match na mile, to PARTIAL MATCH (Smart Search) karo
+      // e.g. Agar URL "fasteners" hai aur DB mein "Fasteners Segment" hai, to match kar lo
+      if (!matchedCat) {
+        matchedCat = categoryTree.find(c => 
+          c.name.toLowerCase().includes(cleanUrlCat) || 
+          cleanUrlCat.includes(c.name.toLowerCase())
+        );
+      }
       
       if (matchedCat) {
+        // MATCH FOUND!
         let newFilter = { type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name };
         let shouldExpand = matchedCat.id;
 
-        // Check Sub-Category
-        if (subParam) {
-           const matchedSub = matchedCat.sub_categories.find((s: any) => s.name.toLowerCase() === subParam.toLowerCase());
+        // Sub-Category Check
+        if (urlSubCategory) {
+           const cleanUrlSub = fromSlug(urlSubCategory);
+           const matchedSub = matchedCat.sub_categories.find((s: any) => 
+             s.name.toLowerCase().trim() === cleanUrlSub ||
+             s.name.toLowerCase().includes(cleanUrlSub) // Smart match for sub-cat too
+           );
+           
            if (matchedSub) {
              newFilter = { type: 'SUB_CATEGORY', value: matchedSub.id, name: matchedSub.name };
            }
@@ -100,15 +111,18 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
 
         setActiveFilter(newFilter);
         setExpandedCats(prev => prev.includes(shouldExpand) ? prev : [...prev, shouldExpand]);
+      } else {
+        console.warn("Category mismatch:", urlCategory);
+        // Fallback: Optional - Stay on All Products or show error
       }
     } else {
        setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
     }
     
-    // Dependency array update karein
   }, [urlCategory, urlSubCategory, categoryTree]);
+
   // -------------------------------------------
-  // STEP 3: FETCH PRODUCTS (Run when Filter Changes)
+  // STEP 3: FETCH PRODUCTS
   // -------------------------------------------
   useEffect(() => {
     const fetchProducts = async () => {
@@ -116,14 +130,12 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
       try {
         let query = supabase.from('products').select('*').order('name');
 
-        // Apply Server-Side Filters (Using ilike for Case Insensitivity)
         if (activeFilter.type === 'CATEGORY') {
-          query = query.ilike('category', activeFilter.value); // ilike = Ignore Case
+          query = query.ilike('category', activeFilter.value); 
         } else if (activeFilter.type === 'SUB_CATEGORY') {
-          query = query.eq('sub_category', activeFilter.value); // UUID is exact
+          query = query.eq('sub_category', activeFilter.value); 
         }
 
-        // Apply Search (if typed)
         if (searchTerm) {
           query = query.ilike('name', `%${searchTerm}%`);
         }
@@ -136,7 +148,7 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
       }
     };
 
-    // Debounce search slightly to prevent too many requests
+    // Debounce
     const timeoutId = setTimeout(() => {
       fetchProducts();
     }, 300);
@@ -154,27 +166,15 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
     );
   };
 
-  // Helper function to create URL slug (spaces -> hyphens)
-  const toSlug = (text: string) => text.toLowerCase().replace(/ /g, '-');
-
   const handleMainCategoryClick = (catName: string) => {
-    // OLD: setSearchParams({ category: catName.toLowerCase() });
-    
-    // NEW: Navigate to /products/category-name
     navigate(`/products/${toSlug(catName)}`);
   };
 
   const handleSubCategoryClick = (catName: string, subId: string, subName: string) => {
-    // OLD: setSearchParams({ category: catName.toLowerCase(), sub: subName.toLowerCase() });
-    
-    // NEW: Navigate to /products/category-name/sub-name
     navigate(`/products/${toSlug(catName)}/${toSlug(subName)}`);
   };
 
   const resetFilter = () => {
-    // OLD: setSearchParams({});
-    
-    // NEW: Back to main products page
     navigate('/products');
     setSearchTerm('');
   };
@@ -220,7 +220,7 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
           {/* SIDEBAR */}
           <aside className="lg:w-[300px] shrink-0">
             <div className="sticky top-32 space-y-6">
-              {/* Search Input */}
+              {/* Search */}
               <div className="relative">
                 <input
                   type="text"
@@ -319,7 +319,7 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
               </div>
             ) : products.length === 0 ? (
                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200">
-                  <h3 className="text-xl font-bold text-zinc-400">No products found</h3>
+                  <h3 className="text-xl font-bold text-zinc-400">No products found for {activeFilter.name}</h3>
                   <button onClick={resetFilter} className="mt-4 text-sm text-blue-600 font-bold underline">Clear Filters</button>
                </div>
             ) : (
