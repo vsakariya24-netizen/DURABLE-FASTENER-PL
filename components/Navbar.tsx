@@ -56,7 +56,7 @@ const Navbar: React.FC = () => {
               <img 
                 src="/durablelogo.png" 
                 alt="Logo" 
-                className="h-16 xs:h-18 md:h-[130px] w-auto object-contain transition-transform duration-300" 
+                className="h-16 xs:h-18 md:h-[230px] w-auto object-contain transition-transform duration-300" 
               />
               
               <div className="h-12 xs:h-14 md:h-20 w-px bg-gray-300 mx-2"></div>
@@ -64,7 +64,7 @@ const Navbar: React.FC = () => {
               <img 
                 src="/classone.png" 
                 alt="Classone" 
-                className="h-14 xs:h-16 md:h-[110px] w-auto object-contain mt-1"
+                className="h-14 xs:h-16 md:h-[210px] w-auto object-contain mt-1"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </Link>
