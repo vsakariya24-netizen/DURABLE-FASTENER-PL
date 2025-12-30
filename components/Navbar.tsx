@@ -1,4 +1,3 @@
-// Navbar.tsx (Bada Logo Version)
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -22,7 +21,6 @@ const Navbar: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // ... NavItems array same rahega ...
   const navItems = [
     { name: 'OEM Platform', path: '/oem-platform', icon: <Cpu size={18} /> },
     { name: 'Manufacturing', path: '/manufacturing', icon: <Factory size={18} /> },
@@ -41,26 +39,32 @@ const Navbar: React.FC = () => {
     >
       <div className="w-full px-4 xs:px-6 lg:px-10">
         
-        {/* ✅ FIX 1: Container Height Badhayi (Mobile: h-16, Desktop: 140px) */}
-        <div className="flex justify-between items-center h-16 md:h-[140px] transition-all duration-300">
+        {/* ✅ UPDATE 1: Container Height 
+            - Mobile: h-24 (Bada kar diya, pehle h-16 tha)
+            - Desktop: h-[140px] (Laptop jaisa bada)
+        */}
+        <div className="flex justify-between items-center h-24 md:h-[140px] transition-all duration-300">
        
           {/* LOGO */}
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="flex items-center gap-4 group">
+            <Link to="/" className="flex items-center gap-3 group">
               
-              {/* ✅ FIX 2: Logo Height Badhayi (Mobile: 48px, Desktop: 130px) */}
+              {/* ✅ UPDATE 2: Logo Height 
+                  - Mobile: h-16 (Approx 64px - Ab Mobile pe bada dikhega)
+                  - Desktop: h-[130px]
+              */}
               <img 
                 src="/durablelogo.png" 
                 alt="Logo" 
-                className="h-10 xs:h-12 md:h-[130px] w-auto object-contain transition-transform duration-300" 
+                className="h-16 xs:h-18 md:h-[130px] w-auto object-contain transition-transform duration-300" 
               />
               
-              <div className="h-8 xs:h-10 md:h-20 w-px bg-gray-300 mx-2"></div>
+              <div className="h-12 xs:h-14 md:h-20 w-px bg-gray-300 mx-2"></div>
               
               <img 
                 src="/classone.png" 
                 alt="Classone" 
-                className="h-8 xs:h-10 md:h-[110px] w-auto object-contain mt-1"
+                className="h-14 xs:h-16 md:h-[110px] w-auto object-contain mt-1"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </Link>
@@ -71,7 +75,7 @@ const Navbar: React.FC = () => {
             <Link to="/" className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${isActive('/') ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
                <Home size={18} /> <span>Home</span>
             </Link>
-            {/* Products Dropdown Same */}
+            {/* Products Dropdown */}
             <div className="relative group px-1">
               <Link to="/products" className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${isActive('/products') ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
                 <Package size={18} /> <span>Products</span> <ChevronDown size={14} />
@@ -113,8 +117,10 @@ const Navbar: React.FC = () => {
         </div>
       </div>
       
-      {/* Mobile Drawer (Same as before) */}
-      <div className={`xl:hidden fixed inset-0 top-[70px] bg-white z-40 transition-all duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* ✅ UPDATE 3: Mobile Drawer Top Position
+          - top-[100px] kiya kyunki navbar ab bada hai (pehle 70px tha)
+      */}
+      <div className={`xl:hidden fixed inset-0 top-[100px] bg-white z-40 transition-all duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full overflow-y-auto pb-20 p-4 space-y-2">
             <Link to="/" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg font-bold text-gray-700"><Home size={20}/> Home</Link>
             <Link to="/products" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg font-bold text-gray-700"><Package size={20}/> Products</Link>

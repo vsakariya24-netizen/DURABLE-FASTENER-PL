@@ -55,12 +55,12 @@ const App: React.FC = () => {
             
             <Routes>
               {/* --- Public Website Routes --- */}
-            <Route path="/" element={
+  <Route path="/" element={
   <>
     <Navbar />
-    {/* 👇 Pehle 'pt-24' tha, ab 'pt-16 md:pt-40' karein taaki bade logo ke niche content aaye */}
+    {/* 👇 YAHAN CHANGE KIYA: 'pt-28' (Mobile ke liye extra space) */}
     <div className="flex flex-col min-h-screen">
-      <main className="flex-grow w-full pt-16 md:pt-40">
+      <main className="flex-grow w-full pt-28 md:pt-48">
         <Home />
       </main>
       <Footer />
