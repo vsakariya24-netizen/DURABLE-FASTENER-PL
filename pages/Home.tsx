@@ -153,7 +153,7 @@ const Home: React.FC = () => {
           {[
             { label: 'Suppliers & Dealers', value: statDealers.count, ref: statDealers.ref, suffix: '+', icon: Users, color: 'text-blue-500' },
             { label: 'Years Experience', value: statYears.count, ref: statYears.ref, suffix: '+', icon: ShieldCheck, color: 'text-green-500' },
-            { label: 'Product Variations', value: statProducts.count, ref: statProducts.ref, suffix: 'k+', icon: Settings, color: 'text-yellow-500' }
+            { label: 'Product Variations', value: statProducts.count, ref: statProducts.ref, suffix: '+', icon: Settings, color: 'text-yellow-500' }
           ].map((stat, idx) => (
             <div key={idx} ref={stat.ref} className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 flex items-center justify-between">
               <div><h3 className="text-4xl font-bold text-gray-900">{stat.value}{stat.suffix}</h3><p className="text-gray-500 font-medium">{stat.label}</p></div>
