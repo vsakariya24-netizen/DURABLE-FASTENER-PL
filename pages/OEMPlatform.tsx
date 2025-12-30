@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase'; // Adjust path to your supabase client
 import { 
   ArrowRight, Box, Settings, ShieldCheck, 
   Truck, Anchor, Activity, FileText, 
@@ -9,6 +10,34 @@ import {
 import { Link } from 'react-router-dom';
 
 const OEMPlatform: React.FC = () => {
+  const [content, setContent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    try {
+      const { data, error } = await supabase.from('oem_content').select('*').single();
+      if (data) setContent(data);
+    } catch (error) {
+      console.error("Error fetching OEM content", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper icons map (to keep the dynamic loop working for manufacturing limits)
+  const iconMap: any = {
+    "DIAMETER": Layers,
+    "TOLERANCE": Activity,
+    "GRADES": Settings,
+    "COATING": ShieldCheck
+  };
+
+  if (loading) return <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center text-white">Loading OEM Platform...</div>;
+
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-200 font-sans selection:bg-blue-600 selection:text-white overflow-x-hidden">
       
@@ -19,8 +48,9 @@ const OEMPlatform: React.FC = () => {
           <video 
             autoPlay loop muted playsInline 
             className="w-full h-full object-cover opacity-30 grayscale"
-            poster="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=2070" 
+            poster={content?.hero_video_url} 
           >
+             {/* If you want to make the actual video file dynamic, you can add a field for it too */}
           </video>
         </div>
 
@@ -32,14 +62,12 @@ const OEMPlatform: React.FC = () => {
           </div>
 
           <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-white mb-6 leading-[0.9]">
-            OEM FOUNDATION <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-white to-blue-600">
-              BUILT FOR STRENGTH.
-            </span>
+             {/* Split title logic: This assumes standard format, or you can just dump the whole string */}
+             {content?.hero_title || "OEM FOUNDATION"} 
           </h1>
 
           <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10 font-light leading-relaxed">
-            Rajkot's premier platform for custom cold-forged fasteners. Delivering professional-grade structural integrity for industrial buyers worldwide.
+            {content?.hero_subtitle || "Rajkot's premier platform for custom cold-forged fasteners."}
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -65,24 +93,22 @@ const OEMPlatform: React.FC = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-800 border border-slate-800">
-            {[
-              { icon: Layers, label: "DIAMETER", value: "M1.2 — M24", sub: "Micro to Heavy Duty" },
-              { icon: Activity, label: "TOLERANCE", value: "±0.01mm", sub: "Precision Engineering" },
-              { icon: Settings, label: "GRADES", value: "4.8 - 12.9", sub: "High Tensile Options" },
-              { icon: ShieldCheck, label: "COATING", value: "1000h SST", sub: "Salt Spray Tested" },
-            ].map((spec, i) => (
-              <div key={i} className="p-10 bg-[#020617] hover:bg-slate-900 transition-colors group">
-                <spec.icon className="text-blue-500 mb-6 group-hover:scale-110 transition-transform" size={24} />
-                <p className="text-xs font-mono text-slate-500 mb-2 uppercase font-bold">{spec.label}</p>
-                <p className="text-3xl font-bold text-white font-mono">{spec.value}</p>
-                <p className="text-sm text-slate-600 mt-2">{spec.sub}</p>
-              </div>
-            ))}
+            {content?.mfg_limits?.map((spec: any, i: number) => {
+              const IconComponent = iconMap[spec.label] || Layers; // Fallback icon
+              return (
+                <div key={i} className="p-10 bg-[#020617] hover:bg-slate-900 transition-colors group">
+                  <IconComponent className="text-blue-500 mb-6 group-hover:scale-110 transition-transform" size={24} />
+                  <p className="text-xs font-mono text-slate-500 mb-2 uppercase font-bold">{spec.label}</p>
+                  <p className="text-3xl font-bold text-white font-mono">{spec.value}</p>
+                  <p className="text-sm text-slate-600 mt-2">{spec.sub}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* 3. HEAD & DRIVE PLATFORM (Optimized Section) */}
+      {/* 3. HEAD & DRIVE PLATFORM */}
       <section className="py-24 px-6 bg-[#0b0f19]">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8">
@@ -98,7 +124,7 @@ const OEMPlatform: React.FC = () => {
                 </h4>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {['Hexagon', 'Pan Head', 'Countersunk', 'Truss', 'Button', 'Socket Cap', 'Flange', 'Bugle', 'Custom'].map(h => (
+                {content?.head_styles?.map((h: string) => (
                   <div key={h} className="group flex items-center justify-center p-5 border border-white/10 bg-white/5 text-center rounded-lg hover:border-blue-500 hover:bg-blue-600/10 transition-all duration-300">
                     <span className="text-sm md:text-base font-bold text-slate-300 group-hover:text-white uppercase tracking-wider">
                       {h}
@@ -119,7 +145,7 @@ const OEMPlatform: React.FC = () => {
                 </h4>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {['Phillips', 'Torx / Star', 'Allen / Hex', 'Slotted', 'Square', 'Pozi', 'Tri-Wing', 'One-Way', 'Security'].map(d => (
+                {content?.drive_systems?.map((d: string) => (
                   <div key={d} className="group flex items-center justify-center p-5 border border-white/10 bg-white/5 text-center rounded-lg hover:border-blue-400 hover:bg-blue-600/10 transition-all duration-300">
                     <span className="text-sm md:text-base font-bold text-slate-300 group-hover:text-white uppercase tracking-wider">
                       {d}
@@ -171,11 +197,11 @@ const OEMPlatform: React.FC = () => {
               </div>
               <div className="mt-10 grid grid-cols-2 gap-4">
                  <div className="bg-black/50 p-6 rounded-xl border border-white/5 text-center">
-                    <div className="text-3xl font-black text-white">1.67</div>
+                    <div className="text-3xl font-black text-white">{content?.qa_cpk || '1.67'}</div>
                     <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">Cpk INDEX</div>
                  </div>
                  <div className="bg-black/50 p-6 rounded-xl border border-white/5 text-center">
-                    <div className="text-3xl font-black text-white">12.9</div>
+                    <div className="text-3xl font-black text-white">{content?.qa_max_class || '12.9'}</div>
                     <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">MAX CLASS</div>
                  </div>
               </div>
@@ -183,7 +209,7 @@ const OEMPlatform: React.FC = () => {
         </div>
       </section>
 
-      {/* 5. CALL TO ACTION */}
+      {/* 5. CALL TO ACTION (Static for now, but easy to make dynamic if needed) */}
       <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <h2 className="text-4xl md:text-6xl font-black text-[#0b0f19] mb-6">READY TO SCALE?</h2>

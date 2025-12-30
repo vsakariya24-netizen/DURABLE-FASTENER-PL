@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Package, MessageSquare, TrendingUp, FileText, Layers } from 'lucide-react'; // Added Layers icon
+import { Package, MessageSquare, TrendingUp, FileText, Layers, Settings } from 'lucide-react'; // Added Layers icon
 import { Link } from 'react-router-dom';
 
 const DashboardHome: React.FC = () => {
@@ -90,6 +90,9 @@ const DashboardHome: React.FC = () => {
 
             <Link to="/admin/products" className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-colors">
               Manage Catalogue
+            </Link>
+            <Link to="/admin/manage-oem" className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg shadow-blue-200">
+              <Settings size={18} /> Edit OEM Page
             </Link>
          </div>
       </div>

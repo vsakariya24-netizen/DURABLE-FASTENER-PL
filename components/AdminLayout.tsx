@@ -56,6 +56,9 @@ const AdminLayout = () => {
   label: 'OEM Specs & Logistics', 
   icon: <Settings size={20} /> 
 },
+{ 
+  path: '/admin/manage-oem', label: 'OEM Specs & Logistics', icon: <Settings size={20} /> 
+},
     { 
       path: '/admin/enquiries', 
       label: 'Enquiries', 

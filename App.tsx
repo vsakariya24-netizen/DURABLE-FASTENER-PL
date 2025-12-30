@@ -21,7 +21,7 @@ import Blog from './pages/Blog';
 import Careers from './pages/Careers';
 import BlogDetail from './pages/BlogDetail';
 import AdminLifeGallery from './pages/Admin/AdminLifeGallery';
-
+import ManageOEM from './pages/Admin/ManageOEM'; // Import the new file
 // Admin Components
 import AdminLogin from './pages/Admin/Login';
 import AdminLayout from './components/AdminLayout';
@@ -55,11 +55,23 @@ const App: React.FC = () => {
             
             <Routes>
               {/* --- Public Website Routes --- */}
-              <Route path="/" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Home /></main><Footer /></div></>} />
+            <Route path="/" element={
+  <>
+    <Navbar />
+    {/* 👇 Pehle 'pt-24' tha, ab 'pt-16 md:pt-40' karein taaki bade logo ke niche content aaye */}
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-grow w-full pt-16 md:pt-40">
+        <Home />
+      </main>
+      <Footer />
+    </div>
+  </>
+} />
               <Route path="/about" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><About /></main><Footer /></div></>} />
              <Route 
   path="/products" 
-  element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Products /></main><Footer /></div></>} 
+  element={<><Navbar /><div className="flex flex-col min-h-screen">
+    <main className="flex-grow pt-16"><Products /></main><Footer /></div></>} 
 />
 
 {/* 2. Category Route (e.g. /products/fasteners) */}
@@ -112,7 +124,7 @@ const App: React.FC = () => {
                   <Route path="edit-blog/:id" element={<AddBlog />} />
                   <Route path="add-blog" element={<AddBlog />} />
                   <Route path="blogs" element={<BlogList />} />
-                  
+                  <Route path="manage-oem" element={<ManageOEM />} />
                 </Route>
               </Route>
 

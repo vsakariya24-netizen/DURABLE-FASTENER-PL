@@ -6,20 +6,27 @@ export default {
   ],
   theme: {
     extend: {
+      // ✅ YEH PART ADD KIYA HAI (Jio Phone Support)
+      screens: {
+        'xs': '320px', // Extra small devices (Jio Phone / Old Androids)
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
       colors: {
-        // आपकी ब्रांडिंग के हिसाब से कस्टम कलर्स
         brand: {
-          yellow: '#FFD700', // Gold/Yellow for luxury/hardware
-          dark: '#0F1115',   // Deep Black/Charcoal for premium feel
-          blue: '#1e3a8a',   // Corporate Blue
-          gray: '#F3F4F6',   // Light gray for backgrounds
+          yellow: '#FFD700',
+          dark: '#0F1115',
+          blue: '#1e3a8a',
+          gray: '#F3F4F6',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'], // Professional font
+        sans: ['Inter', 'sans-serif'],
       },
       animation: {
-        // आपके कोड में यूज़ हुए एनिमेशन
         blob: "blob 7s infinite",
         marquee: "marquee 25s linear infinite",
       },
