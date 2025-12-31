@@ -128,8 +128,7 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        let query = supabase.from('products').select('*').order('name');
-
+    let query = supabase.from('products').select('*').order('created_at', { ascending: true });
         if (activeFilter.type === 'CATEGORY') {
           query = query.ilike('category', activeFilter.value); 
         } else if (activeFilter.type === 'SUB_CATEGORY') {
