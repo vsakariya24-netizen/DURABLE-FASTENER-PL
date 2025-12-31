@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Menu, X, Sparkles, ChevronDown, Package, Settings, 
   Home, Cpu, Factory, Users, BookOpen, Briefcase, 
-  ArrowRight
+  ArrowRight,
+  Heart
 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
@@ -26,7 +27,7 @@ const Navbar: React.FC = () => {
     { name: 'Manufacturing', path: '/manufacturing', icon: <Factory size={18} /> },
     { name: 'About Us', path: '/about', icon: <Users size={18} /> },
     { name: 'Blog', path: '/blog', icon: <BookOpen size={18} /> },
-    { name: 'Life at Durable', path: '/life-at-durable', icon: <Heart size={18} /> },
+     { name: 'Life at Durable', path: '/life-at-durable', icon: <Heart size={18} /> },
     { name: 'Careers', path: '/careers', icon: <Briefcase size={18} /> },
   ];
 

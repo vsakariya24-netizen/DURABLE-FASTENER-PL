@@ -26,4 +26,21 @@ html {
   transform: translateY(30px);
   transition: all 0.8s ease-out;
 }
+.main-container {
+  /* flex-grow */
+  flex-grow: 1;
+
+  /* w-full */
+  width: 100%;
+
+  /* pt-28 (Mobile/Default view) */
+  padding-top: 7rem; /* approx 112px */
+}
+
+/* md:pt-48 (Medium screens and larger, e.g., Tablets/Laptops) */
+@media (min-width: 768px) {
+  .main-container {
+    padding-top: 12rem; /* approx 192px */
+  }
+}
 /* ... */

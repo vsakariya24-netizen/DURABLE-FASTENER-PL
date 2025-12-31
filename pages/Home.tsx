@@ -3,7 +3,7 @@ import * as ReactRouterDOM from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { ArrowRight, Settings, ShieldCheck, Truck, Users, Play, ChevronRight, FileText, MapPin, Mail, Phone, Box } from 'lucide-react';
 import { supabase } from '../lib/supabase'; 
-
+import { motion } from 'framer-motion';
 const { Link } = ReactRouterDOM;
 
 // --- Static Data ---
@@ -115,13 +115,13 @@ const Home: React.FC = () => {
       </Helmet>
 
       {/* 1. HERO SECTION */}
-      <section className="relative h-screen min-h-[700px] flex items-center bg-[#0F1115] text-white overflow-hidden">
+<section className="relative h-screen min-h-[700px] flex bg-[#0F1115] text-white overflow-hidden">
         <div className="absolute inset-0" style={{ transform: `translateY(${offsetY * 0.5}px)` }}>
             <img src={siteContent.hero_bg} className="w-full h-full object-cover grayscale opacity-50" alt="Durable Fastener Factory Rajkot" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
 
-        <div className="relative z-20 max-w-[1440px] mx-auto px-6 lg:px-12 w-full pt-20">
+       <div className="relative z-20 max-w-[1440px] mx-auto px-6 lg:px-20 flex-grow w-full pt-32 md:pt-60">
           <RevealSection>
             <div className="flex items-center gap-3 mb-6">
               <span className="h-[1px] w-12 bg-yellow-400"></span>
@@ -148,7 +148,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* 2. DYNAMIC STATS */}
-      <div className="relative -mt-20 z-30 px-4">
+      <div className="relative -mt-44 z-30 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { label: 'Suppliers & Dealers', value: statDealers.count, ref: statDealers.ref, suffix: '+', icon: Users, color: 'text-blue-500' },
