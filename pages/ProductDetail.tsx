@@ -12,28 +12,22 @@ import MagicZoomClone from '../components/MagicZoomClone';
 
 const { useParams, Link } = ReactRouterDOM;
 
-// --- 1. REFINED THEME CONSTANTS ---
+// --- THEME CONSTANTS ---
 const THEME = {
-  // CHANGED: Main background to Light Gray to make white cards pop (Like Image 2 style)
   bg: "bg-[#dbdbdc]", 
   sectionBg: "bg-neutral-50",
-  // Typography Colors
-  textPrimary: "text-neutral-900",    
+  textPrimary: "text-neutral-900",     
   textSecondary: "text-neutral-700",  
-  textMuted: "text-neutral-500",      
-  
-  // Accents - Industrial Yellow
+  textMuted: "text-neutral-500",       
   accent: "bg-yellow-500",            
   accentHover: "hover:bg-yellow-400",
   accentText: "text-yellow-700",
   accentBorder: "border-yellow-500",
-  
-  // Borders & Surfaces
   border: "border-neutral-200",       
   surface: "bg-white shadow-sm",
 };
 
-// --- 2. FONTS ---
+// --- FONTS ---
 const fontHeading = { fontFamily: '"Oswald", sans-serif', letterSpacing: '0.03em' };
 const fontBody = { fontFamily: '"Roboto", sans-serif' };
 const fontMono = { fontFamily: '"Roboto Mono", monospace' };
@@ -74,7 +68,7 @@ const itemVar = {
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 60, damping: 20 } }
 };
 
-// --- REFINED HEADER COMPONENT ---
+// --- HEADER COMPONENT ---
 const SectionHeader = ({ icon: Icon, title }: { icon: any, title: string }) => (
   <div className={`flex items-center gap-2.5 mb-5 border-b ${THEME.border} pb-3`}>
     <Icon size={20} className="text-yellow-600" />
@@ -104,7 +98,6 @@ const ProductDetail: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // --- NEW FONT LOADER ---
   useEffect(() => {
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap';
@@ -191,27 +184,37 @@ const ProductDetail: React.FC = () => {
   const displayHeadType = product.head_type ? product.head_type.replace(/Buggel/gi, 'Bugle') : '';
 
   return (
-    <div className={`${THEME.bg} min-h-screen pb-24 pt-28 lg:pt-32 selection:bg-yellow-500/30 selection:text-black`} style={fontBody}>
+    // Padding Top Adjustments:
+    // pt-[140px] for Mobile (Nav 96px + Breadcrumb ~44px)
+    // pt-[200px] for Desktop (Nav 140px + Breadcrumb ~60px)
+    <div className={`${THEME.bg} min-h-screen pb-24 pt-[140px] md:pt-[200px] selection:bg-yellow-500/30 selection:text-black`} style={fontBody}>
       
-      {/* --- BREADCRUMB SECTION --- */}
-      {/* Kept bg-white to contrast with the gray page body */}
-      <div className="border-b border-neutral-200 bg-white relative z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-           <nav className="flex items-center gap-2 text-[14px] font-medium tracking-wide">
-              <Link to="/" className="text-neutral-500 hover:text-neutral-900 transition-colors flex items-center gap-1">
-                Home
-              </Link>
-              <ChevronRight size={14} className="text-neutral-400" />
-              <Link to="/products" className="text-neutral-500 hover:text-neutral-900 transition-colors">
-                Products
-              </Link>
-              <ChevronRight size={14} className="text-neutral-400" />
-              <span className="text-yellow-700 font-bold">
-                {product.name}
-              </span>
-           </nav>
-        </div>
-      </div>
+      {/* ✅ FIX 1: DARK THEME BREADCRUMB */}
+      {/* Color change (bg-neutral-900) ensures visual separation from Navbar */}
+    <div className="fixed top-[80px] md:top-[140px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md transition-all duration-300">
+  <div className="max-w-7xl mx-auto px-5 py-10"> {/* Reduced py-3 to py-2.5 for sleek look */}
+    <nav className="flex items-center gap-2 text-[13px] md:text-[14px] font-medium tracking-wide">
+      {/* Home Link */}
+      <Link to="/" className="text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
+        Home
+      </Link>
+      
+      <ChevronRight size={12} className="text-neutral-600" />
+      
+      {/* Products Link */}
+      <Link to="/products" className="text-neutral-400 hover:text-white transition-colors">
+        Products
+      </Link>
+      
+      <ChevronRight size={12} className="text-neutral-600" />
+      
+      {/* Active Page Name */}
+      <span className="text-yellow-500 font-bold uppercase tracking-wider text-xs md:text-sm truncate max-w-[180px] md:max-w-none">
+        {product.name}
+      </span>
+    </nav>
+  </div>
+  </div>
 
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
         
@@ -252,11 +255,10 @@ const ProductDetail: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
           
           {/* --- LEFT COLUMN: Visuals --- */}
-     {/* --- LEFT COLUMN: Visuals --- */}
           <div className="lg:col-span-7 flex flex-col gap-6">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[950px]">
                   
-                  {/* Thumbnails - Isko bhi thoda clean kiya hai taaki match kare */}
+                  {/* Thumbnails */}
                   <div className="hidden md:flex flex-col gap-3 overflow-y-auto w-24 py-1 pr-1 custom-scrollbar">
                       {displayImages.map((img: string, idx: number) => (
                           <button 
@@ -269,8 +271,7 @@ const ProductDetail: React.FC = () => {
                       ))}
                   </div>
 
-                  {/* Main Viewer - MODIFIED FOR "NO BOX" LOOK (Image 2 Style) */}
-                  {/* Changes: Removed border, removed shadow, removed background color, removed padding (p-8 -> p-0/p-4) */}
+                  {/* Main Viewer */}
                   <div className="flex-1 relative flex items-center justify-center h-[400px] md:h-full overflow-visible group">
                       
                       <div className="absolute top-4 right-4 z-20">
@@ -288,7 +289,6 @@ const ProductDetail: React.FC = () => {
                             transition={{ duration: 0.4 }}
                             className="w-full h-full flex items-center justify-center relative z-10"
                         >
-                            {/* MagicZoomClone - Zoom level badha diya aur padding hata di taaki screw bada dikhe */}
                             <MagicZoomClone 
                                 src={currentImage} 
                                 zoomSrc={currentImage} 
@@ -303,11 +303,11 @@ const ProductDetail: React.FC = () => {
               </motion.div>
           </div>
           {/* --- RIGHT COLUMN: Configurator --- */}
-          <div className="lg:col-span-5 flex flex-col space-y-8 sticky top-24">
+          <div className="lg:col-span-5 flex flex-col space-y-8 sticky top-[200px]">
               
               <motion.div variants={containerVar} initial="hidden" animate="visible" className="space-y-8">
                 
-                {/* 1. CONFIG PANEL - White Card on Gray Bg */}
+                {/* 1. CONFIG PANEL */}
                 <motion.div variants={itemVar} className={`bg-white border border-neutral-200 p-8 rounded-2xl shadow-lg relative overflow-hidden`}>
                     
                     {/* DIAMETER SELECTION */}
@@ -336,65 +336,64 @@ const ProductDetail: React.FC = () => {
                     </div>
 
                     {/* LENGTH SELECTION */}
-                  {/* LENGTH SELECTION - UPDATED FOR BETTER VISIBILITY */}
-<div className="mb-8">
-  <div className="flex justify-between items-end mb-4 border-b border-neutral-100 pb-2">
-    <SectionHeader icon={Maximize2} title="Select Length (mm)" />
-    <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
-        {selectedLen ? selectedLen : '--'}<span className="text-sm text-neutral-400 ml-1 font-sans font-medium">mm</span>
-    </span>
-  </div>
-  
-  {/* NEW RULER VISUALIZATION */}
-  <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-5 relative overflow-hidden">
-    
-    {/* Faint Background Grid */}
-     <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)',
-        backgroundSize: '12px 12px'
-     }}></div>
+                    <div className="mb-8">
+                      <div className="flex justify-between items-end mb-4 border-b border-neutral-100 pb-2">
+                        <SectionHeader icon={Maximize2} title="Select Length (mm)" />
+                        <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
+                            {selectedLen ? selectedLen : '--'}<span className="text-sm text-neutral-400 ml-1 font-sans font-medium">mm</span>
+                        </span>
+                      </div>
+                      
+                      {/* RULER VISUALIZATION */}
+                      <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-5 relative overflow-hidden">
+                        
+                        {/* Faint Background Grid */}
+                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
+                           backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)',
+                           backgroundSize: '12px 12px'
+                         }}></div>
 
-     <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
-         {availableLengths.length > 0 ? availableLengths.map((len: any) => {
-             const isSelected = selectedLen === len;
-             
-             return (
-                 <button 
-                   key={len} 
-                   onClick={() => setSelectedLen(len)} 
-                   className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
-                 >
-                     {/* Number Label - MADE LARGER AND CLEARER */}
-                     <span className={`
-                        font-mono transition-all duration-200 whitespace-nowrap block
-                        ${isSelected 
-                            ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110' 
-                            : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900 group-hover:font-bold'}
-                     `}>
-                         {parseInt(len)}
-                     </span>
-                     
-                     {/* The Ruler Bar */}
-                     <div className={`
-                        w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ease-out relative
-                        ${isSelected 
-                            ? 'h-full bg-yellow-500 shadow-md' 
-                            : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'}
-                     `}>
-                     </div>
-                     
-                     {/* Bottom baseline marker */}
-                     <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10"></div>
-                 </button>
-             )
-         }) : (
-            <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm italic">
-                Select Diameter to view lengths
-            </div>
-         )}
-     </div>
-  </div>
-</div>
+                         <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
+                             {availableLengths.length > 0 ? availableLengths.map((len: any) => {
+                                 const isSelected = selectedLen === len;
+                                 
+                                 return (
+                                     <button 
+                                       key={len} 
+                                       onClick={() => setSelectedLen(len)} 
+                                       className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
+                                     >
+                                         {/* Number Label */}
+                                         <span className={`
+                                           font-mono transition-all duration-200 whitespace-nowrap block
+                                           ${isSelected 
+                                               ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110' 
+                                               : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900 group-hover:font-bold'}
+                                         `}>
+                                             {parseInt(len)}
+                                         </span>
+                                         
+                                         {/* The Ruler Bar */}
+                                         <div className={`
+                                           w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ease-out relative
+                                           ${isSelected 
+                                               ? 'h-full bg-yellow-500 shadow-md' 
+                                               : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'}
+                                         `}>
+                                         </div>
+                                         
+                                         {/* Bottom baseline marker */}
+                                         <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10"></div>
+                                     </button>
+                                 )
+                             }) : (
+                                <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm italic">
+                                    Select Diameter to view lengths
+                                </div>
+                             )}
+                         </div>
+                      </div>
+                    </div>
 
                     {/* FINISH SELECTION */}
                     <div>
@@ -483,7 +482,7 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* --- TECHNICAL VAULT (Light Gray / Black Font) --- */}
+      {/* --- TECHNICAL VAULT --- */}
       <div className="bg-[#aaaaab] border-t border-neutral-300 relative z-20 overflow-hidden text-neutral-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             {showDimensions && (
