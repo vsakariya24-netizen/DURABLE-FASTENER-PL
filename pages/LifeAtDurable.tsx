@@ -1,64 +1,71 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-// 👇 1. Supabase Import
+import React, { useRef, useState, useEffect } from 'react';
+import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { 
-  Heart, Zap, Users, BookOpen, TrendingUp, Smile, 
-  Award, Globe, Coffee, ArrowRight, Star, ShieldCheck, 
-  CheckCircle, Target, Sparkles, Rocket
+  Heart, Zap, Users, AlertTriangle, CheckCircle, XCircle, 
+  Anchor, Coffee, Clock, TrendingUp, Award, ArrowRight, 
+  Star, ShieldCheck, Smile, Sun, ChevronRight
 } from 'lucide-react';
 
-// --- Animation Variants (Same as before) ---
-const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+// --- Animated Counter Component ---
+const Counter = ({ from, to, label }: { from: number; to: number; label: string }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true });
+  const [count, setCount] = useState(from);
+
+  useEffect(() => {
+    if (inView) {
+      let start = from;
+      const duration = 2000;
+      const incrementTime = (duration / (to - from)) * Math.abs(1);
+      const timer = setInterval(() => {
+        start += 1;
+        setCount(start);
+        if (start === to) clearInterval(timer);
+      }, incrementTime);
+      return () => clearInterval(timer);
+    }
+  }, [inView, from, to]);
+
+  return (
+    <div ref={ref} className="text-center p-6 border border-slate-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow">
+      <h3 className="text-5xl md:text-6xl font-black text-blue-900 font-sans mb-2">
+        {count}+
+      </h3>
+      <p className="text-sm font-bold tracking-widest uppercase text-slate-500">{label}</p>
+    </div>
+  );
 };
 
-const staggerContainer = {
-  visible: { transition: { staggerChildren: 0.1 } }
+// --- Marquee Component ---
+const Marquee = ({ text }: { text: string }) => {
+  return (
+    <div className="bg-slate-900 text-white py-3 overflow-hidden border-y border-slate-800 relative z-20">
+      <motion.div 
+        className="whitespace-nowrap flex gap-10 text-sm md:text-base font-bold uppercase tracking-widest"
+        animate={{ x: [0, -1000] }}
+        transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+      >
+        {Array(10).fill(text).map((t, i) => (
+          <span key={i} className="flex items-center gap-4 text-slate-400">
+            {t} <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  );
 };
 
-// --- Reusable Components (Same as before) ---
-const SectionHeader = ({ title, subtitle, align = "center", light = false }: { title: React.ReactNode, subtitle?: string, align?: "center" | "left", light?: boolean }) => (
-  <motion.div 
-    initial="hidden" 
-    whileInView="visible" 
-    viewport={{ once: true, margin: "-100px" }} 
-    variants={fadeInUp} 
-    className={`mb-16 ${align === "center" ? "text-center" : "text-left"}`}
-  >
-    <h2 className={`text-4xl md:text-6xl font-black mb-6 tracking-tight ${light ? "text-white" : "text-slate-900"}`}>
-      {title}
-    </h2>
-    <div className={`h-1.5 w-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-6 ${align === "center" ? "mx-auto" : ""}`}></div>
-    {subtitle && (
-      <p className={`text-xl max-w-3xl mx-auto font-medium leading-relaxed ${light ? "text-slate-300" : "text-slate-600"}`}>
-        {subtitle}
-      </p>
-    )}
-  </motion.div>
-);
-
-const GlassCard = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-  <motion.div 
-    variants={fadeInUp}
-    whileHover={{ y: -5 }}
-    className={`bg-white/80 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl p-8 ${className}`}
-  >
-    {children}
-  </motion.div>
-);
-
-// --- Main Component ---
+// --- Main Page ---
 
 const LifeAtDurable: React.FC = () => {
   const targetRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: targetRef, offset: ["start start", "end end"] });
-
-  // 👇 2. State for Gallery
+  const { scrollYProgress } = useScroll({ target: targetRef });
+  const heroY = useTransform(scrollYProgress, [0, 0.2], [0, 200]);
+  
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
 
-  // 👇 3. Fetch Gallery Data
+  // Fetch Gallery Data
   useEffect(() => {
     const fetchGallery = async () => {
       const { data } = await supabase
@@ -69,241 +76,392 @@ const LifeAtDurable: React.FC = () => {
       if (data && data.length > 0) {
         setGalleryItems(data);
       } else {
-        // Fallback agar database empty ho
+        // Fallback Data
         setGalleryItems([
-           { title: "Diwali Bash", image_url: "https://images.unsplash.com/photo-1514525253440-b393452e2729?w=800", tag: "Festival" },
-           { title: "Goa Retreat", image_url: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800", tag: "Trip" },
-           { title: "Box Cricket", image_url: "https://images.unsplash.com/photo-1593341646782-e0b495cffd32?w=800", tag: "Sports" }
+           { title: "Diwali Puja", image_url: "https://images.unsplash.com/photo-1605218439502-861c8340d042?w=800", tag: "Tradition", size: "large" },
+           { title: "Floor Action", image_url: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800", tag: "Grit", size: "small" },
+           { title: "Team Lunch", image_url: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800", tag: "Bonding", size: "small" },
+           { title: "Quality Check", image_url: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800", tag: "Focus", size: "wide" },
         ]);
       }
     };
     fetchGallery();
   }, []);
 
+  // --- NEW TIMELINE DATA FOR SECTION 4 ---
+  const timelineData = [
+    {
+      time: "09:00 AM",
+      title: "The Morning Spark",
+      desc: "It starts with a handshake. We check the safety gear, share a laugh, and set our intentions. It's not just about hitting targets; it's about returning home safe.",
+      icon: Sun,
+      color: "text-amber-500",
+      bgColor: "bg-amber-50",
+      img: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop" 
+    },
+    {
+      time: "11:30 AM",
+      title: "Symphony of Steel",
+      desc: "The floor comes alive. The rhythm of the machines is our heartbeat. Every screw produced is a promise of durability kept to a customer somewhere in the world.",
+      icon: Zap,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      img: "https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?q=80&w=800&auto=format&fit=crop" 
+    },
+    {
+      time: "04:00 PM",
+      title: "Chai, Smiles & Solutions",
+      desc: "The machines pause, but the minds don't. Over steaming cups of tea, hierarchies dissolve. The best ideas usually come from a joke cracked during this break.",
+      icon: Coffee,
+      color: "text-red-500",
+      bgColor: "bg-red-50",
+      img: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop" 
+    },
+    {
+      time: "06:00 PM",
+      title: "Pride in the Finish",
+      desc: "Silence returns. We wipe down the tools and look at the bins full of finished work. We leave tired, but with the satisfaction of a day well spent.",
+      icon: CheckCircle,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50",
+      img: "https://images.unsplash.com/photo-1469533778471-92a68acc3633?q=80&w=800&auto=format&fit=crop" 
+    }
+  ];
+
   return (
-    <div ref={targetRef} className="bg-slate-50 min-h-screen font-sans selection:bg-purple-500 selection:text-white overflow-x-hidden">
+    <div ref={targetRef} className="bg-slate-50 min-h-screen font-sans text-slate-900 overflow-x-hidden selection:bg-blue-600 selection:text-white">
 
-      {/* Hero Section - Same */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-slate-950 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/30 via-slate-950 to-black"></div>
-        <div className="absolute top-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10"></div>
-        
-        <div className="container mx-auto px-6 relative z-10 text-center">
-          <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
-            <motion.div variants={fadeInUp} className="inline-block py-2 px-6 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold tracking-widest uppercase text-sm mb-8">
-              Where People Grow
-            </motion.div>
-            <motion.h1 variants={fadeInUp} className="text-6xl md:text-8xl font-black leading-tight mb-6">
-              Life At Durable <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
-                Where People Come First.
-              </span>
-            </motion.h1>
-            <motion.p variants={fadeInUp} className="text-2xl text-slate-300 max-w-4xl mx-auto mb-10 font-light">
-              Where careers take flight. Where the future works. You don’t just work — you evolve.
-            </motion.p>
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-4">
-               <button className="bg-white text-slate-950 px-8 py-4 rounded-full font-bold text-lg hover:bg-cyan-50 transition-colors">Join The Future</button>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Our Culture - Same */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <SectionHeader 
-          title="Culture. Not Policy." 
-          subtitle="This is who we are. We believe in high trust, high ownership, and humanity over hierarchy."
-        />
-        <motion.div variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <motion.div variants={fadeInUp} className="md:col-span-2 rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-10 flex flex-col justify-between relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-110 transition-transform duration-700"><Heart size={240} fill="currentColor" /></div>
-             <div><h3 className="text-3xl font-bold mb-4">People-First Mindset</h3><p className="text-blue-100 text-lg max-w-md">We value mental wellness and genuine connections over metrics. You are a person here, not a resource.</p></div>
-          </motion.div>
-          <GlassCard className="bg-slate-100/50">
-             <ShieldCheck className="text-green-500 mb-4" size={40} />
-             <h3 className="text-xl font-bold mb-2">High Trust</h3>
-             <p className="text-slate-600 text-sm">We don't micromanage. We give you the keys and let you drive.</p>
-          </GlassCard>
-          <GlassCard className="bg-slate-100/50">
-             <Users className="text-purple-500 mb-4" size={40} />
-             <h3 className="text-xl font-bold mb-2">Zero Politics</h3>
-             <p className="text-slate-600 text-sm">No ego. No toxicity. Just a team that feels like family.</p>
-          </GlassCard>
-          <motion.div variants={fadeInUp} className="md:col-span-2 rounded-[2.5rem] bg-slate-900 text-white p-10 flex items-center justify-between relative overflow-hidden">
-             <div className="relative z-10"><h3 className="text-2xl font-bold mb-2">Transparent Leadership</h3><p className="text-slate-400">Open doors. Open conversations. Learning over blaming.</p></div>
-             <div className="hidden md:block bg-white/10 p-4 rounded-full"><Sparkles className="text-yellow-400" /></div>
-          </motion.div>
+      {/* =========================================
+          1. HERO SECTION: FIRST EMOTIONAL HOOK
+      ========================================= */}
+      <section className="relative h-[95vh] flex items-center justify-center overflow-hidden bg-slate-900">
+        <motion.div style={{ y: heroY, scale: 1.1 }} className="absolute inset-0 opacity-50">
+             {/* Use a real-looking team photo here */}
+             <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop" alt="Durable Team" className="w-full h-full object-cover"/>
+             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
         </motion.div>
-      </section>
 
-      {/* Durable Way - Same */}
-      <section className="py-24 bg-white border-y border-slate-100">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-            <h2 className="text-4xl md:text-7xl font-black text-slate-900 leading-tight mb-8">
-              IDEAS OVER <span className="text-blue-600">TITLES.</span>
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-left">
-              {[
-                { title: "Micromanage Less", desc: "We push people to rise, not to fit in." },
-                { title: "Listen More", desc: "We encourage young minds and fresh thoughts." },
-                { title: "Bold Experiments", desc: "If it makes sense, ship it. Your creativity shapes our future." }
-              ].map((item, i) => (
-                <div key={i} className="border-l-4 border-slate-900 pl-6">
-                   <h4 className="text-2xl font-bold mb-2">{item.title}</h4>
-                   <p className="text-slate-500">{item.desc}</p>
-                </div>
-              ))}
+        <div className="container mx-auto px-6 relative z-10 text-center">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-md mb-8">
+               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+               <span className="text-xs font-bold text-white uppercase tracking-widest">Life at Durable</span>
             </div>
+
+            <h1 className="text-5xl md:text-8xl font-black text-white leading-[1.1] tracking-tight mb-8">
+                NOT JUST A DUTY. <br/>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-200">A SHARED JOURNEY.</span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto font-light leading-relaxed mb-12">
+                "Here, we don't just manufacture fasteners. We manufacture careers, confidence, and character."
+            </p>
+
+            <motion.button whileHover={{ scale: 1.05 }} className="bg-blue-600 text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/50">
+               See Open Positions
+            </motion.button>
+          </motion.div>
         </div>
       </section>
 
-      {/* =================================================================
-          4. STAFF ACTIVITIES (DYNAMIC GALLERY)
-      ================================================================= */}
-      <section className="py-24 bg-slate-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 mb-12">
-           <SectionHeader title="Work Hard. Celebrate Harder." subtitle="Great teams grow through great memories. Every celebration becomes a story." align="left" />
-        </div>
-        
-        {/* 👇 4. Use galleryItems State here */}
-        <div className="flex gap-6 overflow-x-auto pb-12 px-6 snap-x hide-scrollbar max-w-[100vw]">
-          {galleryItems.map((item, i) => (
-             <motion.div 
-               key={item.id || i} // Use ID from DB
-               whileHover={{ scale: 0.98 }}
-               className="min-w-[300px] md:min-w-[400px] h-[500px] rounded-[2rem] relative overflow-hidden group snap-center shadow-lg"
-             >
-                {/* Use image_url from DB */}
-                <img src={item.image_url} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
-                <div className="absolute bottom-8 left-8 text-white">
-                   <span className="text-xs font-bold bg-white/20 backdrop-blur px-3 py-1 rounded-full uppercase mb-2 inline-block">
-                     {item.tag}
-                   </span>
-                   <h3 className="text-3xl font-bold">{item.title}</h3>
-                </div>
-             </motion.div>
-          ))}
-        </div>
-      </section>
+      <Marquee text="Respect • Integrity • Growth • Safety • Brotherhood • Excellence • " />
 
-      {/* Rest of the sections (Academy, Spotlight, etc.) remain static as per request for now */}
-      <section className="py-24 bg-slate-900 text-white relative">
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-           <div className="flex flex-col md:flex-row gap-16 items-center">
-              <div className="md:w-1/2">
-                 <div className="flex items-center gap-2 text-yellow-400 font-bold tracking-widest uppercase mb-4">
-                    <BookOpen size={20}/> Durable Learning Academy
-                 </div>
-                 <h2 className="text-5xl font-black mb-6">Today's Skills Create <br /><span className="text-indigo-400">Tomorrow's Leaders.</span></h2>
-                 <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-                   Stagnation is the enemy. Here, you don't just do your job — you upgrade yourself. We map the path from Junior to Leader.
-                 </p>
-                 <ul className="space-y-4">
-                    {["Skill Stacking Sessions", "Leadership Training", "Career Roadmap Planning", "Mentorship by Seniors"].map((item, i) => (
-                       <li key={i} className="flex items-center gap-3 text-lg">
-                          <CheckCircle className="text-green-400" size={20} /> {item}
-                       </li>
-                    ))}
-                 </ul>
-              </div>
-              <div className="md:w-1/2">
-                 <div className="bg-gradient-to-tr from-indigo-500 to-purple-600 p-1 rounded-3xl rotate-2 hover:rotate-0 transition-transform duration-500">
-                    <div className="bg-slate-900 rounded-[1.3rem] p-8">
-                       <h3 className="text-2xl font-bold mb-6">Course Offerings</h3>
-                       <div className="space-y-4">
-                          {[1,2,3].map((_, i) => (
-                            <div key={i} className="bg-white/5 p-4 rounded-xl flex items-center gap-4">
-                               <div className="bg-indigo-500/20 p-3 rounded-full text-indigo-400"><Target size={20}/></div>
-                               <div>
-                                  <div className="font-bold">Module {i+1}: Advanced Strategy</div>
-                                  <div className="text-xs text-slate-500">Duration: 4 Weeks • Certification Incl.</div>
-                               </div>
-                            </div>
-                          ))}
-                       </div>
-                    </div>
-                 </div>
-              </div>
+      {/* =========================================
+          2. WHAT MAKES DURABLE DIFFERENT (Core Soul)
+      ========================================= */}
+      <section className="py-24 px-6 bg-white">
+        <div className="container mx-auto max-w-7xl">
+           <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-4">OUR DNA</h2>
+              <p className="text-slate-500 text-lg">Four pillars that hold this company together.</p>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                 { icon: Zap, color: "text-amber-500", title: "We Value Thinking", text: "Ideas don’t need permission. If it improves quality or safety, we listen." },
+                 { icon: Anchor, color: "text-blue-600", title: "We Respect Work", text: "Whether on the shop floor or the office, every role builds the same dream." },
+                 { icon: TrendingUp, color: "text-green-600", title: "We Grow Together", text: "Learning is part of our daily work—not a yearly formality." },
+                 { icon: Heart, color: "text-red-500", title: "We Care Beyond Work", text: "We celebrate wins. We support during tough days. We are a family." }
+              ].map((item, i) => (
+                 <motion.div 
+                   key={i}
+                   initial={{ opacity: 0, y: 20 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   viewport={{ once: true }}
+                   transition={{ delay: i * 0.1 }}
+                   className="bg-slate-50 p-8 rounded-3xl hover:bg-white hover:shadow-xl transition-all border border-slate-100"
+                 >
+                    <item.icon size={40} className={`mb-6 ${item.color}`} />
+                    <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                    <p className="text-slate-600 leading-relaxed">{item.text}</p>
+                 </motion.div>
+              ))}
            </div>
         </div>
       </section>
 
-      {/* How We Care */}
-      <section className="py-24 bg-slate-50">
-         <div className="max-w-7xl mx-auto px-6">
-            <SectionHeader title="Your Growth. Our Priority." subtitle="We place humans above everything else. We build individuals who become future leaders." />
+      {/* =========================================
+          3. REAL STORIES (Emotional Credibility)
+      ========================================= */}
+      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+         <div className="container mx-auto px-6 relative z-10">
+            <h2 className="text-4xl md:text-5xl font-black mb-16 text-center">STORIES FROM INSIDE</h2>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-               <div className="bg-white p-10 rounded-3xl shadow-sm border border-slate-100">
-                  <h3 className="text-3xl font-bold mb-8 flex items-center gap-3"><Heart className="text-red-500"/> How We Care</h3>
-                  <div className="grid grid-cols-1 gap-6">
-                     {["Professional Growth & Skill Building", "Emotional Well-being Support", "Healthy Work Culture", "Clear Career Roadmaps"].map((item, i) => (
-                        <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50">
-                           <div className="w-2 h-2 rounded-full bg-slate-900"></div><span className="font-medium text-lg text-slate-700">{item}</span>
-                        </div>
-                     ))}
-                  </div>
-               </div>
-               <div className="bg-slate-900 text-white p-10 rounded-3xl shadow-xl">
-                  <h3 className="text-3xl font-bold mb-8 flex items-center gap-3"><Smile className="text-yellow-400"/> The Vibe Check</h3>
-                  <div className="space-y-6">
-                     <div className="flex gap-4"><CheckCircle className="text-green-400 shrink-0 mt-1" /><div><h4 className="font-bold text-lg">Respect is Default</h4><p className="text-slate-400 text-sm">No shouting. No blaming. Discipline with kindness.</p></div></div>
-                     <div className="flex gap-4"><CheckCircle className="text-green-400 shrink-0 mt-1" /><div><h4 className="font-bold text-lg">Zero Politics Policy</h4><p className="text-slate-400 text-sm">We don't tolerate toxicity. Mutual trust at every level.</p></div></div>
-                     <div className="flex gap-4"><CheckCircle className="text-green-400 shrink-0 mt-1" /><div><h4 className="font-bold text-lg">Calm & Professional</h4><p className="text-slate-400 text-sm">A supportive environment where you can focus.</p></div></div>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </section>
-
-      {/* Spotlight */}
-      <section className="py-24 px-6 bg-white relative">
-         <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-black mb-12 text-center">Real Stories. Real Growth.</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               {[{ name: "Rahul M.", role: "Production Lead", quote: "I joined as a trainee. In 3 years, I'm leading a team of 40. Durable saw potential in me I didn't see in myself." }, { name: "Sneha P.", role: "Sales Executive", quote: "The culture here is different. You aren't just an employee number. My ideas actually get implemented." }].map((story, i) => (
-                  <motion.div key={i} whileHover={{ y: -5 }} className="bg-slate-50 p-8 rounded-3xl border border-slate-100 relative">
-                     <div className="text-6xl text-blue-200 font-serif absolute top-4 right-6">"</div>
-                     <p className="text-xl text-slate-700 font-medium mb-6 relative z-10 leading-relaxed">{story.quote}</p>
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full"></div>
-                        <div><div className="font-bold text-slate-900">{story.name}</div><div className="text-sm text-slate-500">{story.role}</div></div>
+               {/* Story 1 */}
+               <motion.div initial={{ x: -50, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: true }} className="bg-white/5 border border-white/10 p-10 rounded-3xl backdrop-blur-sm">
+                  <div className="flex items-center gap-4 mb-6">
+                     <div className="w-16 h-16 rounded-full bg-slate-200 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt="Ramesh" className="w-full h-full object-cover"/>
                      </div>
-                  </motion.div>
-               ))}
+                     <div>
+                        <h4 className="font-bold text-xl">Ramesh Bhai</h4>
+                        <p className="text-blue-400 text-sm">Production Team • Joined 2019</p>
+                     </div>
+                  </div>
+                  <p className="text-lg text-slate-300 italic">
+                     "I joined as a helper. Today, I handle operations independently. Durable gave me trust before I had confidence. They taught me that my background doesn't matter, my hard work does."
+                  </p>
+               </motion.div>
+
+               {/* Story 2 */}
+               <motion.div initial={{ x: 50, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: true }} className="bg-white/5 border border-white/10 p-10 rounded-3xl backdrop-blur-sm">
+                  <div className="flex items-center gap-4 mb-6">
+                     <div className="w-16 h-16 rounded-full bg-slate-200 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150" alt="Priya" className="w-full h-full object-cover"/>
+                     </div>
+                     <div>
+                        <h4 className="font-bold text-xl">Priya Ben</h4>
+                        <p className="text-blue-400 text-sm">Quality Control • Joined 2021</p>
+                     </div>
+                  </div>
+                  <p className="text-lg text-slate-300 italic">
+                     "In other companies, QC is just a department. Here, it is a mindset. I am empowered to stop the production line if I see a defect. That respect for quality keeps me here."
+                  </p>
+               </motion.div>
             </div>
          </div>
       </section>
 
-      {/* Gen Z */}
-      <section className="py-24 bg-black text-white px-6 overflow-hidden">
-         <div className="max-w-7xl mx-auto text-center">
-            <h2 className="text-5xl md:text-8xl font-black mb-12">BUILT FOR <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-green-500">GEN-Z</span></h2>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12">We understand this generation. We give respect, we build growth, and we offer purpose.</p>
-            <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
-               {["🚀 Fast Promotion Cycles", "💻 Digital First", "🌎 Remote Friendly", "🎨 Creative Freedom", "🧠 Mental Health Leaves", "⏰ Flexible Hours", "🔥 Purpose Driven", "✅ Respect", "📈 Limitless Growth"].map((tag, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, scale: 0.5 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }} whileHover={{ scale: 1.1, rotate: Math.random() * 6 - 3 }} className="px-6 py-3 rounded-full border border-white/20 text-lg font-bold bg-white/5 hover:bg-lime-400 hover:text-black hover:border-lime-400 transition-all cursor-default select-none">
-                     {tag}
-                  </motion.div>
-               ))}
+      {/* =========================================
+          4. A DAY AT DURABLE (REDESIGNED: VISUAL STORYBOARD)
+      ========================================= */}
+      <section className="py-24 bg-gradient-to-b from-slate-50 to-white overflow-hidden">
+        <div className="container mx-auto px-6 max-w-6xl">
+          
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">
+              THE PULSE OF <span className="text-blue-600">PRODUCTION</span>
+            </h2>
+            <p className="text-slate-500 max-w-2xl mx-auto text-lg leading-relaxed">
+              Every day is a story of iron will, human connection, and the pursuit of perfection.
+            </p>
+          </div>
+
+          <div className="relative">
+            {/* The Central Line (Hidden on mobile) */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-amber-200 via-blue-200 to-emerald-200 hidden md:block rounded-full opacity-50"></div>
+
+            <div className="space-y-24">
+              {timelineData.map((item, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  className={`relative flex flex-col md:flex-row gap-8 md:gap-0 items-center ${i % 2 !== 0 ? 'md:flex-row-reverse' : ''}`}
+                >
+                  
+                  {/* 1. Image Side (Visual Emotion) */}
+                  <div className="w-full md:w-1/2 px-4 md:px-12 group">
+                    <div className="relative overflow-hidden rounded-2xl shadow-2xl transform transition-transform duration-500 hover:-translate-y-2">
+                      <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10`} />
+                      <img 
+                        src={item.img} 
+                        alt={item.title} 
+                        className="w-full h-64 md:h-80 object-cover transform group-hover:scale-110 transition-transform duration-700" 
+                      />
+                      {/* Glassmorphism Time Badge */}
+                      <div className="absolute bottom-6 left-6 z-20 bg-white/20 backdrop-blur-md border border-white/30 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                        <item.icon size={16} className="text-white" />
+                        <span className="text-white font-bold text-sm tracking-wide">{item.time}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Center Marker (The Heartbeat) */}
+                  <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:flex items-center justify-center z-20">
+                    <div className={`w-12 h-12 rounded-full border-4 border-white shadow-lg flex items-center justify-center ${item.bgColor}`}>
+                      <item.icon size={20} className={item.color} />
+                    </div>
+                  </div>
+
+                  {/* 3. Text Side (The Story) */}
+                  <div className="w-full md:w-1/2 px-4 md:px-12 text-center md:text-left">
+                    <div className={`p-6 md:p-8 rounded-3xl transition-all duration-300 hover:bg-white hover:shadow-xl border border-transparent hover:border-slate-100`}>
+                      <h3 className="text-2xl font-bold text-slate-800 mb-3 flex items-center justify-center md:justify-start gap-3">
+                        {item.title}
+                      </h3>
+                      <p className="text-slate-600 leading-relaxed text-lg">
+                        {item.desc}
+                      </p>
+                      
+                      {/* Special Badge for Tea Time */}
+                      {item.title.includes("Chai") && (
+                         <div className="mt-4 flex items-center justify-center md:justify-start gap-2 text-sm text-red-500 font-medium bg-red-50 inline-flex px-3 py-1 rounded-full">
+                            <Heart size={14} className="fill-red-500 animate-pulse" />
+                            <span>Team Favorite Time</span>
+                         </div>
+                      )}
+                    </div>
+                  </div>
+
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================
+          5. GROWTH & OPPORTUNITIES (Path not Promise)
+      ========================================= */}
+      <section className="py-24 bg-blue-50">
+         <div className="container mx-auto px-6 max-w-6xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+               <div>
+                  <span className="text-blue-600 font-bold uppercase tracking-widest text-sm">Your Career Path</span>
+                  <h2 className="text-4xl md:text-5xl font-black text-slate-900 mt-2 mb-6">GROWTH IS NOT ABOUT YEARS. <br/> IT'S ABOUT <span className="text-blue-600">WILL.</span></h2>
+                  <p className="text-slate-600 text-lg mb-8">
+                     We don't believe in waiting for "your turn." If you show interest, we teach you.
+                  </p>
+                  <ul className="space-y-4">
+                     {[
+                        "Technical training on latest CNC/Header machines",
+                        "Leadership workshops for junior managers",
+                        "English and Soft-skills improvement",
+                        "Direct mentorship from senior leadership"
+                     ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-blue-100">
+                           <Award className="text-blue-500 shrink-0" size={20} />
+                           <span className="font-bold text-slate-700">{item}</span>
+                        </li>
+                     ))}
+                  </ul>
+               </div>
+               
+               {/* Impact Numbers */}
+               <div className="grid grid-cols-1 gap-6">
+                  <Counter from={0} to={85} label="Team Members" />
+                  <Counter from={0} to={12} label="Promotions Last Year" />
+                  <Counter from={0} to={100} label="% Support for Learning" />
+               </div>
             </div>
          </div>
       </section>
 
-      {/* Final Closing */}
-      <section className="py-32 relative overflow-hidden bg-white">
-        <div className="container mx-auto px-6 text-center relative z-10">
-           <h2 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tighter">
-             WE DON'T JUST BUILD SCREWS. <br/>
-             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">WE BUILD PEOPLE.</span>
-           </h2>
-           <p className="text-2xl text-slate-500 mb-12">
-             We build leaders. We build futures. <br/> And we want YOU to be a part of this journey.
-           </p>
-           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-slate-900 text-white px-12 py-6 rounded-full text-xl font-bold hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-300 flex items-center gap-3 mx-auto">
-             Apply Now <Rocket />
-           </motion.button>
+      {/* =========================================
+          6 & 7. CULTURE & LIFE BEYOND WORK (Gallery)
+      ========================================= */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <h2 className="text-4xl font-black text-slate-900 mb-12 text-center">LIFE BEYOND THE MACHINES</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[250px]">
+            {galleryItems.map((item, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className={`relative group overflow-hidden rounded-2xl ${
+                  item.size === 'large' ? 'md:col-span-2 md:row-span-2' : 
+                  item.size === 'wide' ? 'md:col-span-2' : ''
+                }`}
+              >
+                <img 
+                  src={item.image_url} 
+                  alt={item.title} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+                  <span className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-1">{item.tag}</span>
+                  <h4 className="text-white text-xl font-bold">{item.title}</h4>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================
+          8. THE FILTER (Who is this for?)
+      ========================================= */}
+      <section className="py-24 bg-slate-100">
+        <div className="container mx-auto px-6 max-w-5xl">
+           <div className="bg-white rounded-[3rem] p-8 md:p-16 shadow-2xl relative overflow-hidden">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
+                 
+                 {/* NOT FOR YOU */}
+                 <div className="space-y-6">
+                    <h3 className="text-2xl font-black text-slate-400 flex items-center gap-2">
+                       <XCircle className="text-red-400" /> WE ARE <span className="text-red-500 underline">NOT</span> FOR YOU
+                    </h3>
+                    <ul className="space-y-4">
+                       {["If you prefer comfort over growth.", "If you hide mistakes.", "If you say 'That's not my job'."].map((t, i) => (
+                          <li key={i} className="flex gap-3 text-slate-500">
+                             <span className="w-1.5 h-1.5 bg-red-300 rounded-full mt-2.5 shrink-0"></span> {t}
+                          </li>
+                       ))}
+                    </ul>
+                 </div>
+
+                 {/* FOR YOU */}
+                 <div className="space-y-6">
+                    <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                       <CheckCircle className="text-green-500" /> YOU BELONG <span className="text-green-500 underline">HERE</span>
+                    </h3>
+                    <ul className="space-y-4">
+                       {["If you are obsessed with quality.", "If you are hungry to learn.", "If you treat the factory like home."].map((t, i) => (
+                          <li key={i} className="flex gap-3 text-slate-800 font-bold">
+                             <CheckCircle className="text-green-500 w-5 h-5 shrink-0" /> {t}
+                          </li>
+                       ))}
+                    </ul>
+                 </div>
+
+             </div>
+           </div>
+        </div>
+      </section>
+
+      {/* =========================================
+          CTA: JOIN THE BRIGADE
+      ========================================= */}
+      <section className="py-32 bg-blue-900 text-white text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+        <div className="container mx-auto px-6 relative z-10">
+           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+              <h2 className="text-4xl md:text-7xl font-black mb-6">
+                 THIS FEELS LIKE A PLACE <br/>
+                 <span className="text-blue-300">I WANT TO GROW.</span>
+              </h2>
+              <p className="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">
+                 If you just said that to yourself, we want to meet you.
+              </p>
+              
+              <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
+                <button className="bg-white text-blue-900 px-10 py-5 rounded-full text-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-3">
+                  View Open Positions <ArrowRight size={20}/>
+                </button>
+                <button className="text-blue-200 hover:text-white font-medium underline underline-offset-4 transition-all">
+                  Walk-in Opportunities
+                </button>
+              </div>
+           </motion.div>
         </div>
       </section>
 
