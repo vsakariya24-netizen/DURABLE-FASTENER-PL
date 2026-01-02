@@ -29,6 +29,7 @@ const Navbar: React.FC = () => {
     { name: 'Blog', path: '/blog', icon: <BookOpen size={18} /> },
      { name: 'Life at Durable', path: '/life-at-durable', icon: <Heart size={18} /> },
     { name: 'Careers', path: '/careers', icon: <Briefcase size={18} /> },
+     { name: 'Contact Us', path:'/Contact', icon: <Briefcase size={18} /> }
   ];
 
   return (

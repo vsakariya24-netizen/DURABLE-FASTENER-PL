@@ -92,6 +92,8 @@ const Footer: React.FC = () => {
                 { name: 'Blog', path: '/Blog' },
                  { name: 'Life at Durable', path: '/life-at-durable'},
                 { name: 'Career', path: '/Careers' },
+                { name: 'Contact Us', path: '/Contact' },
+
                 
               ].map((link, idx) => (
                 <li key={idx}>
