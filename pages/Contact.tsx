@@ -164,7 +164,7 @@ const Contact: React.FC = () => {
                     icon={<Phone size={22} />} 
                     colorClass="bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500"
                     title="Call Us"
-                    content="+91 87587 00709"
+                    content="+91 87587 00704/+91 87587 00709"
                     subContent="Mon-Sat, 9am - 7pm"
                 />
 
