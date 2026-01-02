@@ -90,6 +90,7 @@ const Footer: React.FC = () => {
                 { name: 'Manufacturing', path: '/manufacturing' },
                 { name: 'OEM Platform', path: '/oem-platform' },
                 { name: 'Blog', path: '/Blog' },
+                { name: 'Life at Durable', path: '/life-at-durable'},
                 { name: 'Career', path: '/Careers' },
                 
               ].map((link, idx) => (
