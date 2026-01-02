@@ -8,7 +8,6 @@ import {
   Headset
 } from 'lucide-react';
 
-
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -31,7 +30,7 @@ const Navbar: React.FC = () => {
     { name: 'Blog', path: '/blog', icon: <BookOpen size={18} /> },
      { name: 'Life at Durable', path: '/life-at-durable', icon: <Heart size={18} /> },
     { name: 'Careers', path: '/careers', icon: <Briefcase size={18} /> },
-      { name: 'Contact Us', path:'/Contact', icon: <Headset size={18} /> }
+    { name: 'Contact Us', path:'/Contact', icon: <Headset size={18} /> }
   ];
 
   return (
