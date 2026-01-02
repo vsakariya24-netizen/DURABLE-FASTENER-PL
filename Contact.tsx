@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion'; // npm install framer-motion
 import { 
   Mail, Phone, MapPin, Send, Loader2, 
-  Globe, Clock, ArrowRight, Building2 
+  Globe, Clock, Briefcase, Building2 
 } from 'lucide-react';
 
 const Contact: React.FC = () => {
@@ -164,7 +164,7 @@ const Contact: React.FC = () => {
                     icon={<Phone size={22} />} 
                     colorClass="bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500"
                     title="Call Us"
-                    content="+91 87587 00709"
+                    content="+91 87587 00704/+91 87587 00709"
                     subContent="Mon-Sat, 9am - 7pm"
                 />
 
@@ -217,7 +217,7 @@ const Contact: React.FC = () => {
                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Message Sent Successfully!</h3>
                  <p className="text-slate-500 mb-8">Thank you for contacting Durable Fasteners. Our sales team will review your inquiry and get back to you within 24 hours.</p>
                  <button onClick={() => setSubmitted(false)} className="text-blue-600 font-semibold hover:text-blue-800 flex items-center gap-2">
-                    Send another message <ArrowRight size={16} />
+                    Send another message <Briefcase size={16} />
                  </button>
               </motion.div>
             ) : (
@@ -266,11 +266,11 @@ const Contact: React.FC = () => {
                     <motion.button 
                         type="submit" 
                         disabled={loading}
-                        whileHover={{ scale: 1.02, backgroundColor: "#1e293b" }}
+                        whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
-                        className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                    {loading ? <Loader2 className="animate-spin" /> : <>Send Message <ArrowRight size={20} /></>}
+                    {loading ? <Loader2 className="animate-spin" /> : <>Send Message <Briefcase size={20} /></>}
                     </motion.button>
                     <p className="text-center text-slate-400 text-xs mt-4">
                         By submitting this form, you agree to our privacy policy.
@@ -282,13 +282,14 @@ const Contact: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* --- Section 3: Wide Map --- */}
+      {/* --- Section 3: Wide Map (Now Colorful & Taller) --- */}
       <motion.div 
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1 }}
-        className="w-full h-96 bg-slate-200 grayscale filter contrast-[1.1] relative border-t border-slate-300"
+        // CHANGED: Removed grayscale, increased height to 500px, added distinct border
+        className="w-full h-[500px] bg-white relative border-t-4 border-slate-900 shadow-2xl"
       >
         <iframe 
             width="100%" 
@@ -298,8 +299,8 @@ const Contact: React.FC = () => {
             frameBorder="0" 
             scrolling="no" 
             title="Durable Fastener Location"
+            // No filter applied here, so it will be full color
         ></iframe>
-        <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-gray-50 to-transparent pointer-events-none"></div>
       </motion.div>
     </div>
   );
@@ -332,7 +333,7 @@ const InputGroup = ({ label, name, type="text", value, onChange, placeholder }: 
         <motion.div whileTap={{ scale: 0.99 }}>
             <input 
                 type={type} name={name} required value={value} onChange={onChange}
-                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent outline-none transition-all duration-200 font-medium text-slate-900 placeholder-gray-400" 
+                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent outline-none transition-all duration-200 font-medium text-slate-900 placeholder-placeholder" 
                 placeholder={placeholder} 
             />
         </motion.div>
