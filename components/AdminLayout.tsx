@@ -51,11 +51,7 @@ const AdminLayout = () => {
       icon: <Briefcase size={20} /> 
     },
     // menuItems array mein ye add karein:
-{ 
-  path: '/admin/oem-manager', 
-  label: 'OEM Specs & Logistics', 
-  icon: <Settings size={20} /> 
-},
+
 { 
   path: '/admin/manage-oem', label: 'OEM Specs & Logistics', icon: <Settings size={20} /> 
 },

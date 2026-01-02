@@ -107,17 +107,35 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <main className="bg-white overflow-x-hidden font-sans selection:bg-yellow-400 selection:text-black">
+   <main role="main" className="bg-white overflow-x-hidden font-sans
+ selection:bg-yellow-400 selection:text-black">
       <Helmet>
-        <title>Durable Fastener | Best Industrial Fastener Manufacturer in Rajkot</title>
-        <meta name="description" content="Durable Fastener Pvt. Ltd. - ISO 9001:2015 certified manufacturer of high-tensile hardware, automotive components and door fittings in Gujarat, India." />
-        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-      </Helmet>
+  <title>Durable Fastener | Industrial Fastener Manufacturer in India</title>
+  <meta
+    name="description"
+    content="Durable Fastener is a leading ISO 9001:2015 certified manufacturer of industrial fasteners, drywall screws, and automotive components in India."
+  />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://durablefastener.com/" />
+
+  {/* Open Graph */}
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Durable Fastener – Industrial Fastener Manufacturer" />
+  <meta property="og:description" content="High-quality fasteners for construction, automotive & industrial use." />
+  <meta property="og:url" content="https://durablefastener.com" />
+  <meta property="og:image" content="https://durablefastener.com/og-image.jpg" />
+
+  {/* Twitter */}
+  <meta name="twitter:card" content="summary_large_image" />
+</Helmet>
+
 
       {/* 1. HERO SECTION */}
 <section className="relative h-screen min-h-[700px] flex bg-[#0F1115] text-white overflow-hidden">
         <div className="absolute inset-0" style={{ transform: `translateY(${offsetY * 0.5}px)` }}>
-            <img src={siteContent.hero_bg} className="w-full h-full object-cover grayscale opacity-50" alt="Durable Fastener Factory Rajkot" />
+            <img
+  src={siteContent.hero_bg} className="w-full h-full object-cover grayscale opacity-50"  alt="Durable Fastener manufacturing unit in Rajkot Gujarat"
+  loading="lazy" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
 
@@ -164,7 +182,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* 3. ABOUT SECTION */}
-      <section className="py-24">
+      <section className="py-24" aria-labelledby="about-heading">
         <div className="max-w-7xl mx-auto px-4 flex flex-col lg:flex-row items-center gap-16">
           <div className="lg:w-1/2">
             <span className="text-blue-600 font-bold tracking-wider uppercase text-sm">Industrial Fastener Experts</span>
