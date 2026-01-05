@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Calendar, User, ArrowRight, Loader } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import { Helmet } from 'react-helmet-async';
 // Helper for Badge Colors based on category
 const getBadgeStyles = (category: string) => {
   if (category === 'Industry Trends') return 'bg-blue-50 text-blue-700 border-blue-100';
@@ -41,7 +41,59 @@ const Blog = () => {
 
   return (
     <div className="bg-white font-sans selection:bg-yellow-200">
-      
+      <Helmet>
+        {/* 1. Authority Title */}
+        <title>Fastener Industry Blog | Technical Guides & News - Durable Fastener</title>
+        
+        <meta 
+          name="description" 
+          content="Stay updated with the latest trends in fastener manufacturing, technical guides on screw grades (8.8, 10.9), and company news from Durable Fastener Pvt Ltd, Rajkot." 
+        />
+        
+        <meta 
+          name="keywords" 
+          content="fastener blog, screw manufacturing guide, industrial fasteners news, bolt tensile strength guide, durable fastener updates" 
+        />
+
+        {/* 2. DYNAMIC BLOG SCHEMA (Ye aapke Supabase data se automatic banega) */}
+        {!loading && posts.length > 0 && (
+          <script type="application/ld+json">
+            {`
+              {
+                "@context": "https://schema.org",
+                "@type": "Blog",
+                "name": "Durable Fastener Insights",
+                "url": "https://durablefastener.com/blog",
+                "description": "Expert insights on industrial fasteners manufacturing and engineering.",
+                "publisher": {
+                  "@type": "Organization",
+                  "name": "Durable Fastener Pvt Ltd",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://durablefastener.com/durablefastener.png"
+                  }
+                },
+                "blogPost": [
+                  ${posts.map(post => `
+                    {
+                      "@type": "BlogPosting",
+                      "headline": "${post.title.replace(/"/g, '\\"')}",
+                      "description": "${post.excerpt ? post.excerpt.replace(/"/g, '\\"') : 'Read more about this topic.'}",
+                      "image": "${post.image_url || 'https://durablefastener.com/default-blog.jpg'}",
+                      "datePublished": "${post.created_at}",
+                      "author": {
+                        "@type": "Person",
+                        "name": "${post.author || 'Editorial Team'}"
+                      },
+                      "url": "https://durablefastener.com/blog/${post.id}"
+                    }
+                  `).join(',')}
+                ]
+              }
+            `}
+          </script>
+        )}
+      </Helmet>
       {/* Header Section */}
       <div className="text-center pt-32 pb-16 px-4 bg-gray-50">
         <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">Insights & Updates</h1>

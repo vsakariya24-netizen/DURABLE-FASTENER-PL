@@ -5,7 +5,7 @@ import {
   ShieldCheck, CheckCircle2, Package, Settings, 
   Activity, ArrowRight, FileCheck, Scale, Play, Video
 } from 'lucide-react';
-
+import { Helmet } from 'react-helmet-async';
 // --- REUSABLE ANIMATION COMPONENT ---
 const RevealOnScroll: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ 
   children, 
@@ -51,7 +51,91 @@ const Manufacturing: React.FC = () => {
   return (
     // Base font size increased and color lightened for readability
     <div className="bg-[#0f172a] min-h-screen pt-20 font-sans text-slate-200 overflow-x-hidden selection:bg-blue-500 selection:text-white">
-      
+      <Helmet>
+        {/* 1. Industrial & Factory Specific Title */}
+        <title>fastener manufacturing factory|Durable Fastener</title>
+        
+        <meta 
+          name="description" 
+          content="Inside Durable Fastener's Rajkot factory: Explore our Cold Forging, Thread Rolling, and Heat Treatment lines. 400T+ monthly capacity with ISO 9001:2015 QC lab." 
+        />
+        
+        <meta 
+          name="keywords" 
+          content="fastener manufacturing process, screw factory rajkot, cold forging facility india, bolt manufacturing plant, heat treatment rajkot, thread rolling jobwork" 
+        />
+
+        {/* 2. 'HOW TO' SCHEMA (Process samjhane ke liye) */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "HowTo",
+              "name": "How Industrial Fasteners are Manufactured",
+              "description": "Step-by-step industrial process of manufacturing high-tensile screws and bolts at Durable Fastener Pvt Ltd.",
+              "totalTime": "P2D",
+              "supply": [
+                { "@type": "HowToSupply", "name": "Steel Wire Rod (10B21, SAE 1010)" }
+              ],
+              "tool": [
+                { "@type": "HowToTool", "name": "Cold Heading Machine" },
+                { "@type": "HowToTool", "name": "Thread Rolling Machine" },
+                { "@type": "HowToTool", "name": "Mesh Belt Furnace" }
+              ],
+              "step": [
+                {
+                  "@type": "HowToStep",
+                  "name": "Cold Heading",
+                  "text": "The raw wire is cut and formed into the screw shape using 5-station bolt formers."
+                },
+                {
+                  "@type": "HowToStep",
+                  "name": "Thread Rolling",
+                  "text": "Threads are formed onto the screw blank using high-pressure dies."
+                },
+                {
+                  "@type": "HowToStep",
+                  "name": "Heat Treatment",
+                  "text": "Screws are hardened in a continuous mesh belt furnace to achieve Grade 8.8 or 10.9."
+                },
+                {
+                  "@type": "HowToStep",
+                  "name": "Surface Finishing",
+                  "text": "Zinc or Phosphate coating is applied for corrosion resistance."
+                }
+              ]
+            }
+          `}
+        </script>
+
+        {/* 3. ITEM LIST SCHEMA (Machinery List ke liye) */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              "name": "Factory Machinery Inventory",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Multi-Station Cold Headers (8 Units)"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "High-Speed Thread Rollers (18 Units)"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": "Optical Sorting Machines (3 Units)"
+                }
+              ]
+            }
+          `}
+        </script>
+      </Helmet>
       {/* ================= 1. HERO SECTION ================= */}
       <div className="relative py-32 md:py-48 border-b border-white/10 overflow-hidden group">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1565193566173-7a641a980755?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-[20s] group-hover:scale-110"></div>

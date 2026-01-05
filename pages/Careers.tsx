@@ -6,7 +6,7 @@ import {
   Briefcase, MapPin, IndianRupee, ChevronDown, Send, 
   Clock, Search, Filter, X, Users, User, ArrowRight, Building2, ArrowLeft
 } from 'lucide-react';
-
+import { Helmet } from 'react-helmet-async';
 // --- HELPERS ---
 const getBadgeStyles = (text: string) => {
   const t = text ? text.toLowerCase() : '';
@@ -297,10 +297,121 @@ const Careers: React.FC = () => {
   };
 
   const activeFiltersCount = selectedDepts.length + selectedLocs.length + selectedSalaries.length + selectedGenders.length;
+const isFiltered = selectedDepts.length > 0;
+  const activeDept = isFiltered ? selectedDepts[0] : '';
 
+  // 1. Dynamic Page Title
+  const pageTitle = isFiltered 
+    ? `${activeDept} Jobs in Rajkot | Durable Fastener Careers`
+    : 'Careers at Durable Fastener | Manufacturing Jobs in Rajkot';
+
+  // 2. Dynamic Meta Description
+  const pageDescription = isFiltered
+    ? `Apply for ${filteredJobs.length} open positions in ${activeDept} at Durable Fastener Pvt Ltd. Salary: ${filteredJobs[0]?.salary || 'Best in Industry'}. Apply via WhatsApp.`
+    : 'Join Durable Fastener Pvt Ltd. Hiring for Production Engineers, Sales Executives, and Back Office staff. View all current openings.';
+
+  // 3. Dynamic Schema (Google Jobs)
+  // We use "filteredJobs" here so Google sees exactly what the user sees
+  const jobSchema = {
+    "@context": "https://schema.org",
+    "@graph": filteredJobs.map(job => ({
+      "@type": "JobPosting",
+      "title": job.title,
+      "description": job.description.replace(/"/g, '\\"').replace(/\n/g, ' '),
+      "identifier": {
+        "@type": "PropertyValue",
+        "name": "Durable Fastener",
+        "value": job.id
+      },
+      "datePosted": job.created_at,
+      "validThrough": "2026-12-31",
+      "hiringOrganization": {
+        "@type": "Organization",
+        "name": "Durable Fastener Pvt Ltd",
+        "sameAs": "https://durablefastener.com",
+        "logo": "https://durablefastener.com/durablefastener.png"
+      },
+      "jobLocation": {
+        "@type": "Place",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Plot No.16, Ravki",
+          "addressLocality": job.location || "Rajkot",
+          "addressRegion": "Gujarat",
+          "addressCountry": "IN"
+        }
+      },
+      "employmentType": "FULL_TIME",
+      "baseSalary": {
+        "@type": "MonetaryAmount",
+        "currency": "INR",
+        "value": {
+          "@type": "QuantitativeValue",
+          "minValue": job.salary_min || 15000,
+          "maxValue": job.salary_max || 50000,
+          "unitText": "MONTH"
+        }
+      }
+    }))
+  };
   return (
     <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
-      
+    <Helmet>
+  {/* 1. Dynamic Title based on Filter */}
+  <title>
+    {selectedDepts.length > 0 
+      ? `${selectedDepts[0]} Jobs at Durable Fastener | Apply Now`
+      : 'Careers at Durable Fastener | Manufacturing Jobs in Rajkot'}
+  </title>
+  
+  <meta 
+    name="description" 
+    content={`Explore ${filteredJobs.length} open positions in ${selectedDepts.length > 0 ? selectedDepts.join(', ') : 'Engineering, Sales, and Admin'}. Join Rajkot's leading fastener manufacturer.`} 
+  />
+
+  {/* 2. DYNAMIC JOB POSTING SCHEMA (Uses 'filteredJobs' instead of all 'jobs') */}
+  {!loading && filteredJobs.length > 0 && (
+    <script type="application/ld+json">
+      {`
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            ${filteredJobs.map(job => `
+              {
+                "@type": "JobPosting",
+                "title": "${job.title}",
+                "description": "${job.description.replace(/"/g, '\\"').replace(/\n/g, ' ')}",
+                "identifier": {
+                  "@type": "PropertyValue",
+                  "name": "Durable Fastener",
+                  "value": "${job.id}"
+                },
+                "datePosted": "${job.created_at}",
+                "validThrough": "2026-12-31",
+                "hiringOrganization": {
+                  "@type": "Organization",
+                  "name": "Durable Fastener Pvt Ltd",
+                  "sameAs": "https://durablefastener.com",
+                  "logo": "https://durablefastener.com/durablefastener.png"
+                },
+                "jobLocation": {
+                  "@type": "Place",
+                  "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": "${job.location || 'Rajkot'}",
+                    "addressRegion": "Gujarat",
+                    "addressCountry": "IN"
+                  }
+                },
+                "employmentType": "FULL_TIME"
+              }
+            `).join(',')}
+          ]
+        }
+      `}
+    </script>
+  )}
+</Helmet>
       {/* PROFESSIONAL HEADER */}
       <div className="relative bg-slate-900 pt-32 pb-20 px-4 overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>

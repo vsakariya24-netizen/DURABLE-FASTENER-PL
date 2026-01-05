@@ -190,7 +190,8 @@ const Products: React.FC = () => {
 
   return (
     <div className="bg-[#dbdbdc] min-h-screen pt-20">
-      <Helmet>
+      
+  <Helmet>
   {/* 1. Title Tag */}
   <title>
     {activeFilter.name === 'All Products' 

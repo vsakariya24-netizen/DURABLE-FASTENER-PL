@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MagicZoomClone from '../components/MagicZoomClone'; 
+import { Helmet } from 'react-helmet-async';
+
 
 const { useParams, Link } = ReactRouterDOM;
 
@@ -188,7 +190,93 @@ const ProductDetail: React.FC = () => {
     // pt-[140px] for Mobile (Nav 96px + Breadcrumb ~44px)
     // pt-[200px] for Desktop (Nav 140px + Breadcrumb ~60px)
     <div className={`${THEME.bg} min-h-screen pb-24 pt-[140px] md:pt-[200px] selection:bg-yellow-500/30 selection:text-black`} style={fontBody}>
-      
+      <Helmet>
+        {/* 1. Dynamic Title & Description */}
+        <title>{product ? `${product.name} Manufacturer | Durable Fastener Rajkot` : 'Product Details'}</title>
+        <meta 
+          name="description" 
+          content={product ? `Buy ${product.name} directly from factory. ISO certified ${product.category || 'Fastener'} manufacturer in Rajkot, Gujarat. Check specifications and bulk pricing.` : 'Product details'} 
+        />
+
+        {/* 2. PRODUCT SCHEMA (SEO & AEO) */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org/",
+              "@type": "Product",
+              "name": "${product.name}",
+              "image": "${displayImages[0] || 'https://durablefastener.com/default-product.jpg'}",
+              "description": "${(product.description || product.short_description || '').replace(/"/g, '\\"')}",
+              "brand": {
+                "@type": "Brand",
+                "name": "Durable Fastener"
+              },
+              "sku": "${product.id}",
+              "mpn": "${product.slug}",
+              "category": "${product.category || 'Industrial Fasteners'}",
+              "manufacturer": {
+                "@type": "Organization",
+                "name": "Durable Fastener Pvt Ltd",
+                "url": "https://durablefastener.com",
+                "logo": "https://durablefastener.com/durablefastener.png",
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": "+91 87587 00709",
+                  "contactType": "sales"
+                },
+                "address": {
+                   "@type": "PostalAddress",
+                   "addressLocality": "Rajkot",
+                   "addressRegion": "Gujarat",
+                   "addressCountry": "IN"
+                }
+              },
+              "offers": {
+                "@type": "Offer",
+                "url": "https://durablefastener.com/product/${product.slug}",
+                "priceCurrency": "INR",
+                "availability": "https://schema.org/InStock",
+                "itemCondition": "https://schema.org/NewCondition",
+                "price": "0", 
+                "priceValidUntil": "2026-12-31",
+                "seller": {
+                  "@type": "Organization",
+                  "name": "Durable Fastener Pvt Ltd"
+                }
+              }
+            }
+          `}
+        </script>
+
+        {/* 3. BREADCRUMB SCHEMA */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://durablefastener.com"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Products",
+                  "item": "https://durablefastener.com/products"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": "${product.name}"
+                }
+              ]
+            }
+          `}
+        </script>
+      </Helmet>
       {/* ✅ FIX 1: DARK THEME BREADCRUMB */}
       {/* Color change (bg-neutral-900) ensures visual separation from Navbar */}
     <div className="fixed top-[80px] md:top-[140px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md transition-all duration-300">

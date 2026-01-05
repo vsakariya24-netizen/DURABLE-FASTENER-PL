@@ -6,7 +6,7 @@ import {
   Anchor, Coffee, TrendingUp, Award, ArrowRight, 
   Sun, ShieldCheck, Clock, MessageCircle
 } from 'lucide-react';
-
+import { Helmet } from 'react-helmet-async';
 // --- Helper Component: HandNote ---
 const HandNote = ({ text, className }: { text: string; className?: string }) => (
   <span className={`font-serif italic text-2xl text-blue-500 inline-block rotate-[-3deg] ${className}`}>
@@ -136,7 +136,51 @@ const LifeAtDurable: React.FC = () => {
 
   return (
     <div ref={targetRef} className="bg-slate-50 min-h-screen font-sans text-slate-900 overflow-x-hidden selection:bg-blue-600 selection:text-white">
+<Helmet>
+        {/* 1. Career-Focused Title */}
+        <title>Life at Durable | Careers & Culture at Fastener Factory Rajkot</title>
+        
+        <meta 
+          name="description" 
+          content="Join the Durable Fastener family. We offer stable careers, on-time salaries, and a culture of respect. Explore manufacturing jobs in Rajkot's leading fastener unit." 
+        />
+        
+        <meta 
+          name="keywords" 
+          content="jobs in rajkot, fastener industry careers, durable fastener culture, manufacturing jobs gujarat, work at durable fastener, factory jobs rajkot" 
+        />
 
+        {/* 2. CULTURE & RECRUITMENT SCHEMA */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "WebPage",
+              "name": "Life at Durable Fastener",
+              "url": "https://durablefastener.com/life-at-durable",
+              "description": "Inside look at the culture, values, and daily life at Durable Fastener Pvt Ltd.",
+              "primaryImageOfPage": {
+                "@type": "ImageObject",
+                "url": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2000"
+              },
+              "mainEntity": {
+                "@type": "Organization",
+                "name": "Durable Fastener Pvt Ltd",
+                "alternateName": "Durable Family",
+                "logo": "https://durablefastener.com/durablefastener.png",
+                "slogan": "Your Second Home",
+                "areaServed": "Rajkot, Gujarat",
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": "+91 87587 00709",
+                  "contactType": "HR",
+                  "availableLanguage": ["English", "Gujarati", "Hindi"]
+                }
+              }
+            }
+          `}
+        </script>
+      </Helmet>
       {/* 1. HERO SECTION */}
       <section className="relative h-[90vh] flex items-center justify-center overflow-hidden bg-slate-900">
         <motion.div style={{ y: heroY, scale: 1.1 }} className="absolute inset-0 opacity-40">

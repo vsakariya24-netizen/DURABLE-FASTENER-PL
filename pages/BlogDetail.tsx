@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Calendar, User, ArrowLeft, Loader, Share2 } from 'lucide-react';
-
+import { Helmet } from 'react-helmet-async';
 const BlogDetail: React.FC = () => {
   const { id } = useParams(); // Get the ID from the URL
   const [post, setPost] = useState<any>(null);
@@ -37,10 +37,54 @@ const BlogDetail: React.FC = () => {
         <Link to="/blog" className="mt-4 text-blue-600 hover:underline">Back to Blog</Link>
     </div>
   );
-
+const cleanDescription = post.excerpt || post.content.substring(0, 150).replace(/"/g, "") + "...";
   return (
     <div className="bg-white font-sans min-h-screen pt-32 pb-20">
-      
+      <Helmet>
+        {/* 1. Dynamic Article SEO */}
+        <title>{post.title} | Durable Fastener Blog</title>
+        <meta name="description" content={cleanDescription} />
+        
+        {/* 2. Open Graph (For Social Media Sharing) */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={post.title} />
+        <meta property="og:description" content={cleanDescription} />
+        <meta property="og:image" content={post.image_url || 'https://durablefastener.com/default-blog.jpg'} />
+        <meta property="og:url" content={`https://durablefastener.com/blog/${id}`} />
+        
+        {/* 3. Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={cleanDescription} />
+        <meta name="twitter:image" content={post.image_url} />
+
+        {/* 4. Article Schema (Structured Data) */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "Article",
+              "headline": "${post.title.replace(/"/g, '\\"')}",
+              "image": "${post.image_url || ''}",
+              "datePublished": "${post.created_at}",
+              "dateModified": "${post.created_at}",
+              "author": {
+                "@type": "Person",
+                "name": "${post.author || 'Durable Fastener Team'}"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Durable Fastener Pvt Ltd",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://durablefastener.com/durablefastener.png"
+                }
+              },
+              "description": "${cleanDescription.replace(/"/g, '\\"')}"
+            }
+          `}
+        </script>
+      </Helmet>
       {/* Progress Bar (Visual Touch) */}
       <div className="fixed top-0 left-0 h-1 bg-yellow-500 z-50 w-full animate-pulse"></div>
 

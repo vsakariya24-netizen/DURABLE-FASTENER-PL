@@ -10,7 +10,7 @@ import {
   Database, Microscope
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import { Helmet } from 'react-helmet-async';
 // =========================================
 // 1. UTILITY COMPONENTS
 // =========================================
@@ -338,7 +338,76 @@ const OEMPlatform: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#030305] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden">
-      
+      <Helmet>
+        {/* 1. B2B & Commercial Title */}
+        <title>OEM Fastener Manufacturer | Custom Automotive Bolts India - Durable Fastener</title>
+        
+        <meta 
+          name="description" 
+          content="India's leading OEM platform for custom industrial fasteners. We manufacture bespoke screws, bolts, and automotive components based on engineering drawings. ISO 9001:2015 Certified." 
+        />
+        
+        <meta 
+          name="keywords" 
+          content="oem fastener manufacturer, custom bolts india, automotive oem fasteners, bespoke screw manufacturing, contract manufacturing rajkot, fastener product development" 
+        />
+
+        {/* 2. SERVICE SCHEMA (Google ko batane ke liye ki aap Custom Kaam karte hain) */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "Service",
+              "name": "OEM Custom Fastener Manufacturing",
+              "serviceType": "Contract Manufacturing",
+              "provider": {
+                "@type": "Organization",
+                "name": "Durable Fastener Pvt Ltd",
+                "url": "https://durablefastener.com",
+                "logo": "https://durablefastener.com/durablefastener.png",
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": "Rajkot",
+                  "addressRegion": "Gujarat",
+                  "addressCountry": "IN"
+                }
+              },
+              "areaServed": {
+                "@type": "Country",
+                "name": "India"
+              },
+              "description": "We provide end-to-end OEM manufacturing services for automotive and industrial brands. From cold forging to heat treatment, we produce fasteners exactly as per technical blueprints.",
+              "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": "Manufacturing Capabilities",
+                "itemListElement": [
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Cold Forging"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Thread Rolling"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Custom Heat Treatment"
+                    }
+                  }
+                ]
+              }
+            }
+          `}
+        </script>
+      </Helmet>
       {/* =========================================
           1. HERO: HOLOGRAPHIC BLUEPRINT
       ========================================= */}
