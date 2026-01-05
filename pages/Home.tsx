@@ -109,32 +109,40 @@ const Home: React.FC = () => {
   return (
    <main role="main" className="bg-white overflow-x-hidden font-sans
  selection:bg-yellow-400 selection:text-black">
-      <Helmet>
-  <title>Durable Fastener | Industrial Fastener Manufacturer in India</title>
+ <Helmet>
+  {/* 1. Primary Title (SEO Optimized for Rajkot/Gujarat) */}
+  <title>Fastener Manufacturer in Rajkot | High Tensile Screws Gujarat - Durable Fastener</title>
+  
+  {/* 2. Meta Description (Includes 'MS Screw', 'ISO', 'Manufacturer') */}
   <meta
     name="description"
-    content="Durable Fastener is a leading ISO 9001:2015 certified manufacturer of industrial fasteners, drywall screws, and automotive components in India."
+    content="Durable Fastener Pvt Ltd is a leading manufacturer of MS Screws, High Tensile Fasteners, and Bolts in Rajkot, Gujarat. ISO 9001:2015 Certified Factory."
   />
+  
+  {/* 3. Keywords (Specific for GSC Ranking) */}
+  <meta 
+    name="keywords" 
+    content="fastener manufacturer in rajkot, high tensile fasteners gujarat, screw manufacturer, durable fastener private limited, ms screw manufacturer, fasteners manufacturers in india" 
+  />
+  
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://durablefastener.com/" />
 
-  {/* Open Graph */}
+  {/* 4. Open Graph (For WhatsApp/Facebook/LinkedIn sharing) */}
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Durable Fastener – Industrial Fastener Manufacturer" />
-  <meta property="og:description" content="High-quality fasteners for construction, automotive & industrial use." />
+  <meta property="og:title" content="Top Fastener & Screw Manufacturer in Rajkot - Durable Fastener" />
+  <meta property="og:description" content="Direct from Factory: High Tensile Fasteners, Drywall Screws & Automotive Components in Gujarat." />
   <meta property="og:url" content="https://durablefastener.com" />
   <meta property="og:image" content="https://durablefastener.com/og-image.jpg" />
 
-  {/* Twitter */}
+  {/* 5. Twitter Card */}
   <meta name="twitter:card" content="summary_large_image" />
 </Helmet>
-
-
       {/* 1. HERO SECTION */}
 <section className="relative h-screen min-h-[700px] flex bg-[#0F1115] text-white overflow-hidden">
         <div className="absolute inset-0" style={{ transform: `translateY(${offsetY * 0.5}px)` }}>
             <img
-  src={siteContent.hero_bg} className="w-full h-full object-cover grayscale opacity-50"  alt="Durable Fastener manufacturing unit in Rajkot Gujarat"
+  src={siteContent.hero_bg} className="w-full h-full object-cover grayscale opacity-50"  alt="Inside Durable Fastener Pvt Ltd factory - Screw Manufacturing Plant in Rajkot"
   loading="lazy" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
@@ -146,8 +154,12 @@ const Home: React.FC = () => {
               <span className="text-yellow-400 font-bold tracking-[0.2em] uppercase text-xs">ISO 9001:2015 Certified Manufacturer</span>
             </div>
             <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8 uppercase">
-              Where Desire <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">Meets</span> <br/> Value
-            </h1>
+  {/* Hidden text for SEO only */}
+  <span className="sr-only">Top Fastener Manufacturer in Rajkot</span> 
+  Where Desire <br/> 
+  <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">Meets</span> <br/> 
+  Value
+</h1>
             <p className="text-lg text-gray-300 max-w-xl leading-relaxed mb-10 border-l-2 border-yellow-400 pl-6">
               Durable Fastener Pvt. Ltd. manufactures international-grade high-tensile hardware for automotive, construction, and heavy machinery industries.
             </p>

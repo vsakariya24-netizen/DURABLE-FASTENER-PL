@@ -222,7 +222,9 @@ const About: React.FC = () => {
               <div key={i} className="text-center p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
                 <item.icon className="mx-auto text-amber-500 mb-6 group-hover:scale-110 transition-transform" size={40} />
                 <h4 className="text-white font-black mb-3">{item.title}</h4>
-                <p className="text-slate-400 text-sm font-light leading-relaxed">{item.text}</p>
+                <p className="text-slate-400 text-lg font-light leading-relaxed max-w-sm">
+  Decades of expertise inside our <b>fastener manufacturing factory</b> producing international grade hardware.
+</p>
               </div>
             ))}
           </div>

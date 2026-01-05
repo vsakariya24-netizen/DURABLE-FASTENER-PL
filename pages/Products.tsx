@@ -191,7 +191,17 @@ const Products: React.FC = () => {
   return (
     <div className="bg-[#dbdbdc] min-h-screen pt-20">
       <Helmet>
-        <title>{`${activeFilter.name} | Durable Fasteners Pvt Ltd`}</title>
+        
+        <title>
+    {activeFilter.name === 'All Products' 
+      ? 'Industrial Fasteners & Screw Products Catalogue | Durable Fastener Pvt Ltd' 
+      : `${activeFilter.name} Manufacturer in Gujarat | Durable Fastener Pvt Ltd`}
+      <meta 
+    name="description" 
+    content={`Buy high quality ${activeFilter.name} directly from manufacturer in Rajkot. We supply High Tensile and MS options across India.`} 
+  />
+  </title>
+
       </Helmet>
 
       {/* HERO */}
