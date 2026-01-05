@@ -191,18 +191,19 @@ const Products: React.FC = () => {
   return (
     <div className="bg-[#dbdbdc] min-h-screen pt-20">
       <Helmet>
-        
-        <title>
+  {/* 1. Title Tag */}
+  <title>
     {activeFilter.name === 'All Products' 
       ? 'Industrial Fasteners & Screw Products Catalogue | Durable Fastener Pvt Ltd' 
       : `${activeFilter.name} Manufacturer in Gujarat | Durable Fastener Pvt Ltd`}
-      <meta 
+  </title>
+
+  {/* 2. Meta Tag (Title ke BAHAR hona chahiye) */}
+  <meta 
     name="description" 
     content={`Buy high quality ${activeFilter.name} directly from manufacturer in Rajkot. We supply High Tensile and MS options across India.`} 
   />
-  </title>
-
-      </Helmet>
+</Helmet>
 
       {/* HERO */}
       <section className="relative h-[30vh] flex items-center justify-center bg-[#0a0a0a] overflow-hidden">
