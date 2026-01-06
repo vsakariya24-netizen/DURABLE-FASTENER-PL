@@ -6,6 +6,9 @@ import { HelmetProvider } from 'react-helmet-async';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import PrivacyPolicy from './components/Privacypolicy';
+import TermsAndConditions from './components/TermsAndConditions';
+
 
 // Public Pages
 import Home from './pages/Home';
@@ -95,7 +98,8 @@ const App: React.FC = () => {
               <Route path="/blog" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Blog /></main><Footer /></div></>} />
               <Route path="/blog/:id" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><BlogDetail /></main><Footer /></div></>} />
               <Route path="/life-at-durable" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><LifeAtDurable /></main><Footer /></div></>} />
-              
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
               {/* --- Admin Login --- */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="life-gallery" element={<AdminLifeGallery />} />

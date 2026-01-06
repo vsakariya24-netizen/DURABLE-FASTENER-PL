@@ -7,7 +7,7 @@ import {
   ArrowRight, CheckCircle2, Factory, Flame, Droplets, ScanFace, 
   Zap, Hexagon, ShieldCheck, MapPin, Settings, Component, 
   Crosshair, Layers, Cpu, Phone, Download, Container, FileSearch, 
-  Database, Microscope
+  Database, Microscope,FlaskConical,Ruler,Hash
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -30,6 +30,16 @@ const ScrollReveal: React.FC<{ children: React.ReactNode; delay?: number; classN
   );
 };
 
+const RulerTicks = () => (
+  <div className="flex justify-between w-full mt-2 px-1">
+    {[...Array(21)].map((_, i) => (
+      <div 
+        key={i} 
+        className={`w-px ${i % 5 === 0 ? 'h-4 bg-slate-400' : 'h-2 bg-slate-700'}`} 
+      />
+    ))}
+  </div>
+);
 // Mouse Spotlight Card
 const SpotlightCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => {
   const mouseX = useMotionValue(0);
@@ -497,144 +507,298 @@ const OEMPlatform: React.FC = () => {
       {/* =========================================
           3. TECHNICAL BASELINE (Redesigned)
       ========================================= */}
-      <section className="py-32 px-6 relative bg-[#050505] overflow-hidden">
+     <section className="py-32 px-6 relative bg-[#050505] overflow-hidden">
         {/* Abstract Technical Background */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:40px_40px]"></div>
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-900/50 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-900/50 to-transparent"></div>
-
+        
         <div className="max-w-7xl mx-auto relative z-10">
           
           {/* Section Header */}
-          <ScrollReveal>
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-px w-8 bg-blue-500"></div>
-                  <span className="text-blue-500 font-mono text-xs uppercase tracking-[0.2em] font-bold">
-                    Production Capabilities
-                  </span>
-                </div>
-                <h3 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
-                  TECHNICAL <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-400 to-slate-600">
-                    BASELINE.
-                  </span>
-                </h3>
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-px w-8 bg-blue-500"></div>
+                <span className="text-blue-500 font-mono text-xs uppercase tracking-[0.2em] font-bold">
+                  Production Capabilities
+                </span>
               </div>
-              
-              {/* Certification Badge */}
-              <div className="flex items-center gap-4 border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-3 rounded-sm">
-                <ShieldCheck className="text-emerald-500" size={24} />
-                <div className="flex flex-col">
-                  <span className="text-white font-bold text-sm tracking-wide">ISO 9001:2015</span>
-                  <span className="text-emerald-500 text-[10px] font-mono uppercase tracking-wider">Certified Facility</span>
-                </div>
-              </div>
+              <h3 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
+                TECHNICAL <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-400 to-slate-600">
+                  BASELINE.
+                </span>
+              </h3>
             </div>
-          </ScrollReveal>
-
-          {/* The Spec Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-px bg-white/10 border border-white/10 shadow-2xl">
             
-            {/* 1. Material (Large Box) */}
-            <div className="md:col-span-4 bg-[#0A0A0C] p-8 md:p-10 group hover:bg-[#0F1115] transition-colors relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Component size={80} />
-              </div>
-              <div className="flex flex-col justify-between h-full relative z-10">
-                 <div>
-                    <span className="text-slate-500 font-mono text-xs uppercase tracking-widest block mb-2">Raw Material</span>
-                    <h4 className="text-3xl font-mono text-white font-bold">{specs.material || "Steel & SS"}</h4>
-                 </div>
-                 <div className="mt-8 pt-6 border-t border-white/10">
-                    <div className="flex justify-between items-center">
-                      <span className="text-blue-400 font-mono text-xs">GRADES</span>
-                      <span className="text-slate-300 font-mono text-sm">SAE 1010, 10B21, SS304</span>
-                    </div>
-                 </div>
+            <div className="flex items-center gap-4 border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-3 rounded-sm">
+              <ShieldCheck className="text-emerald-500" size={24} />
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-sm tracking-wide">ISO 9001:2015</span>
+                <span className="text-emerald-500 text-[10px] font-mono uppercase tracking-wider">Certified Facility</span>
               </div>
             </div>
-
-            {/* 2. Diameter (Range Visualizer) */}
-            <div className="md:col-span-4 bg-[#0A0A0C] p-8 md:p-10 group hover:bg-[#0F1115] transition-colors">
-               <span className="text-slate-500 font-mono text-xs uppercase tracking-widest block mb-4">Diameter Range</span>
-               <div className="flex items-baseline gap-2 mb-6">
-                 <h4 className="text-4xl font-mono text-white font-bold">{specs.diameter || "M2 - M8"}</h4>
-                 <span className="text-sm text-slate-500 font-mono">metric</span>
-               </div>
-               {/* Visual Bar */}
-               <div className="w-full h-12 bg-white/5 rounded-sm relative flex items-center px-2 border border-white/5">
-                  <div className="absolute left-[10%] right-[10%] h-6 bg-blue-600/20 border border-blue-500/50 rounded-sm flex items-center justify-center">
-                     <span className="text-[10px] text-blue-400 font-mono tracking-wider">OPTIMAL RANGE</span>
-                  </div>
-                  {/* Ticks */}
-                  <div className="w-full flex justify-between px-1">
-                     {[...Array(5)].map((_,i) => <div key={i} className="w-px h-2 bg-white/20"></div>)}
-                  </div>
-               </div>
-            </div>
-
-             {/* 3. Length (Range Visualizer) */}
-             <div className="md:col-span-4 bg-[#0A0A0C] p-8 md:p-10 group hover:bg-[#0F1115] transition-colors">
-               <span className="text-slate-500 font-mono text-xs uppercase tracking-widest block mb-4">Length Capacity</span>
-               <div className="flex items-baseline gap-2 mb-6">
-                 <h4 className="text-4xl font-mono text-white font-bold">{specs.length || "4mm - 125mm"}</h4>
-                 <span className="text-sm text-slate-500 font-mono">mm</span>
-               </div>
-                {/* Visual Scale */}
-                <div className="relative w-full h-1 bg-white/10 mt-10">
-                  <div className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-3 flex justify-between items-center">
-                     <div className="w-2 h-2 rounded-full bg-slate-600"></div>
-                     <div className="w-full h-px bg-gradient-to-r from-blue-500 to-blue-500"></div>
-                     <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
-                  </div>
-                  <div className="absolute -top-6 right-0 text-blue-500 font-mono text-xs">MAX 125mm</div>
-                  <div className="absolute -top-6 left-0 text-slate-500 font-mono text-xs">MIN 4mm</div>
-               </div>
-            </div>
-
-            {/* 4. Threads (Detail Box) */}
-            <div className="md:col-span-5 bg-[#0A0A0C] p-8 group hover:bg-[#0F1115] transition-colors border-t md:border-t-0 border-white/10">
-               <div className="flex items-start justify-between mb-6">
-                 <span className="text-slate-500 font-mono text-xs uppercase tracking-widest">Threading Spec</span>
-                 <Settings className="text-blue-500/50 group-hover:text-blue-500 transition-colors" size={20} />
-               </div>
-               <h4 className="text-2xl font-mono text-white font-medium mb-4">{specs.thread || "Metric & Inch"}</h4>
-               <div className="flex gap-2 flex-wrap">
-                  {['Coarse', 'Fine', 'Machine', 'Self-Tapping'].map((tag, i) => (
-                    <span key={i} className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-slate-300 font-mono uppercase rounded-sm">
-                      {tag}
-                    </span>
-                  ))}
-               </div>
-            </div>
-
-            {/* 5. Surface Finishes (Wide Highlight Box) */}
-            <div className="md:col-span-7 bg-gradient-to-br from-[#0F172A] to-[#0A0A0C] p-8 group border-t md:border-t-0 border-l md:border-l-0 border-white/10 relative">
-               <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
-               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div>
-                    <span className="text-blue-400 font-mono text-xs uppercase tracking-widest mb-2 block">Surface Engineering</span>
-                    <h4 className="text-2xl md:text-3xl font-mono text-white font-bold leading-tight">
-                      {specs.finish || "Zinc, Phosphate, Ruspert"}
-                    </h4>
-                  </div>
-                  <div className="flex flex-col gap-2 min-w-[140px]">
-                     <div className="flex justify-between text-xs font-mono border-b border-white/10 pb-1">
-                        <span className="text-slate-500">SST LIFE</span>
-                        <span className="text-emerald-400">72-1000 HRS</span>
-                     </div>
-                     <div className="flex justify-between text-xs font-mono border-b border-white/10 pb-1">
-                         <span className="text-slate-500">ROHS</span>
-                         <span className="text-emerald-400">COMPLIANT</span>
-                     </div>
-                  </div>
-               </div>
-            </div>
-
           </div>
-          
+
+          {/* === THE NEW BENTO GRID === */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            
+            {/* 1. MATERIAL (Chemical Composition Style) */}
+            <div className="md:col-span-5 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
+               <div className="flex justify-between items-start mb-6">
+                 <div>
+                    <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Raw Material</span>
+                    <h4 className="text-3xl text-white font-bold font-mono">{specs.material || "Steel & SS"}</h4>
+                 </div>
+                 <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
+                    <FlaskConical size={24} />
+                 </div>
+               </div>
+
+               {/* Chemical Table Visualization */}
+               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+                  <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/5">
+                     <span className="text-slate-400 text-xs font-mono">GRADE FAMILY</span>
+                     <span className="text-white text-xs font-mono font-bold bg-blue-600/20 px-2 py-1 rounded text-blue-300">
+                        {specs.material?.includes('SS') ? 'AUSTENITIC' : 'CARBON STEEL'}
+                     </span>
+                  </div>
+                  <div className="space-y-3">
+                     {/* Pseudo Chemical Bars */}
+                     <div>
+                        <div className="flex justify-between text-[10px] text-slate-500 font-mono mb-1">
+                           <span>Fe (Iron)</span>
+                           <span>Balance</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                           <div className="h-full bg-slate-600 w-[85%]"></div>
+                        </div>
+                     </div>
+                     <div>
+                        <div className="flex justify-between text-[10px] text-slate-500 font-mono mb-1">
+                           <span>C (Carbon)</span>
+                           <span>0.18 - 0.23%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                           <div className="h-full bg-blue-500 w-[35%]"></div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* 2. DIAMETER (Concentric Circles / Cross Section) */}
+            <div className="md:col-span-3 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all relative overflow-hidden">
+               <div>
+                  <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Cross Section</span>
+                  <h4 className="text-3xl text-white font-bold font-mono">{specs.diameter || "M2 - M8"}</h4>
+               </div>
+
+               {/* Visual: Concentric Circles */}
+               <div className="relative h-32 w-full flex items-center justify-center mt-4">
+                  {/* Outer Ring (Max) */}
+                  <div className="absolute w-28 h-28 border border-dashed border-slate-600 rounded-full flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity">
+                     <span className="absolute -right-2 top-1/2 -translate-y-1/2 translate-x-full text-[9px] text-slate-500 font-mono pl-2">M8</span>
+                  </div>
+                  {/* Mid Ring */}
+                  <div className="absolute w-20 h-20 border border-blue-500/30 bg-blue-500/5 rounded-full flex items-center justify-center">
+                  </div>
+                  {/* Inner Ring (Min) */}
+                  <div className="absolute w-8 h-8 bg-blue-500 rounded-full shadow-[0_0_15px_#3b82f6]">
+                     <span className="absolute -left-2 top-1/2 -translate-y-1/2 -translate-x-full text-[9px] text-white font-mono pr-2">M2</span>
+                  </div>
+                  
+                  {/* Crosshair */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+                     <div className="w-full h-px bg-blue-400"></div>
+                     <div className="h-full w-px bg-blue-400 absolute"></div>
+                  </div>
+               </div>
+            </div>
+
+            {/* 3. LENGTH (Digital Ruler) */}
+            <div className="md:col-span-4 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all">
+               <div className="flex justify-between items-start">
+                  <div>
+                     <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Linear Scale</span>
+                     <h4 className="text-3xl text-white font-bold font-mono">{specs.length || "4mm - 125mm"}</h4>
+                  </div>
+                  <Ruler className="text-slate-600 group-hover:text-blue-500 transition-colors" />
+               </div>
+
+               {/* Visual: Ruler */}
+               <div className="mt-8 relative">
+                  {/* The Scale Line */}
+                  <div className="h-1 w-full bg-slate-800 rounded relative">
+                     {/* Active Range Bar */}
+                     <div className="absolute left-[10%] right-[10%] h-full bg-blue-600 shadow-[0_0_10px_#2563eb]"></div>
+                     
+                     {/* Min Marker */}
+                     <div className="absolute left-[10%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-blue-600 transform -translate-x-1/2">
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-mono">4mm</span>
+                     </div>
+                     {/* Max Marker */}
+                     <div className="absolute right-[10%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-blue-600 transform translate-x-1/2">
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-mono">125mm</span>
+                     </div>
+                  </div>
+                  <RulerTicks />
+                  <div className="flex justify-between text-[10px] text-slate-600 font-mono mt-2 px-1">
+                     <span>0</span>
+                     <span>50</span>
+                     <span>100</span>
+                     <span>150+</span>
+                  </div>
+               </div>
+            </div>
+
+           
+            {/* 4. Threads (Detail Box) */}
+        {/* 4. Threads (Detail Box) - UPDATED TO MATCH UPLOADED IMAGE STYLE */}
+            <div className="md:col-span-5 bg-[#0A0A0C] p-6 group hover:bg-[#0F1115] transition-colors border-t md:border-t-0 border-white/10 relative overflow-hidden">
+               
+               {/* Metallic Gradient Definition */}
+               <svg width="0" height="0">
+                 <defs>
+                   <linearGradient id="screwMetal" x1="0%" y1="0%" x2="100%" y2="0%">
+                     <stop offset="0%" stopColor="#334155" /> 
+                     <stop offset="50%" stopColor="#94a3b8" /> 
+                     <stop offset="100%" stopColor="#334155" />
+                   </linearGradient>
+                 </defs>
+               </svg>
+
+               <div className="flex items-start justify-between mb-6 relative z-10">
+                 <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Threading Spec</span>
+                 <Settings className="text-blue-500/50 group-hover:rotate-90 transition-transform duration-700" size={20} />
+               </div>
+               
+               <h4 className="text-2xl font-mono text-white font-medium mb-6 relative z-10">{specs.thread || "Fine, Coarse & Metric"}</h4>
+               
+               {/* Thread Visual Grid */}
+               <div className="grid grid-cols-4 gap-2 relative z-10">
+                 {[
+                   { 
+                     label: 'COARSE', 
+                     // Wide spacing between threads
+                     stripes: "M12 12 L28 18 M12 22 L28 28 M12 32 L28 38 M12 42 L28 48 M12 52 L28 58", 
+                     desc: "Deep" 
+                   },
+                   { 
+                     label: 'FINE', 
+                     // Tight/Close spacing
+                     stripes: "M12 10 L28 14 M12 15 L28 19 M12 20 L28 24 M12 25 L28 29 M12 30 L28 34 M12 35 L28 39 M12 40 L28 44 M12 45 L28 49 M12 50 L28 54 M12 55 L28 59", 
+                     desc: "Precision" 
+                   },
+                   { 
+                     label: 'MACHINE', 
+                     // Standard uniform spacing
+                     stripes: "M12 10 L28 13 M12 17 L28 20 M12 24 L28 27 M12 31 L28 34 M12 38 L28 41 M12 45 L28 48 M12 52 L28 55 M12 59 L28 62", 
+                     desc: "ISO Std" 
+                   },
+                   { 
+                     label: 'SELF-TAP', 
+                     // Steep angle, wide spacing
+                     stripes: "M12 10 L28 20 M12 22 L28 32 M12 34 L28 44 M12 46 L28 56", 
+                     desc: "Cutting" 
+                   }
+                 ].map((thread, i) => (
+                   <div key={i} className="bg-white/5 border border-white/10 rounded-lg py-4 px-1 hover:border-blue-500/50 hover:bg-white/10 transition-all group/thread cursor-default relative flex flex-col items-center gap-3">
+                      
+                      {/* THE VERTICAL SCREW VISUAL */}
+                      <div className="h-24 w-full flex items-center justify-center">
+                         <svg viewBox="0 0 40 80" className="h-full drop-shadow-lg">
+                           {/* 1. Screw Head (Flat Top like image) */}
+                           <rect x="4" y="0" width="32" height="10" rx="2" fill="url(#screwMetal)" />
+                           
+                           {/* 2. Screw Shaft (Vertical Cylinder) */}
+                           <rect x="12" y="9" width="16" height="52" fill="url(#screwMetal)" />
+                           
+                           {/* 3. Screw Tip (Pointed Triangle) */}
+                           <path d="M12 60 L20 75 L28 60 Z" fill="url(#screwMetal)" />
+
+                           {/* 4. The Diagonal Threads (White Stripes) */}
+                           <path d={thread.stripes} stroke="white" strokeWidth="2" strokeOpacity="0.3" strokeLinecap="square" />
+                         </svg>
+                      </div>
+
+                      <div className="flex flex-col items-center text-center relative z-10">
+                        <span className="text-[10px] font-bold text-slate-300 group-hover/thread:text-blue-400 transition-colors tracking-tighter">{thread.label}</span>
+                      </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+
+            {/* 5. Surface Finishes (Wide Highlight Box) - UPDATED TO MATCH IMAGE */}
+            <div className="md:col-span-7 bg-[#0A0A0C] p-8 group border-t md:border-t-0 border-l md:border-l-0 border-white/10 relative overflow-hidden">
+              {/* Blue Accent Line */}
+              <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 shadow-[0_0_15px_#2563eb]"></div>
+              
+              <div className="flex flex-col h-full justify-between relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Surface Engineering</span>
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-500 font-mono block">SST LIFE (SALT SPRAY)</span>
+                    <span className="text-emerald-400 font-bold font-mono text-lg text-shadow-glow">72 - 1000 HRS</span>
+                  </div>
+                </div>
+
+                {/* DYNAMIC FINISH CHIPS - PILL SHAPE */}
+                <div className="flex flex-wrap gap-3 content-start">
+                  {[
+                    { name: "Black Phosphate", type: "black" },
+                    { name: "Zinc (White)", type: "zinc" },
+                    { name: "Golden", type: "gold" },
+                    { name: "Blue", type: "blue" },
+                    { name: "Rose Gold", type: "rose" },
+                    { name: "Trivalent Zinc", type: "zinc" },
+                    { name: "Passivation", type: "grey" }
+                  ].map((finish, i) => {
+                    
+                    // Specific Styling Logic based on type
+                    let dotColor = "";
+                    if (finish.type === 'black') dotColor = "bg-neutral-900 border border-neutral-700 shadow-[inset_0_2px_4px_rgba(255,255,255,0.1)]";
+                    if (finish.type === 'zinc') dotColor = "bg-gradient-to-br from-slate-100 to-slate-400 border border-white/20";
+                    if (finish.type === 'gold') dotColor = "bg-gradient-to-br from-[#FCD34D] via-[#F59E0B] to-[#B45309] border border-yellow-500/20";
+                    if (finish.type === 'blue') dotColor = "bg-gradient-to-br from-[#bae6fd] via-[#38bdf8] to-[#0284c7] border border-blue-400/20";
+                    if (finish.type === 'rose') dotColor = "bg-gradient-to-br from-[#fda4af] via-[#f43f5e] to-[#be123c] border border-rose-500/20";
+                    if (finish.type === 'grey') dotColor = "bg-slate-600 border border-slate-500";
+
+                    return (
+                      <div key={i} className="group/chip flex items-center gap-3 bg-[#13161C] border border-white/10 rounded-full pl-1.5 pr-5 py-1.5 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-default">
+                        {/* The Colored Dot */}
+                        <div className={`w-5 h-5 rounded-full ${dotColor} shadow-lg shrink-0`}></div>
+                        
+                        {/* The Text */}
+                        <span className="text-slate-300 text-xs font-bold uppercase tracking-wide group-hover/chip:text-white transition-colors">
+                          {finish.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Custom Coating Badge */}
+                  <div className="flex items-center gap-2 px-4 py-1.5 border border-dashed border-white/20 rounded-full">
+                     <span className="text-[10px] text-slate-500 uppercase font-mono">+ Custom Coatings</span>
+                  </div>
+                </div>
+
+                {/* Compliance Badges */}
+                <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-4">
+                   <span className="text-[10px] text-slate-600 font-mono">COMPLIANCE:</span>
+                   <div className="flex gap-2">
+                      <span className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold rounded flex items-center gap-1">
+                        <CheckCircle2 size={10} /> ROHS
+                      </span>
+                      <span className="px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[10px] font-bold rounded flex items-center gap-1">
+                        <CheckCircle2 size={10} /> REACH
+                      </span>
+                   </div>
+                </div>
+              </div>
+            </div>
+            </div>
           {/* Bottom Decoration */}
           <div className="flex justify-between items-center mt-4 opacity-50">
              <div className="flex gap-4">
@@ -643,100 +807,12 @@ const OEMPlatform: React.FC = () => {
              <div className="h-px w-32 bg-white/20"></div>
           </div>
 
-        </div>
-      </section>
-      {/* =========================================
-          4. THE PROCESS: SPOTLIGHT CARDS
-      ========================================= */}
-      <section className="py-32 px-6 relative">
-         <div className="absolute top-[40%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent z-0 hidden lg:block"></div>
-         <div className="absolute top-[40%] left-0 w-20 h-[2px] bg-blue-500 blur-sm z-0 hidden lg:block animate-beam"></div>
+      
+          {/* Footer Metadata */}
+          <div className="flex justify-end items-center mt-4 opacity-40">
+             <span className="text-[10px] text-slate-500 font-mono mr-2">TOLERANCE SPEC: ISO 4759-1</span>
+          </div>
 
-         <div className="max-w-7xl mx-auto relative z-10">
-            <ScrollReveal>
-              <div className="flex items-end justify-between mb-20">
-                <div>
-                  <h2 className="text-blue-500 font-mono text-xs mb-3 uppercase tracking-[0.3em] font-bold flex items-center gap-2">
-                    <span className="w-8 h-[2px] bg-blue-500 inline-block"></span> Workflow
-                  </h2>
-                  <h3 className="text-4xl md:text-5xl font-black text-white">Production Pipeline.</h3>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-               {[
-                 { step: "01", title: "Cold Heading", desc: "5-Station Bolt Formers", icon: Factory },
-                 { step: "02", title: "Thread Rolling", desc: "High-precision rotary dies", icon: Zap },
-                 { step: "03", title: "Heat Treat", desc: "Atmosphere Controlled", icon: Flame },
-                 { step: "04", title: "Auto Sorting", desc: "Optical 360° Inspection", icon: ScanFace },
-               ].map((proc, i) => (
-                 <ScrollReveal key={i} delay={i * 0.15}>
-                   <SpotlightCard className="rounded-2xl p-8 h-full">
-                     <div className="absolute top-4 right-4 text-white/5 text-6xl font-black select-none">{proc.step}</div>
-                     
-                     <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center mb-6 border border-blue-500/20 text-blue-400 group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                        <proc.icon size={24} />
-                     </div>
-                     
-                     <h4 className="text-xl font-bold text-white mb-2 relative z-10">{proc.title}</h4>
-                     <p className="text-sm text-slate-500 leading-relaxed font-mono relative z-10">{proc.desc}</p>
-                   </SpotlightCard>
-                 </ScrollReveal>
-               ))}
-            </div>
-         </div>
-      </section>
-
-      {/* =========================================
-          5. TECH SPECS: DIGITAL GRID
-      ========================================= */}
-      <section className="py-24 bg-[#08080a] relative overflow-hidden border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <ScrollReveal>
-            <div className="mb-12">
-               <span className="text-blue-500 font-mono text-xs uppercase tracking-widest font-bold">Specification Breakdown</span>
-               <h3 className="text-4xl font-black text-white mt-2">Quality Standards.</h3>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {Object.entries(techSpecs).map(([key, data], index) => (
-                <div 
-                  key={key} 
-                  className="bg-slate-900/30 border border-white/10 rounded-2xl p-8 relative overflow-hidden group hover:border-blue-500/30 hover:bg-[#0F172A] transition-all duration-300"
-                >
-                  {/* Subtle Color Glow */}
-                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent blur-3xl opacity-0 group-hover:opacity-20 transition-opacity`}></div>
-                  
-                  {/* Header */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className={`p-3 rounded-lg bg-white/5 ${data.color} ring-1 ring-white/10 group-hover:ring-blue-500/30 transition-all`}>
-                      <data.icon size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-white">{data.title}</h3>
-                  </div>
-                  
-                  {/* Description */}
-                  <p className="text-slate-400 text-sm font-mono mb-8 leading-relaxed h-10 border-l-2 border-white/10 pl-3">
-                    {data.desc}
-                  </p>
-                  
-                  {/* Data Points List */}
-                  <div className="space-y-4">
-                      {data.points.map((pt, i) => (
-                        <div key={i} className="flex justify-between items-end border-b border-dashed border-white/5 pb-2">
-                           <span className="text-slate-500 font-semibold text-[10px] uppercase tracking-widest">{pt.label}</span>
-                           <span className={`font-mono text-sm font-bold ${data.color}`}>{pt.value}</span>
-                        </div>
-                      ))}
-                  </div>
-                  
-                  {/* Bottom indicator */}
-                  <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-blue-500 to-transparent group-hover:w-full transition-all duration-700"></div>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
         </div>
       </section>
 

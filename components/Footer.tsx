@@ -69,9 +69,20 @@ const Footer: React.FC = () => {
             </p>
             
             <div className="flex gap-4">
-              {[Facebook, Linkedin, Instagram].map((Icon, idx) => (
-                <a key={idx} href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-brand-yellow hover:text-brand-dark transition-all duration-300 transform hover:-translate-y-1">
-                  <Icon size={18} />
+              {/* 👇 Yahan array of objects banaya hai taaki link aur icon saath mein ho */}
+              {[
+                { Icon: Facebook, link: "https://www.facebook.com/durablefastener" },
+                { Icon: Linkedin, link: "https://www.linkedin.com/company/durable-fastener/" },
+                { Icon: Instagram, link: "https://www.instagram.com/durablefastener/" }
+              ].map((social, idx) => (
+                <a 
+                  key={idx} 
+                  href={social.link} // 👈 Yahan ab link dynamic aayega
+                  target="_blank"     // 👈 New tab mein khulne ke liye
+                  rel="noopener noreferrer" // 👈 Security ke liye zaroori
+                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-brand-yellow hover:text-brand-dark transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  <social.Icon size={18} />
                 </a>
               ))}
             </div>
@@ -187,8 +198,10 @@ const Footer: React.FC = () => {
           </p>
           
           <div className="flex items-center gap-6">
-             <Link to="/privacy" className="text-xs text-gray-500 hover:text-white transition-colors">Privacy Policy</Link>
-             <Link to="/terms" className="text-xs text-gray-500 hover:text-white transition-colors">Terms of Service</Link>
+             <Link to="/privacy-policy" className="text-xs text-gray-500 hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms-and-conditions" className="hover:text-blue-500">
+  Terms & Conditions
+</Link>
              
              <button 
                onClick={scrollToTop} 
