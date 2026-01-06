@@ -50,7 +50,7 @@ const TermsAndConditions = () => {
     { id: 'section-5', label: '5. Orders & Acceptance', icon: FileText },
     { id: 'section-6', label: '6. Limitation of Liability', icon: AlertTriangle },
     { id: 'section-10', label: '10. Prohibited Activities', icon: Ban },
-    { id: 'section-12', label: '12. Governing Law', icon: Gavel },
+    { id: 'section-12', label: '13. Governing Law', icon: Gavel },
     { id: 'section-contact', label: '14. Contact Info', icon: Mail },
   ];
 
@@ -278,7 +278,7 @@ const TermsAndConditions = () => {
                   <p className="text-sm text-slate-600">Durable Fastener reserves the right to suspend or terminate access to the Website without notice or restrict access if these Terms & Conditions are violated.</p>
                 </section>
                 <section id="section-13">
-                  <h3 className="font-bold text-slate-900 mb-2">13. Changes to Terms</h3>
+                  <h3 className="font-bold text-slate-900 mb-2">12. Changes to Terms</h3>
                   <p className="text-sm text-slate-600">Durable Fastener may revise these Terms & Conditions at any time without prior notice. Continued use of the Website constitutes acceptance of the updated terms.</p>
                 </section>
               </div>
@@ -286,7 +286,7 @@ const TermsAndConditions = () => {
               {/* 12. Governing Law */}
               <section id="section-12" className="scroll-mt-24 bg-slate-50 p-6 rounded border border-slate-200">
                 <h2 className="text-xl font-serif font-bold text-slate-900 mb-3 flex items-center gap-2">
-                  <span className="text-blue-700">12.</span> Governing Law & Jurisdiction
+                  <span className="text-blue-700">13.</span> Governing Law & Jurisdiction
                 </h2>
                 <p className="text-slate-700 mb-2">These Terms & Conditions shall be governed by and interpreted in accordance with the laws of <strong>India</strong>.</p>
                 <p className="text-slate-700">Any disputes shall be subject to the exclusive jurisdiction of courts located in <strong>Gujarat, India</strong>.</p>
@@ -342,5 +342,6 @@ const TermsAndConditions = () => {
     </div>
   );
 };
+
 
 export default TermsAndConditions;
