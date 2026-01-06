@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   FileText, Printer, ShieldCheck, Mail, MapPin, 
   Globe, Lock, CheckCircle, Scale, AlertCircle, ChevronRight,
-  ArrowLeft // Added ArrowLeft icon
+  ArrowLeft, Info, Gavel, Server, AlertTriangle
 } from 'lucide-react';
 
 const PrivacyPolicy = () => {
@@ -11,14 +11,11 @@ const PrivacyPolicy = () => {
   // Handle scroll spy to update active section in sidebar
   useEffect(() => {
     const handleScroll = () => {
-      // Get all sections that have an ID
       const sections = document.querySelectorAll('section[id]');
       const scrollPosition = window.scrollY + 150;
 
       sections.forEach((section) => {
-        // FIX: We explicitly tell TypeScript this is an HTMLElement
         const htmlSection = section as HTMLElement;
-        
         const top = htmlSection.offsetTop;
         const height = htmlSection.offsetHeight;
         
@@ -38,7 +35,15 @@ const PrivacyPolicy = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      // Offset for sticky header
+      const headerOffset = 100;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+  
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
       setActiveSection(id);
     }
   };
@@ -48,15 +53,23 @@ const PrivacyPolicy = () => {
   };
 
   const sections = [
-    { id: 'section-1', label: '1. Scope of Policy' },
-    { id: 'section-2', label: '2. Data Collection' },
-    { id: 'section-3', label: '3. Usage & Purpose' },
-    { id: 'section-4', label: '4. Cookies & Tracking' },
-    { id: 'section-5', label: '5. Information Sharing' },
-    { id: 'section-6', label: '6. Security Protocols' },
-    { id: 'section-7', label: '7. Data Retention' },
-    { id: 'section-8', label: '8. User Rights' },
-    { id: 'section-contact', label: 'Contact & Compliance' },
+    { id: 'section-1', label: '1. Introduction' },
+    { id: 'section-2', label: '2. Legal Compliance' },
+    { id: 'section-3', label: '3. Scope' },
+    { id: 'section-4', label: '4. Data Categories' },
+    { id: 'section-5', label: '5. Purpose' },
+    { id: 'section-6', label: '6. Cookies' },
+    { id: 'section-7', label: '7. Sharing & Disclosure' },
+    { id: 'section-8', label: '8. International Data' },
+    { id: 'section-9', label: '9. Security' },
+    { id: 'section-10', label: '10. Retention' },
+    { id: 'section-11', label: '11. Your Rights' },
+    { id: 'section-12', label: '12. Internal Disclaimer' },
+    { id: 'section-13', label: '13. Breach Limitation' },
+    { id: 'section-14', label: '14. Third-Party' },
+    { id: 'section-15', label: '15. Updates' },
+    { id: 'section-16', label: '16. Jurisdiction' },
+    { id: 'section-17', label: '17. Contact' },
   ];
 
   return (
@@ -67,9 +80,9 @@ const PrivacyPolicy = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1"><Lock size={12} className="text-green-400" /> SSL Encrypted Connection</span>
-            <span className="hidden sm:flex items-center gap-1"><CheckCircle size={12} className="text-blue-400" /> Official Compliance Document</span>
+            <span className="hidden sm:flex items-center gap-1"><CheckCircle size={12} className="text-blue-400" /> DPDP Act 2023 Compliant</span>
           </div>
-          <div className="font-mono opacity-70">DOC-REF: DF-2026-PP-V2</div>
+          <div className="font-mono opacity-70">DOC-REF: DF-2026-PP-V3</div>
         </div>
       </div>
 
@@ -78,7 +91,7 @@ const PrivacyPolicy = () => {
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          {/* NEW: Back to Home Navigation */}
+          {/* Back to Home Navigation */}
           <div className="mb-6 print:hidden">
             <a 
               href="/" 
@@ -133,35 +146,36 @@ const PrivacyPolicy = () => {
           
           {/* Sidebar Navigation - Sticky */}
           <aside className="lg:col-span-3 print:hidden">
-            <nav className="sticky top-6 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-              <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+            <nav className="sticky top-6 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden max-h-[85vh] flex flex-col">
+              <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 shrink-0">
                 <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide">Document Index</h3>
               </div>
-              <ul className="py-2">
+              <ul className="py-2 overflow-y-auto custom-scrollbar">
                 {sections.map((item) => (
                   <li key={item.id}>
                     <button
                       onClick={() => scrollToSection(item.id)}
-                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between group transition-all border-l-4 ${
+                      className={`w-full text-left px-4 py-2 text-xs font-medium flex items-center justify-between group transition-all border-l-4 ${
                         activeSection === item.id 
-                          ? 'border-blue-700 bg-blue-50 text-blue-800 font-semibold' 
+                          ? 'border-blue-700 bg-blue-50 text-blue-800' 
                           : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                       }`}
                     >
-                      {item.label}
-                      {activeSection === item.id && <ChevronRight size={14} />}
+                      <span className="truncate mr-2">{item.label}</span>
+                      {activeSection === item.id && <ChevronRight size={12} className="shrink-0" />}
                     </button>
                   </li>
                 ))}
               </ul>
+              
+              {/* Trust Badge Widget */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200 shrink-0">
+                 <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <ShieldCheck size={14} className="text-blue-600" />
+                    <span>Updated: 06 Jan 2026</span>
+                 </div>
+              </div>
             </nav>
-            
-            {/* Trust Badge Widget */}
-            <div className="mt-6 bg-blue-900 rounded-lg p-6 text-white text-center shadow-lg">
-              <ShieldCheck size={40} className="mx-auto mb-3 text-blue-300 opacity-90" />
-              <h4 className="font-bold text-sm mb-1">Data Protection</h4>
-              <p className="text-xs text-blue-200">Compliant with IT Act 2000 & Global Privacy Standards.</p>
-            </div>
           </aside>
 
           {/* Main Content - Paper Style */}
@@ -169,124 +183,233 @@ const PrivacyPolicy = () => {
             
             <div className="p-8 md:p-12 lg:p-16 space-y-12">
               
-              {/* Introduction / Preamble */}
-              <div className="prose prose-slate max-w-none border-b border-slate-200 pb-8">
-                <p className="lead text-lg text-slate-700 leading-relaxed">
-                  <strong>Durable Fastener Private Limited</strong> We are committed to maintaining the confidentiality, integrity, and security of all personal information entrusted to us by our industrial partners, distributors, and website visitors. This Privacy Policy outlines our legal obligations and your rights regarding data processing.
-                </p>
-                <div className="flex items-start gap-3 bg-blue-50 border-l-4 border-blue-700 p-4 mt-6 text-sm text-blue-900 rounded-r">
-                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="block mb-1 font-bold uppercase text-xs tracking-wider">Legal Compliance Statement</strong>
-                    This document is drafted in accordance with the <em>Information Technology Act, 2000</em>, the <em>IT Rules, 2011</em>, and adheres to standard industrial data protection protocols.
-                  </div>
+              {/* Introduction / Section 1 */}
+              <section id="section-1" className="scroll-mt-32 border-b border-slate-200 pb-8">
+                 <div className="flex items-center gap-2 mb-4">
+                    <span className="text-blue-900 font-bold text-lg">1.</span>
+                    <h2 className="text-2xl font-serif font-bold text-slate-900">Introduction</h2>
+                 </div>
+                <div className="prose prose-slate max-w-none">
+                  <p className="text-slate-700 leading-relaxed">
+                    <strong>Durable Fastener Private Limited</strong>Company is committed to protecting personal data collected in the course of its business-to-business (B2B) operations. This Privacy Policy explains what data we collect, why we collect it, how it is used, stored, and protected, and the rights available to data principals under applicable law.
+                  </p>
+                  <p className="mt-4 text-slate-600 italic">
+                    This Policy applies to all digital interactions with the Company, including use of https://durablefastener.com/.
+                  </p>
                 </div>
-              </div>
-
-              {/* Section 1 */}
-              <section id="section-1" className="scroll-mt-24">
-                <h2 className="text-2xl font-serif font-bold text-slate-900 mb-4 border-b border-slate-200 pb-2">1. Scope of This Policy</h2>
-                <p className="text-slate-600 mb-4">This policy applies to all digital interactions with Durable Fastener Private Limited, including:</p>
-                <ul className="list-[square] pl-5 space-y-2 text-slate-700 marker:text-blue-700">
-                  <li><strong>Website Visitors:</strong> Individuals browsing our product catalog.</li>
-                  <li><strong>Business Inquiries:</strong> Distributors and OEM clients submitting RFQs (Request for Quotation).</li>
-                  <li><strong>Vendors:</strong> Suppliers interacting through our digital procurement portals.</li>
-                </ul>
               </section>
 
-              {/* Section 2 */}
-              <section id="section-2" className="scroll-mt-24">
-                <h2 className="text-2xl font-serif font-bold text-slate-900 mb-4 border-b border-slate-200 pb-2">2. Information We Collect</h2>
+              {/* Section 2: Legal Compliance */}
+              <section id="section-2" className="scroll-mt-32">
+                 <h2 className="text-xl font-serif font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <Gavel size={20} className="text-blue-700" /> 2. Legal & Regulatory Compliance
+                 </h2>
+                 <div className="bg-blue-50 border-l-4 border-blue-700 p-5 rounded-r">
+                    <p className="text-sm text-slate-700 mb-3">This Privacy Policy is issued in accordance with applicable Indian laws, including but not limited to:</p>
+                    <ul className="list-disc pl-5 space-y-1 text-sm font-medium text-slate-800">
+                        <li>Digital Personal Data Protection Act, 2023 (DPDP Act)</li>
+                        <li>Information Technology Act, 2000</li>
+                        <li>Applicable rules, regulations, and amendments thereunder</li>
+                    </ul>
+                    <p className="text-xs text-slate-500 mt-3">Where required, statutory obligations shall prevail over this Policy.</p>
+                 </div>
+              </section>
+
+              {/* Section 3: Scope */}
+              <section id="section-3" className="scroll-mt-32">
+                <h2 className="text-xl font-serif font-bold text-slate-900 mb-4">3. Scope of Application</h2>
+                <p className="text-slate-600 mb-3">This Policy applies to personal data collected through:</p>
+                <ul className="grid sm:grid-cols-2 gap-3 text-sm text-slate-700">
+                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> Website visits and online interactions</li>
+                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> Business inquiries, RFQs, and OEM communications</li>
+                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> Distributors, vendors, logistics partners</li>
+                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> Digital correspondence (email/forms)</li>
+                </ul>
+                <p className="mt-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Note: This Website is not intended for consumer or personal use.</p>
+              </section>
+
+              {/* Section 4: Categories */}
+              <section id="section-4" className="scroll-mt-32">
+                <h2 className="text-xl font-serif font-bold text-slate-900 mb-4">4. Categories of Data Collected</h2>
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-slate-50 p-5 rounded border border-slate-100">
-                    <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div> Personal Data
+                  <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
+                    <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                      <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded">4.1</span> Personal & Business Data
                     </h3>
-                    <p className="text-sm text-slate-600">Information you voluntarily provide via forms, such as Name, Company Designation, Email, Official Phone Number, and Shipping Address.</p>
+                    <ul className="space-y-2 text-sm text-slate-600">
+                        <li>• Name, designation, company name</li>
+                        <li>• Official email address and phone number</li>
+                        <li>• Business address, shipping address</li>
+                        <li>• Information shared in RFQs/Inquiries</li>
+                    </ul>
                   </div>
-                  <div className="bg-slate-50 p-5 rounded border border-slate-100">
-                    <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-slate-400 rounded-full"></div> Technical Data
+                  <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
+                    <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                      <span className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded">4.2</span> Technical & Usage Data
                     </h3>
-                    <p className="text-sm text-slate-600">Automated data including IP addresses, browser type, device specifications, and interaction logs for security auditing.</p>
+                    <ul className="space-y-2 text-sm text-slate-600">
+                        <li>• IP address</li>
+                        <li>• Browser and device type</li>
+                        <li>• Access timestamps and interaction logs</li>
+                    </ul>
                   </div>
                 </div>
               </section>
 
-              {/* Section 3 */}
-              <section id="section-3" className="scroll-mt-24">
-                <h2 className="text-2xl font-serif font-bold text-slate-900 mb-4 border-b border-slate-200 pb-2">3. Purpose of Data Collection</h2>
-                <p className="text-slate-600 mb-4">We process data strictly for business-to-business (B2B) purposes:</p>
-                <ul className="space-y-3 text-slate-700">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle size={18} className="text-green-600 shrink-0 mt-1" />
-                    <span>To process manufacturing orders and generate technical invoices.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle size={18} className="text-green-600 shrink-0 mt-1" />
-                    <span>To provide product certifications and material test reports.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle size={18} className="text-green-600 shrink-0 mt-1" />
-                    <span>To verify business identity and prevent fraud.</span>
-                  </li>
-                </ul>
+              {/* Section 5: Purpose */}
+              <section id="section-5" className="scroll-mt-32">
+                <h2 className="text-xl font-serif font-bold text-slate-900 mb-4">5. Purpose of Data Processing</h2>
+                <p className="text-slate-600 mb-4">Personal data is processed strictly for legitimate business purposes:</p>
+                <div className="bg-slate-50 p-6 rounded-lg border border-slate-100">
+                    <ul className="space-y-3 text-slate-700 text-sm">
+                        <li className="flex items-start gap-3">
+                            <CheckCircle size={16} className="text-green-600 mt-0.5" />
+                            Responding to inquiries and RFQs
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <CheckCircle size={16} className="text-green-600 mt-0.5" />
+                            Processing orders, invoices, and dispatch documentation
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <CheckCircle size={16} className="text-green-600 mt-0.5" />
+                            Issuing certifications, compliance documents, and test reports
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <CheckCircle size={16} className="text-green-600 mt-0.5" />
+                            Verifying business identity and preventing fraud
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <CheckCircle size={16} className="text-green-600 mt-0.5" />
+                            Meeting statutory, tax, audit, and regulatory obligations
+                        </li>
+                    </ul>
+                </div>
+                <p className="mt-4 text-sm font-medium text-slate-800">We do not process data for consumer profiling or advertising.</p>
               </section>
 
-              {/* Section 4 */}
-              <section id="section-4" className="scroll-mt-24">
-                <h2 className="text-2xl font-serif font-bold text-slate-900 mb-4 border-b border-slate-200 pb-2">4. Cookies & Tracking Policy</h2>
-                <p className="text-slate-600 leading-relaxed">
-                  Our website utilizes essential cookies to ensure site functionality and performance cookies to analyze industrial traffic patterns. We do not use advertising cookies to track your behavior across unrelated websites. You retain the right to disable cookies via your browser settings.
+              {/* Section 6: Cookies */}
+              <section id="section-6" className="scroll-mt-32">
+                <h2 className="text-xl font-serif font-bold text-slate-900 mb-3">6. Cookies & Tracking Technologies</h2>
+                <p className="text-slate-600 text-sm leading-relaxed mb-3">
+                  The Website uses Essential cookies for core functionality and Performance cookies for aggregated traffic analysis.
                 </p>
+                <p className="text-slate-800 text-sm font-semibold mb-2">We do not use advertising or cross-site tracking cookies.</p>
+                <p className="text-slate-500 text-xs">Users may disable cookies via browser settings; however, certain features may not function optimally.</p>
               </section>
-
-              {/* Section 5 & 6 */}
-              <div className="grid md:grid-cols-2 gap-8">
-                <section id="section-5" className="scroll-mt-24">
-                  <h2 className="text-xl font-serif font-bold text-slate-900 mb-3">5. Information Sharing</h2>
-                  <p className="text-slate-600 text-sm leading-relaxed">
-                    We strictly <strong>do not sell</strong> data. Information is shared only with logistics partners for delivery, legal authorities when mandated by law, and authorized IT service providers under strict Non-Disclosure Agreements (NDAs).
-                  </p>
-                </section>
-                <section id="section-6" className="scroll-mt-24">
-                  <h2 className="text-xl font-serif font-bold text-slate-900 mb-3">6. Security Protocols</h2>
-                  <p className="text-slate-600 text-sm leading-relaxed">
-                    We implement SSL encryption, firewalls, and strict access controls. Data is stored on secure servers with regular backups to prevent loss. Only authorized personnel have access to sensitive business data.
-                  </p>
-                </section>
-              </div>
 
               {/* Section 7 & 8 */}
               <div className="grid md:grid-cols-2 gap-8">
-                <section id="section-7" className="scroll-mt-24">
-                  <h2 className="text-xl font-serif font-bold text-slate-900 mb-3">7. Data Retention</h2>
+                <section id="section-7" className="scroll-mt-32">
+                  <h2 className="text-xl font-serif font-bold text-slate-900 mb-3">7. Data Sharing & Disclosure</h2>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-2">We strictly <strong>do not sell</strong> personal data. Data is shared only with:</p>
+                  <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
+                      <li>Logistics partners for order fulfillment</li>
+                      <li>Statutory authorities (when mandated)</li>
+                      <li>Authorized IT providers (under NDA)</li>
+                  </ul>
+                </section>
+                <section id="section-8" className="scroll-mt-32">
+                  <h2 className="text-xl font-serif font-bold text-slate-900 mb-3 flex items-center gap-2"><Globe size={18}/> 8. International Data</h2>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-2">For export inquiries:</p>
+                  <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
+                      <li>Data may be processed outside India for business execution.</li>
+                      <li>Processing is subject to reasonable safeguards.</li>
+                      <li>Compliance with foreign regimes is not guaranteed unless expressly agreed.</li>
+                  </ul>
+                </section>
+              </div>
+
+              {/* Section 9 & 10 */}
+              <div className="grid md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
+                <section id="section-9" className="scroll-mt-32">
+                  <h2 className="text-xl font-serif font-bold text-slate-900 mb-3 flex items-center gap-2"><ShieldCheck size={18}/> 9. Data Security</h2>
                   <p className="text-slate-600 text-sm leading-relaxed">
-                    Client data is retained for the duration of the business relationship and for 5 years thereafter for tax and audit purposes, after which it is securely archived or anonymized.
+                    We implement reasonable technical and organizational safeguards to protect data. However, no system is completely secure, and we do not warrant absolute security of transmission or storage.
                   </p>
                 </section>
-                <section id="section-8" className="scroll-mt-24">
-                  <h2 className="text-xl font-serif font-bold text-slate-900 mb-3">8. User Rights</h2>
+                <section id="section-10" className="scroll-mt-32">
+                  <h2 className="text-xl font-serif font-bold text-slate-900 mb-3 flex items-center gap-2"><Server size={18}/> 10. Data Retention</h2>
                   <p className="text-slate-600 text-sm leading-relaxed">
-                    You have the right to request a copy of your data, request corrections to company details, or request deletion of data (subject to pending orders or legal invoice retention requirements).
+                    Data is retained as long as necessary for the collected purpose or to comply with legal/tax obligations. Thereafter, it is securely deleted, anonymized, or archived.
                   </p>
                 </section>
               </div>
 
-              {/* Contact Footer */}
-              <section id="section-contact" className="scroll-mt-24 mt-12 bg-slate-900 text-white p-8 rounded shadow-inner">
+              {/* Section 11: Rights */}
+              <section id="section-11" className="scroll-mt-32 bg-slate-50 p-6 rounded-lg border border-slate-200">
+                <h2 className="text-xl font-serif font-bold text-slate-900 mb-4">11. Data Principal Rights (DPDP Act, 2023)</h2>
+                <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex-1">
+                        <h4 className="font-bold text-sm text-blue-800 mb-2 uppercase">Your Rights</h4>
+                        <ul className="space-y-2 text-sm text-slate-700">
+                            <li className="flex items-center gap-2"><CheckCircle size={14} className="text-blue-500"/> Request access to personal data</li>
+                            <li className="flex items-center gap-2"><CheckCircle size={14} className="text-blue-500"/> Request correction of inaccurate data</li>
+                            <li className="flex items-center gap-2"><CheckCircle size={14} className="text-blue-500"/> Request deletion (where permissible)</li>
+                        </ul>
+                    </div>
+                    <div className="flex-1 border-l border-slate-200 pl-0 md:pl-8">
+                        <h4 className="font-bold text-sm text-slate-600 mb-2 uppercase">Limitations</h4>
+                        <p className="text-xs text-slate-500 mb-2">Requests may be denied where:</p>
+                        <ul className="space-y-1 text-xs text-slate-500">
+                            <li>• Retention is required by law</li>
+                            <li>• Data is necessary for ongoing business/compliance</li>
+                        </ul>
+                        <p className="text-xs text-slate-400 mt-2 italic">We reserve the right to verify identity before acting.</p>
+                    </div>
+                </div>
+              </section>
+
+              {/* Legal Disclaimers (Sections 12, 13, 14, 15) */}
+              <div className="border-t border-slate-200 pt-8">
+                <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                    <section id="section-12" className="scroll-mt-32">
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">12. Internal Data Handling Disclaimer</h3>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                        Unauthorized access by employees contrary to policy is a violation. The Company takes corrective action but is not liable for actions outside authorized scope to the extent permitted by law.
+                        </p>
+                    </section>
+                    <section id="section-13" className="scroll-mt-32">
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">13. Data Breach Limitation</h3>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                        In case of breach, we will mitigate impact and notify where required. We are not liable for indirect or consequential losses to the max extent permitted by law.
+                        </p>
+                    </section>
+                    <section id="section-14" className="scroll-mt-32">
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">14. Third-Party Websites</h3>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                        We are not responsible for privacy practices of linked third-party sites. Users access them at their own risk.
+                        </p>
+                    </section>
+                    <section id="section-15" className="scroll-mt-32">
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">15. Policy Updates</h3>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                        We may update this policy without notice. Continued use constitutes acceptance.
+                        </p>
+                    </section>
+                </div>
+              </div>
+
+              {/* Section 16: Jurisdiction */}
+              <section id="section-16" className="scroll-mt-32 bg-slate-100 p-4 rounded text-center">
+                 <h2 className="text-sm font-bold text-slate-800">16. Governing Law & Jurisdiction</h2>
+                 <p className="text-xs text-slate-600 mt-1">
+                    Governed by the laws of India. All disputes subject to exclusive jurisdiction of courts at <strong>Rajkot, Gujarat, India</strong>.
+                 </p>
+              </section>
+
+              {/* Section 17: Contact */}
+              <section id="section-17" className="scroll-mt-32 mt-8 bg-slate-900 text-white p-8 rounded shadow-inner">
                 <div className="flex flex-col md:flex-row justify-between gap-8">
                   <div className="space-y-4">
-                    <h2 className="text-xl font-bold border-b border-slate-700 pb-2 mb-4">Official Contact Information</h2>
+                    <h2 className="text-xl font-bold border-b border-slate-700 pb-2 mb-4">17. Contact Information</h2>
                     <div className="flex items-start gap-3">
                       <MapPin className="text-blue-400 shrink-0" size={20} />
-                      <p className="text-slate-300 text-sm">
+                      <p className="text-slate-300 text-sm leading-relaxed">
                         <strong className="text-white block">Registered Office:</strong>
                         Durable Fastener Private Limited<br />
-                        Plot No.16, Survey No.660,
-                        Surbhi Ind Zone-D, Ravki, Rajkot-360004,
-                        Gujarat, India <br />
-                        
+                        Plot No. 16, Survey No. 660,<br />
+                        Surbhi Ind Zone-D, Ravki,<br />
+                        Rajkot – 360004, Gujarat, India
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -301,18 +424,17 @@ const PrivacyPolicy = () => {
 
                   <div className="flex flex-col justify-end items-start md:items-end">
                     <div className="flex gap-2 mb-4">
-                      {/* Placeholder for Certification Icons */}
-                      <div className="bg-white/10 p-2 rounded text-xs text-center">
+                      <div className="bg-white/10 p-2 rounded text-xs text-center min-w-[80px]">
                         <ShieldCheck size={24} className="mx-auto mb-1 text-green-400" />
                         <span>Secured</span>
                       </div>
-                      <div className="bg-white/10 p-2 rounded text-xs text-center">
+                      <div className="bg-white/10 p-2 rounded text-xs text-center min-w-[80px]">
                         <FileText size={24} className="mx-auto mb-1 text-blue-400" />
-                        <span>IT Act Compliant</span>
+                        <span>IT Act 2000</span>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-500 text-right max-w-xs">
-                      This privacy policy is subject to the jurisdiction of the courts in Rajkot, Gujarat.
+                    <p className="text-xs text-slate-500 text-right">
+                       © 2026 Durable Fastener Private Limited.<br/>All Rights Reserved.
                     </p>
                   </div>
                 </div>
