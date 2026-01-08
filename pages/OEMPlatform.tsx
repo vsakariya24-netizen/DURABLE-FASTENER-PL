@@ -5,12 +5,13 @@ import {
 } from 'framer-motion';
 import { 
   ArrowRight, CheckCircle2, Factory, Flame, Droplets, ScanFace, 
-  Zap, Hexagon, ShieldCheck, MapPin, Settings, Component, 
+  Zap, Hexagon, Nut, ShieldCheck, MapPin, Settings, Component, 
   Crosshair, Layers, Cpu, Phone, Download, Container, FileSearch, 
-  Database, Microscope,FlaskConical,Ruler,Hash
+  Database, Microscope, FlaskConical, Ruler, Hash, Image as ImageIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+
 // =========================================
 // 1. UTILITY COMPONENTS
 // =========================================
@@ -29,6 +30,23 @@ const ScrollReveal: React.FC<{ children: React.ReactNode; delay?: number; classN
     </motion.div>
   );
 };
+// Custom Screw Icon based on your uploaded image
+const CustomScrew: React.FC<{ size?: number; className?: string }> = ({ size = 80, className = "" }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    width={size} 
+    height={size} 
+    fill="currentColor" 
+    className={className}
+  >
+    {/* Head: Rounded Pan Head */}
+    <path d="M6 6C6 3.5 8.5 2 12 2C15.5 2 18 3.5 18 6V8H6V6Z" />
+    
+    {/* Body: Shaft with Pointed Tip */}
+    <path d="M9 8V19L12 22L15 19V8H9ZM15 10.5L9 9V10L15 11.5V10.5ZM15 13.5L9 12V13L15 14.5V13.5ZM15 16.5L9 15V16L15 17.5V16.5Z" />
+  </svg>
+);
 
 const RulerTicks = () => (
   <div className="flex justify-between w-full mt-2 px-1">
@@ -40,38 +58,6 @@ const RulerTicks = () => (
     ))}
   </div>
 );
-// Mouse Spotlight Card
-const SpotlightCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
-    const { left, top } = currentTarget.getBoundingClientRect();
-    mouseX.set(clientX - left);
-    mouseY.set(clientY - top);
-  }
-
-  return (
-    <div 
-      className={`group relative border border-white/10 bg-slate-900/50 overflow-hidden ${className}`}
-      onMouseMove={handleMouseMove}
-    >
-      <motion.div
-        className="pointer-events-none absolute -inset-px rounded-xl opacity-0 transition duration-300 group-hover:opacity-100"
-        style={{
-          background: useMotionTemplate`
-            radial-gradient(
-              650px circle at ${mouseX}px ${mouseY}px,
-              rgba(59, 130, 246, 0.15),
-              transparent 80%
-            )
-          `,
-        }}
-      />
-      <div className="relative h-full">{children}</div>
-    </div>
-  );
-};
 
 // 3D Parallax Card
 const TiltedCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -278,10 +264,11 @@ const OEMPlatform: React.FC = () => {
     if (typeof unwrappedInput === 'object' && unwrappedInput !== null) {
       clean.name = unwrappedInput.name || '';
       clean.img = unwrappedInput.img || '';
-      const nestedData = unwrap(clean.name);
-      if (typeof nestedData === 'object' && nestedData !== null) {
-         if (nestedData.name) clean.name = nestedData.name;
-         if (nestedData.img) clean.img = nestedData.img; 
+      // Also handle nested structure if needed
+      if (typeof clean.name === 'string' && clean.name.startsWith('{')) {
+          const nested = unwrap(clean.name);
+          if (nested.name) clean.name = nested.name;
+          if (nested.img) clean.img = nested.img;
       }
     } else {
       clean.name = String(unwrappedInput);
@@ -290,52 +277,12 @@ const OEMPlatform: React.FC = () => {
   };
 
   const specs = content?.technical_specs || {};
-
-  // --- EXISTING TAB DATA (Refactored to Grid) ---
-  const techSpecs = {
-    material: {
-      title: "Raw Material Integrity",
-      desc: "Zero-scrap policy. 100% sourced from Tata/JSW primary mills.",
-      points: [
-        { label: "Steel Grades", value: "SAE 1010, 1022, 10B21" },
-        { label: "Stainless", value: "AISI 304, 316" },
-        { label: "Wire Origin", value: "Primary Mills Only" },
-        { label: "Structure", value: "Spheroidized" }
-      ],
-      icon: Layers,
-      color: "text-blue-400",
-      borderColor: "border-blue-500/50"
-    },
-    heat_treat: {
-      title: "Thermal Processing",
-      desc: "Continuous Mesh Belt Furnace for uniform core hardening.",
-      points: [
-        { label: "Method", value: "Carburizing / Carb" },
-        { label: "Case Depth", value: "0.05mm - 0.25mm" },
-        { label: "Core Hardness", value: "32-39 HRC" },
-        { label: "Surface HV", value: "Min 550 HV" }
-      ],
-      icon: Flame,
-      color: "text-orange-400",
-      borderColor: "border-orange-500/50"
-    },
-    plating: {
-      title: "Surface Engineering",
-      desc: "High-performance coatings for extreme environments.",
-      points: [
-        { label: "Zinc (Cr3+)", value: "Blue, Yellow, Black" },
-        { label: "Ruspert", value: "500H+ Salt Spray" },
-        { label: "SST Life", value: "72Hrs - 1000Hrs" },
-        { label: "De-embrittlement", value: "Baked @ 200°C" }
-      ],
-      icon: Droplets,
-      color: "text-cyan-400",
-      borderColor: "border-cyan-500/50"
-    }
-  };
-
   const liveHeadStyles = content?.head_styles || [];
   const liveDriveSystems = content?.drive_systems || [];
+  
+  // NEW: Fetching dynamic Lists
+  const liveThreading = content?.threading_types || [];
+  const liveSurfaces = content?.surface_finishes || [];
 
   if (loading) return (
     <div className="min-h-screen bg-[#030305] flex items-center justify-center">
@@ -349,75 +296,10 @@ const OEMPlatform: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#030305] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden">
       <Helmet>
-        {/* 1. B2B & Commercial Title */}
         <title>OEM Fastener Manufacturer | Custom Automotive Bolts India - Durable Fastener</title>
-        
-        <meta 
-          name="description" 
-          content="India's leading OEM platform for custom industrial fasteners. We manufacture bespoke screws, bolts, and automotive components based on engineering drawings. ISO 9001:2015 Certified." 
-        />
-        
-        <meta 
-          name="keywords" 
-          content="oem fastener manufacturer, custom bolts india, automotive oem fasteners, bespoke screw manufacturing, contract manufacturing rajkot, fastener product development" 
-        />
-
-        {/* 2. SERVICE SCHEMA (Google ko batane ke liye ki aap Custom Kaam karte hain) */}
-        <script type="application/ld+json">
-          {`
-            {
-              "@context": "https://schema.org",
-              "@type": "Service",
-              "name": "OEM Custom Fastener Manufacturing",
-              "serviceType": "Contract Manufacturing",
-              "provider": {
-                "@type": "Organization",
-                "name": "Durable Fastener Pvt Ltd",
-                "url": "https://durablefastener.com",
-                "logo": "https://durablefastener.com/durablefastener.png",
-                "address": {
-                  "@type": "PostalAddress",
-                  "addressLocality": "Rajkot",
-                  "addressRegion": "Gujarat",
-                  "addressCountry": "IN"
-                }
-              },
-              "areaServed": {
-                "@type": "Country",
-                "name": "India"
-              },
-              "description": "We provide end-to-end OEM manufacturing services for automotive and industrial brands. From cold forging to heat treatment, we produce fasteners exactly as per technical blueprints.",
-              "hasOfferCatalog": {
-                "@type": "OfferCatalog",
-                "name": "Manufacturing Capabilities",
-                "itemListElement": [
-                  {
-                    "@type": "Offer",
-                    "itemOffered": {
-                      "@type": "Service",
-                      "name": "Cold Forging"
-                    }
-                  },
-                  {
-                    "@type": "Offer",
-                    "itemOffered": {
-                      "@type": "Service",
-                      "name": "Thread Rolling"
-                    }
-                  },
-                  {
-                    "@type": "Offer",
-                    "itemOffered": {
-                      "@type": "Service",
-                      "name": "Custom Heat Treatment"
-                    }
-                  }
-                ]
-              }
-            }
-          `}
-        </script>
+        <meta name="description" content="India's leading OEM platform for custom industrial fasteners." />
       </Helmet>
+
       {/* =========================================
           1. HERO: HOLOGRAPHIC BLUEPRINT
       ========================================= */}
@@ -481,31 +363,9 @@ const OEMPlatform: React.FC = () => {
       {/* =========================================
           2. DATA TICKER
       ========================================= */}
-      <div className="border-y border-white/10 bg-[#0A0A0C] relative z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
-            {[
-              { label: "Monthly Output", val: "75M+", sub: "Pieces" },
-              { label: "Steel Grade", val: "10B21", sub: "Boron Steel" },
-              { label: "PPM Quality", val: "<50", sub: "Defect Rate" },
-              { label: "Exporting To", val: "12+", sub: "Countries" },
-            ].map((stat, i) => (
-              <ScrollReveal key={i} delay={i * 0.1} className="h-full">
-                <div className="p-6 md:p-8 flex flex-col items-center justify-center hover:bg-white/5 transition-colors cursor-default h-full">
-                   <span className="text-3xl md:text-4xl font-black text-white font-mono tracking-tight">{stat.val}</span>
-                   <div className="flex flex-col items-center mt-1">
-                      <span className="text-[10px] uppercase tracking-widest text-blue-500 font-bold">{stat.label}</span>
-                      <span className="text-[10px] text-slate-600 font-mono">{stat.sub}</span>
-                   </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </div>
-
+    
       {/* =========================================
-          3. TECHNICAL BASELINE (Redesigned)
+          3. TECHNICAL BASELINE (Dynamic Lists)
       ========================================= */}
      <section className="py-32 px-6 relative bg-[#050505] overflow-hidden">
         {/* Abstract Technical Background */}
@@ -540,10 +400,10 @@ const OEMPlatform: React.FC = () => {
             </div>
           </div>
 
-          {/* === THE NEW BENTO GRID === */}
+          {/* === THE BENTO GRID === */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             
-            {/* 1. MATERIAL (Chemical Composition Style) */}
+            {/* 1. MATERIAL */}
             <div className="md:col-span-5 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
                <div className="flex justify-between items-start mb-6">
                  <div>
@@ -554,8 +414,6 @@ const OEMPlatform: React.FC = () => {
                     <FlaskConical size={24} />
                  </div>
                </div>
-
-               {/* Chemical Table Visualization */}
                <div className="bg-white/5 rounded-lg p-4 border border-white/5">
                   <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/5">
                      <span className="text-slate-400 text-xs font-mono">GRADE FAMILY</span>
@@ -564,7 +422,6 @@ const OEMPlatform: React.FC = () => {
                      </span>
                   </div>
                   <div className="space-y-3">
-                     {/* Pseudo Chemical Bars */}
                      <div>
                         <div className="flex justify-between text-[10px] text-slate-500 font-mono mb-1">
                            <span>Fe (Iron)</span>
@@ -587,28 +444,20 @@ const OEMPlatform: React.FC = () => {
                </div>
             </div>
 
-            {/* 2. DIAMETER (Concentric Circles / Cross Section) */}
+            {/* 2. DIAMETER */}
             <div className="md:col-span-3 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all relative overflow-hidden">
                <div>
                   <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Cross Section</span>
                   <h4 className="text-3xl text-white font-bold font-mono">{specs.diameter || "M2 - M8"}</h4>
                </div>
-
-               {/* Visual: Concentric Circles */}
                <div className="relative h-32 w-full flex items-center justify-center mt-4">
-                  {/* Outer Ring (Max) */}
                   <div className="absolute w-28 h-28 border border-dashed border-slate-600 rounded-full flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity">
                      <span className="absolute -right-2 top-1/2 -translate-y-1/2 translate-x-full text-[9px] text-slate-500 font-mono pl-2">M8</span>
                   </div>
-                  {/* Mid Ring */}
-                  <div className="absolute w-20 h-20 border border-blue-500/30 bg-blue-500/5 rounded-full flex items-center justify-center">
-                  </div>
-                  {/* Inner Ring (Min) */}
+                  <div className="absolute w-20 h-20 border border-blue-500/30 bg-blue-500/5 rounded-full flex items-center justify-center"></div>
                   <div className="absolute w-8 h-8 bg-blue-500 rounded-full shadow-[0_0_15px_#3b82f6]">
                      <span className="absolute -left-2 top-1/2 -translate-y-1/2 -translate-x-full text-[9px] text-white font-mono pr-2">M2</span>
                   </div>
-                  
-                  {/* Crosshair */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
                      <div className="w-full h-px bg-blue-400"></div>
                      <div className="h-full w-px bg-blue-400 absolute"></div>
@@ -616,7 +465,7 @@ const OEMPlatform: React.FC = () => {
                </div>
             </div>
 
-            {/* 3. LENGTH (Digital Ruler) */}
+            {/* 3. LENGTH */}
             <div className="md:col-span-4 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all">
                <div className="flex justify-between items-start">
                   <div>
@@ -625,49 +474,25 @@ const OEMPlatform: React.FC = () => {
                   </div>
                   <Ruler className="text-slate-600 group-hover:text-blue-500 transition-colors" />
                </div>
-
-               {/* Visual: Ruler */}
                <div className="mt-8 relative">
-                  {/* The Scale Line */}
                   <div className="h-1 w-full bg-slate-800 rounded relative">
-                     {/* Active Range Bar */}
                      <div className="absolute left-[10%] right-[10%] h-full bg-blue-600 shadow-[0_0_10px_#2563eb]"></div>
-                     
-                     {/* Min Marker */}
                      <div className="absolute left-[10%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-blue-600 transform -translate-x-1/2">
                         <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-mono">4mm</span>
                      </div>
-                     {/* Max Marker */}
                      <div className="absolute right-[10%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-blue-600 transform translate-x-1/2">
                         <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-mono">125mm</span>
                      </div>
                   </div>
                   <RulerTicks />
                   <div className="flex justify-between text-[10px] text-slate-600 font-mono mt-2 px-1">
-                     <span>0</span>
-                     <span>50</span>
-                     <span>100</span>
-                     <span>150+</span>
+                     <span>0</span><span>50</span><span>100</span><span>150+</span>
                   </div>
                </div>
             </div>
 
-           
-            {/* 4. Threads (Detail Box) */}
-        {/* 4. Threads (Detail Box) - UPDATED TO MATCH UPLOADED IMAGE STYLE */}
+            {/* 4. Threads (Dynamic from DB) */}
             <div className="md:col-span-5 bg-[#0A0A0C] p-6 group hover:bg-[#0F1115] transition-colors border-t md:border-t-0 border-white/10 relative overflow-hidden">
-               
-               {/* Metallic Gradient Definition */}
-               <svg width="0" height="0">
-                 <defs>
-                   <linearGradient id="screwMetal" x1="0%" y1="0%" x2="100%" y2="0%">
-                     <stop offset="0%" stopColor="#334155" /> 
-                     <stop offset="50%" stopColor="#94a3b8" /> 
-                     <stop offset="100%" stopColor="#334155" />
-                   </linearGradient>
-                 </defs>
-               </svg>
-
                <div className="flex items-start justify-between mb-6 relative z-10">
                  <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Threading Spec</span>
                  <Settings className="text-blue-500/50 group-hover:rotate-90 transition-transform duration-700" size={20} />
@@ -675,130 +500,91 @@ const OEMPlatform: React.FC = () => {
                
                <h4 className="text-2xl font-mono text-white font-medium mb-6 relative z-10">{specs.thread || "Fine, Coarse & Metric"}</h4>
                
-               {/* Thread Visual Grid */}
+               {/* DYNAMIC THREAD GRID */}
                <div className="grid grid-cols-4 gap-2 relative z-10">
-                 {[
-                   { 
-                     label: 'COARSE', 
-                     // Wide spacing between threads
-                     stripes: "M12 12 L28 18 M12 22 L28 28 M12 32 L28 38 M12 42 L28 48 M12 52 L28 58", 
-                     desc: "Deep" 
-                   },
-                   { 
-                     label: 'FINE', 
-                     // Tight/Close spacing
-                     stripes: "M12 10 L28 14 M12 15 L28 19 M12 20 L28 24 M12 25 L28 29 M12 30 L28 34 M12 35 L28 39 M12 40 L28 44 M12 45 L28 49 M12 50 L28 54 M12 55 L28 59", 
-                     desc: "Precision" 
-                   },
-                   { 
-                     label: 'MACHINE', 
-                     // Standard uniform spacing
-                     stripes: "M12 10 L28 13 M12 17 L28 20 M12 24 L28 27 M12 31 L28 34 M12 38 L28 41 M12 45 L28 48 M12 52 L28 55 M12 59 L28 62", 
-                     desc: "ISO Std" 
-                   },
-                   { 
-                     label: 'SELF-TAP', 
-                     // Steep angle, wide spacing
-                     stripes: "M12 10 L28 20 M12 22 L28 32 M12 34 L28 44 M12 46 L28 56", 
-                     desc: "Cutting" 
-                   }
-                 ].map((thread, i) => (
-                   <div key={i} className="bg-white/5 border border-white/10 rounded-lg py-4 px-1 hover:border-blue-500/50 hover:bg-white/10 transition-all group/thread cursor-default relative flex flex-col items-center gap-3">
-                      
-                      {/* THE VERTICAL SCREW VISUAL */}
-                      <div className="h-24 w-full flex items-center justify-center">
-                         <svg viewBox="0 0 40 80" className="h-full drop-shadow-lg">
-                           {/* 1. Screw Head (Flat Top like image) */}
-                           <rect x="4" y="0" width="32" height="10" rx="2" fill="url(#screwMetal)" />
-                           
-                           {/* 2. Screw Shaft (Vertical Cylinder) */}
-                           <rect x="12" y="9" width="16" height="52" fill="url(#screwMetal)" />
-                           
-                           {/* 3. Screw Tip (Pointed Triangle) */}
-                           <path d="M12 60 L20 75 L28 60 Z" fill="url(#screwMetal)" />
-
-                           {/* 4. The Diagonal Threads (White Stripes) */}
-                           <path d={thread.stripes} stroke="white" strokeWidth="2" strokeOpacity="0.3" strokeLinecap="square" />
-                         </svg>
-                      </div>
-
-                      <div className="flex flex-col items-center text-center relative z-10">
-                        <span className="text-[10px] font-bold text-slate-300 group-hover/thread:text-blue-400 transition-colors tracking-tighter">{thread.label}</span>
-                      </div>
-                   </div>
-                 ))}
+                 {liveThreading.length > 0 ? (
+                    liveThreading.map((item: any, i: number) => {
+                      const { name, img } = getCleanData(item);
+                      return (
+                        <div key={i} className="bg-white/5 border border-white/10 rounded-lg py-4 px-1 hover:border-blue-500/50 hover:bg-white/10 transition-all group/thread cursor-default relative flex flex-col items-center gap-3">
+                           {/* THE IMAGE FROM ADMIN PANEL */}
+                           <div className="h-24 w-full flex items-center justify-center overflow-hidden">
+                              {img ? (
+                                <img src={img} alt={name} className="h-full w-auto object-contain drop-shadow-lg opacity-80 group-hover/thread:opacity-100 transition-opacity" />
+                              ) : (
+                                <Settings className="text-slate-700 h-10 w-10" />
+                              )}
+                           </div>
+                           <div className="flex flex-col items-center text-center relative z-10">
+                             <span className="text-[10px] font-bold text-slate-300 group-hover/thread:text-blue-400 transition-colors tracking-tighter uppercase">{name}</span>
+                           </div>
+                        </div>
+                      )
+                    })
+                 ) : (
+                    <div className="col-span-4 text-center text-slate-500 text-xs py-10">No Thread Data Loaded</div>
+                 )}
                </div>
             </div>
 
-            {/* 5. Surface Finishes (Wide Highlight Box) - UPDATED TO MATCH IMAGE */}
+            {/* 5. Surface Finishes (Dynamic from DB) */}
             <div className="md:col-span-7 bg-[#0A0A0C] p-8 group border-t md:border-t-0 border-l md:border-l-0 border-white/10 relative overflow-hidden">
-              {/* Blue Accent Line */}
-              <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 shadow-[0_0_15px_#2563eb]"></div>
-              
-              <div className="flex flex-col h-full justify-between relative z-10">
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Surface Engineering</span>
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-500 font-mono block">SST LIFE (SALT SPRAY)</span>
-                    <span className="text-emerald-400 font-bold font-mono text-lg text-shadow-glow">72 - 1000 HRS</span>
-                  </div>
-                </div>
-
-                {/* DYNAMIC FINISH CHIPS - PILL SHAPE */}
-                <div className="flex flex-wrap gap-3 content-start">
-                  {[
-                    { name: "Black Phosphate", type: "black" },
-                    { name: "Zinc (White)", type: "zinc" },
-                    { name: "Golden", type: "gold" },
-                    { name: "Blue", type: "blue" },
-                    { name: "Rose Gold", type: "rose" },
-                    { name: "Trivalent Zinc", type: "zinc" },
-                    { name: "Passivation", type: "grey" }
-                  ].map((finish, i) => {
-                    
-                    // Specific Styling Logic based on type
-                    let dotColor = "";
-                    if (finish.type === 'black') dotColor = "bg-neutral-900 border border-neutral-700 shadow-[inset_0_2px_4px_rgba(255,255,255,0.1)]";
-                    if (finish.type === 'zinc') dotColor = "bg-gradient-to-br from-slate-100 to-slate-400 border border-white/20";
-                    if (finish.type === 'gold') dotColor = "bg-gradient-to-br from-[#FCD34D] via-[#F59E0B] to-[#B45309] border border-yellow-500/20";
-                    if (finish.type === 'blue') dotColor = "bg-gradient-to-br from-[#bae6fd] via-[#38bdf8] to-[#0284c7] border border-blue-400/20";
-                    if (finish.type === 'rose') dotColor = "bg-gradient-to-br from-[#fda4af] via-[#f43f5e] to-[#be123c] border border-rose-500/20";
-                    if (finish.type === 'grey') dotColor = "bg-slate-600 border border-slate-500";
-
-                    return (
-                      <div key={i} className="group/chip flex items-center gap-3 bg-[#13161C] border border-white/10 rounded-full pl-1.5 pr-5 py-1.5 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-default">
-                        {/* The Colored Dot */}
-                        <div className={`w-5 h-5 rounded-full ${dotColor} shadow-lg shrink-0`}></div>
-                        
-                        {/* The Text */}
-                        <span className="text-slate-300 text-xs font-bold uppercase tracking-wide group-hover/chip:text-white transition-colors">
-                          {finish.name}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  
-                  {/* Custom Coating Badge */}
-                  <div className="flex items-center gap-2 px-4 py-1.5 border border-dashed border-white/20 rounded-full">
-                     <span className="text-[10px] text-slate-500 uppercase font-mono">+ Custom Coatings</span>
-                  </div>
-                </div>
-
-                {/* Compliance Badges */}
-                <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-4">
-                   <span className="text-[10px] text-slate-600 font-mono">COMPLIANCE:</span>
-                   <div className="flex gap-2">
-                      <span className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold rounded flex items-center gap-1">
-                        <CheckCircle2 size={10} /> ROHS
-                      </span>
-                      <span className="px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[10px] font-bold rounded flex items-center gap-1">
-                        <CheckCircle2 size={10} /> REACH
-                      </span>
+               {/* Blue Accent Line */}
+               <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 shadow-[0_0_15px_#2563eb]"></div>
+               
+               <div className="flex flex-col h-full justify-between relative z-10">
+                 <div className="flex items-center justify-between mb-6">
+                   <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Surface Engineering</span>
+                   <div className="text-right">
+                     <span className="text-[10px] text-slate-500 font-mono block">SST LIFE (SALT SPRAY)</span>
+                     <span className="text-emerald-400 font-bold font-mono text-lg text-shadow-glow">72 - 1000 HRS</span>
                    </div>
-                </div>
-              </div>
+                 </div>
+
+                 {/* DYNAMIC FINISH CHIPS */}
+                 <div className="flex flex-wrap gap-3 content-start">
+                   {liveSurfaces.length > 0 ? (
+                       liveSurfaces.map((finish: any, i: number) => {
+                         // Finish object structure from DB should be { name: "...", color: "#..." }
+                         return (
+                           <div key={i} className="group/chip flex items-center gap-3 bg-[#13161C] border border-white/10 rounded-full pl-1.5 pr-5 py-1.5 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-default">
+                             {/* The Colored Dot from DB Hex */}
+                             <div 
+                                style={{ background: finish.color }}
+                                className="w-5 h-5 rounded-full shadow-lg shrink-0 border border-white/10"
+                             ></div>
+                             
+                             <span className="text-slate-300 text-xs font-bold uppercase tracking-wide group-hover/chip:text-white transition-colors">
+                               {finish.name}
+                             </span>
+                           </div>
+                         );
+                       })
+                   ) : (
+                       <div className="text-slate-500 text-xs">Loading finishes...</div>
+                   )}
+                   
+                   <div className="flex items-center gap-2 px-4 py-1.5 border border-dashed border-white/20 rounded-full">
+                      <span className="text-[10px] text-slate-500 uppercase font-mono">+ Custom Coatings</span>
+                   </div>
+                 </div>
+
+                 {/* Compliance Badges */}
+                 <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-4">
+                    <span className="text-[10px] text-slate-600 font-mono">COMPLIANCE:</span>
+                    <div className="flex gap-2">
+                       <span className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold rounded flex items-center gap-1">
+                         <CheckCircle2 size={10} /> ROHS
+                       </span>
+                       <span className="px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[10px] font-bold rounded flex items-center gap-1">
+                         <CheckCircle2 size={10} /> REACH
+                       </span>
+                    </div>
+                 </div>
+               </div>
             </div>
-            </div>
+          </div>
+
           {/* Bottom Decoration */}
           <div className="flex justify-between items-center mt-4 opacity-50">
              <div className="flex gap-4">
@@ -807,20 +593,17 @@ const OEMPlatform: React.FC = () => {
              <div className="h-px w-32 bg-white/20"></div>
           </div>
 
-      
-          {/* Footer Metadata */}
           <div className="flex justify-end items-center mt-4 opacity-40">
              <span className="text-[10px] text-slate-500 font-mono mr-2">TOLERANCE SPEC: ISO 4759-1</span>
           </div>
 
         </div>
-      </section>
+     </section>
 
       {/* =========================================
-          6. VISUAL CAPABILITIES: REBUILT FOR HIGHLIGHT
+          6. VISUAL CAPABILITIES
       ========================================= */}
       <section className="py-32 px-6 bg-[#030304] relative overflow-hidden">
-        {/* Cinematic Background */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#1e293b_0%,#030304_70%)] opacity-30"></div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -832,7 +615,6 @@ const OEMPlatform: React.FC = () => {
           </ScrollReveal>
 
           <div className="grid lg:grid-cols-2 gap-20">
-            
             {/* --- Head Styles Section --- */}
             <div>
               <ScrollReveal>
@@ -841,55 +623,28 @@ const OEMPlatform: React.FC = () => {
                   <h4 className="text-xl font-bold text-white tracking-widest uppercase">Head Styles</h4>
                 </div>
               </ScrollReveal>
-              
               <div className="grid grid-cols-2 gap-8">
                 {liveHeadStyles.map((item: any, i: number) => {
                   const { name, img } = getCleanData(item);
                   const info = getStandard(name, 'head');
-                  
                   return (
                     <ScrollReveal key={i} delay={i * 0.1}>
                       <div className="h-64 perspective-1000 group">
                         <TiltedCard>
                           <div className="relative h-full w-full bg-[#0B0F17] rounded-xl border border-white/10 p-6 flex flex-col items-center justify-center gap-4 overflow-hidden transition-all duration-500 group-hover:border-blue-500/40 group-hover:shadow-[0_0_40px_rgba(59,130,246,0.1)]">
-                            
-                            {/* 1. Cyber Grid Background (Reveals on Hover) */}
                             <div className="absolute inset-0 bg-[linear-gradient(to_right,#3b82f610_1px,transparent_1px),linear-gradient(to_bottom,#3b82f610_1px,transparent_1px)] bg-[size:20px_20px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                            {/* 2. Central Spotlight (Glow behind image) */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
-
-                            {/* 3. Floating Image with Animation */}
-                            <div 
-                              className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110"
-                              style={{ transform: "translateZ(40px)" }} 
-                            >
-                              <motion.div
-                                animate={{ y: [-5, 5, -5] }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                              >
-                                {img ? (
-                                  <img 
-                                    src={img} 
-                                    alt={name} 
-                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(59,130,246,0.3)] transition-all duration-300" 
-                                  />
-                                ) : (
-                                  <Component size={48} className="text-slate-700 group-hover:text-blue-500 transition-colors" />
-                                )}
+                            <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
+                              <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
+                                {img ? <img src={img} alt={name} className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(59,130,246,0.3)] transition-all duration-300" /> : <Component size={48} className="text-slate-700" />}
                               </motion.div>
                             </div>
-
-                            {/* 4. Glassmorphic Text Panel */}
                             <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
                               <div className="text-white font-bold text-sm uppercase tracking-wider">{name}</div>
                               <div className="flex items-center gap-2 mt-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                <span className="text-[10px] text-blue-400 font-mono border border-blue-500/30 px-1.5 rounded bg-blue-500/5">
-                                  {info.std}
-                                </span>
+                                <span className="text-[10px] text-blue-400 font-mono border border-blue-500/30 px-1.5 rounded bg-blue-500/5">{info.std}</span>
                               </div>
                             </div>
-
                           </div>
                         </TiltedCard>
                       </div>
@@ -907,58 +662,29 @@ const OEMPlatform: React.FC = () => {
                   <h4 className="text-xl font-bold text-white tracking-widest uppercase">Drive Systems</h4>
                 </div>
               </ScrollReveal>
-
               <div className="grid grid-cols-2 gap-8">
                 {liveDriveSystems.map((item: any, i: number) => {
                   const { name, img } = getCleanData(item);
                   const info = getStandard(name, 'drive');
-
                   return (
                     <ScrollReveal key={i} delay={i * 0.1}>
                       <div className="h-64 perspective-1000 group">
                         <TiltedCard>
                            <div className="relative h-full w-full bg-[#0B0F17] rounded-xl border border-white/10 p-6 flex flex-col items-center justify-center gap-4 overflow-hidden transition-all duration-500 group-hover:border-emerald-500/40 group-hover:shadow-[0_0_40px_rgba(16,185,129,0.1)]">
-                            
-                            {/* 1. Cyber Grid Background (Emerald) */}
                             <div className="absolute inset-0 bg-[linear-gradient(to_right,#10b98110_1px,transparent_1px),linear-gradient(to_bottom,#10b98110_1px,transparent_1px)] bg-[size:20px_20px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                            {/* 2. Central Spotlight */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
-
-                            {/* 3. Floating Image */}
-                            <div 
-                              className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110"
-                              style={{ transform: "translateZ(40px)" }} 
-                            >
-                               <motion.div
-                                animate={{ y: [-5, 5, -5] }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                              >
-                                {img ? (
-                                  <img 
-                                    src={img} 
-                                    alt={name} 
-                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" 
-                                  />
-                                ) : (
-                                  <Cpu size={48} className="text-slate-700 group-hover:text-emerald-500 transition-colors" />
-                                )}
+                            <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
+                               <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
+                                {img ? <img src={img} alt={name} className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" /> : <Cpu size={48} className="text-slate-700" />}
                               </motion.div>
                             </div>
-
-                            {/* 4. Glassmorphic Text Panel */}
                             <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
                               <div className="text-white font-bold text-sm uppercase tracking-wider">{name}</div>
                               <div className="flex flex-col items-center mt-1 gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                <span className="text-[10px] text-emerald-400 font-mono border border-emerald-500/30 px-1.5 rounded bg-emerald-500/5">
-                                  {info.std}
-                                </span>
-                                <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase scale-0 group-hover:scale-100 transition-transform delay-75">
-                                  {info.label}
-                                </span>
+                                <span className="text-[10px] text-emerald-400 font-mono border border-emerald-500/30 px-1.5 rounded bg-emerald-500/5">{info.std}</span>
+                                <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase scale-0 group-hover:scale-100 transition-transform delay-75">{info.label}</span>
                               </div>
                             </div>
-                            
                           </div>
                         </TiltedCard>
                       </div>
@@ -972,20 +698,154 @@ const OEMPlatform: React.FC = () => {
         </div>
       </section>
 
-      {/* =========================================
-          7. THE GOLDEN SAMPLE: USING NEW REUSABLE COMPONENT
-      ========================================= */}
-      <ProtocolVisualization 
-        theme="amber" 
-        icon={Hexagon} 
-        title={
-          <>
-            The <span className="text-amber-500">Golden Sample</span> Protocol.
-          </>
-        }
-        subtitle="We eliminate import risk. You receive a lab-verified pre-production sample. Mass production only starts when you say 'GO'."
-        steps={["Drawing Approval", "Lab Testing", "Sample Dispatch", "Mass Production"]}
-      />
+
+{/* =========================================
+    6. QUALITY STANDARDS (MAXIMUM VISIBILITY VERSION)
+========================================= */}
+<section className="py-32 px-6 bg-[#050505] relative border-t border-white/5">
+  <div className="max-w-7xl mx-auto relative z-10">
+    
+    <ScrollReveal>
+      <div className="mb-20">
+        <span className="text-blue-500 font-mono text-sm uppercase tracking-[0.3em] font-bold block mb-4">
+          Specification Breakdown
+        </span>
+        <h2 className="text-5xl md:text-6xl font-black text-white leading-tight">
+          Quality <span className="text-white/40">Standards.</span>
+        </h2>
+      </div>
+    </ScrollReveal>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      {/* CARD 1: RAW MATERIAL (Blue Theme) */}
+      <ScrollReveal delay={0.1}>
+        <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-blue-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
+          
+          <div className="flex items-center gap-5 mb-8">
+            <div className="w-16 h-16 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
+              <Layers size={32} />
+            </div>
+            {/* BIGGER TITLE */}
+            <h3 className="text-3xl font-bold text-white tracking-tight">Raw Material</h3>
+          </div>
+
+          {/* BIGGER DESCRIPTION - HIGH CONTRAST */}
+          <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-blue-500 pl-5 font-medium">
+            Zero-scrap policy. 100% sourced from Tata/JSW primary mills.
+          </p>
+
+          <div className="space-y-2">
+            {[
+              { label: "STEEL GRADES", val: "SAE 1010, 1022, 10B21" },
+              { label: "STAINLESS", val: "AISI 304, 316L" },
+              { label: "WIRE ORIGIN", val: "Primary Mills Only" },
+              { label: "STRUCTURE", val: "Spheroidized Annealed" }
+            ].map((item, i) => (
+              <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-blue-500/50 transition-colors">
+                {/* LABEL: Bright Silver, Bold, Readable */}
+                <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">
+                  {item.label}
+                </span>
+                {/* VALUE: Pure White, Large, Mono Font */}
+                <span className="text-base text-white font-mono font-bold text-right bg-blue-500/10 px-3 py-1 rounded border border-blue-500/20">
+                  {item.val}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* CARD 2: THERMAL PROCESSING (Amber Theme) */}
+      <ScrollReveal delay={0.2}>
+        <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-amber-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
+          
+          <div className="flex items-center gap-5 mb-8">
+            <div className="w-16 h-16 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 border border-amber-500/20 group-hover:scale-110 transition-transform duration-500">
+              <Flame size={32} />
+            </div>
+            <h3 className="text-3xl font-bold text-white tracking-tight">Heat Treatment</h3>
+          </div>
+
+          <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-amber-500 pl-5 font-medium">
+             Continuous Mesh Belt Furnace for uniform core hardening.
+          </p>
+
+          <div className="space-y-2">
+            {[
+              { label: "METHOD", val: "Gas Carburizing" },
+              { label: "CASE DEPTH", val: "0.05mm - 0.40mm" },
+              { label: "CORE HARDNESS", val: "32 - 39 HRC" },
+              { label: "SURFACE HV", val: "Min 550 HV" }
+            ].map((item, i) => (
+              <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-amber-500/50 transition-colors">
+                <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">
+                  {item.label}
+                </span>
+                <span className="text-base text-white font-mono font-bold text-right bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">
+                  {item.val}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* CARD 3: SURFACE ENGINEERING (Emerald Theme) */}
+      <ScrollReveal delay={0.3}>
+        <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-emerald-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
+          
+          <div className="flex items-center gap-5 mb-8">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-500">
+              <Droplets size={32} />
+            </div>
+            <h3 className="text-3xl font-bold text-white tracking-tight">Surface Finish</h3>
+          </div>
+
+          <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-emerald-500 pl-5 font-medium">
+            High-performance coatings for extreme environment protection.
+          </p>
+
+          <div className="space-y-2">
+            {[
+              { label: "PLATING", val: "Zinc (Blue/Yel/Blk)" },
+              { label: "HIGH PERF.", val: "Ruspert / Geomet" },
+              { label: "SST LIFE", val: "72Hrs - 1000Hrs" },
+              { label: "HYDROGEN", val: "De-Embrittled" }
+            ].map((item, i) => (
+              <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-emerald-500/50 transition-colors">
+                <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">
+                  {item.label}
+                </span>
+                <span className="text-base text-white font-mono font-bold text-right bg-emerald-500/10 px-3 py-1 rounded border border-emerald-500/20">
+                  {item.val}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+
+    </div>
+  </div>
+</section>
+   
+      
+  {/* =========================================
+    7. THE GOLDEN SAMPLE
+========================================= */}
+<ProtocolVisualization 
+  theme="amber" 
+  icon={CustomScrew}  // <--- Use your new custom component here
+  title={
+    <>
+      The <span className="text-amber-500">Golden Sample</span> Protocol.
+    </>
+  }
+  subtitle="We eliminate import risk. You receive a lab-verified pre-production sample. Mass production only starts when you say 'GO'."
+  steps={["Drawing Approval", "Lab Testing", "Sample Dispatch", "Mass Production"]}
+/>
 
       {/* =========================================
           8. FOOTER CTA
