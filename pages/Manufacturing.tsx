@@ -329,7 +329,7 @@ const Manufacturing: React.FC = () => {
                        </div>
                        <h3 className="text-3xl font-bold text-white mb-4">Heat Treatment Facility</h3>
                        <p className="text-lg text-slate-300 mb-8 leading-relaxed">
-                        heat treatment ensures uniform hardness and mechanical properties across every batch.
+                        Heat treatment ensures uniform hardness and mechanical properties across every batch.
                        </p>
                        <ul className="space-y-3 text-slate-300 font-medium">
                           <li className="flex gap-3"><span className="text-orange-500">✔</span> Continuous Mesh Belt Furnaces</li>

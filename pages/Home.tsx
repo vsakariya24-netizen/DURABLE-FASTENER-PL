@@ -176,11 +176,9 @@ const IntroLoader = ({ onComplete }: { onComplete: () => void }) => {
 
 // --- ANIMATED MANIFESTO ---
 const AnimatedManifesto = () => {
-  const targetRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: targetRef,
-    offset: ["start 0.8", "end 0.5"]
-  });
+  const ref = useRef(null);
+  // Jaise hi 20% element screen par dikhega, animation start hoga
+  const isInView = useInView(ref, { once: true, margin: "-10% 0px -10% 0px" });
 
   const words = [
     { text: "We" }, { text: "do" }, { text: "not" }, { text: "just" }, { text: "manufacture" },
@@ -196,26 +194,59 @@ const AnimatedManifesto = () => {
     { text: "precision.", className: "font-serif italic font-normal text-white/70" }
   ];
 
+  // Container animation logic
+  const container = {
+    hidden: { opacity: 0 },
+    visible: (i = 1) => ({
+      opacity: 1,
+      transition: { staggerChildren: 0.03, delayChildren: 0.1 } // Speed control
+    })
+  };
+
+  // Individual word animation
+  const child = {
+    hidden: { 
+      opacity: 0.1, // Thoda sa dikhega (ghost text)
+      y: 20,        // Niche se upar aayega
+      filter: "blur(5px)" // Starting mein blur rahega
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 100
+      }
+    }
+  };
+
   return (
-    <section ref={targetRef} className="py-40 bg-neutral-900 text-white rounded-[3rem] md:rounded-[5rem] relative z-30 min-h-[80vh] flex items-center justify-center border border-white/5">
+    <section className="py-40 bg-neutral-900 text-white rounded-[3rem] relative z-30 min-h-[60vh] flex items-center justify-center border border-white/5">
       <div className="container mx-auto px-6">
-        <span className="text-yellow-500 font-black tracking-widest uppercase block mb-12 text-center text-sm">Company Manifesto</span>
-        <p className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter leading-[1.1] max-w-5xl mx-auto text-center flex flex-wrap justify-center gap-y-2">
-           {words.map((word, i) => {
-              const start = i / words.length;
-              const end = start + (1 / words.length);
-              return (
-                <ScrollWord 
-                  key={i} 
-                  progress={scrollYProgress} 
-                  range={[start, end]} 
-                  className={word.className}
-                >
-                  {word.text}
-                </ScrollWord>
-              );
-            })}
-        </p>
+        <motion.span 
+            initial={{ opacity: 0, y: 10 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8 }}
+            className="text-yellow-500 font-black tracking-widest uppercase block mb-12 text-center text-sm"
+        >
+            Company Manifesto
+        </motion.span>
+        
+        <motion.p 
+            ref={ref}
+            variants={container}
+            initial="hidden"
+            animate={isInView ? "visible" : "hidden"}
+            className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter leading-[1.1] max-w-5xl mx-auto text-center flex flex-wrap justify-center gap-x-3 gap-y-2"
+        >
+          {words.map((word, index) => (
+            <motion.span variants={child} key={index} className={word.className}>
+              {word.text}
+            </motion.span>
+          ))}
+        </motion.p>
       </div>
     </section>
   );
