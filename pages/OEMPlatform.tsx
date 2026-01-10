@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
-  motion, useMotionValue, useMotionTemplate, useTransform, useSpring, AnimatePresence 
+  motion, useMotionValue, useTransform, useSpring, AnimatePresence 
 } from 'framer-motion';
 import { 
-  ArrowRight, CheckCircle2, Factory, Flame, Droplets, ScanFace, 
-  Zap, Hexagon, Nut, ShieldCheck, MapPin, Settings, Component, 
-  Crosshair, Layers, Cpu, Phone, Download, Container, FileSearch, 
-  Database, Microscope, FlaskConical, Ruler, Hash, Image as ImageIcon
+  ArrowRight, CheckCircle2, Flame, Droplets, 
+  Layers, ShieldCheck, Database, Microscope, FlaskConical, 
+  Ruler, Settings, Image as ImageIcon, Download, Phone, Component, Crosshair, MapPin
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -201,6 +200,40 @@ const ProtocolVisualization: React.FC<ProtocolProps> = ({ theme, title, subtitle
 // 3. MAIN OEM PLATFORM PAGE
 // =========================================
 
+// --- DEFAULT QUALITY FALLBACK ---
+const DEFAULT_QUALITY_STANDARDS = {
+  raw_material: {
+    title: "Raw Material",
+    description: "Zero-scrap policy. 100% sourced from Tata/JSW primary mills.",
+    items: [
+      { label: "STEEL GRADES", val: "SAE 1010, 1022, 10B21" },
+      { label: "STAINLESS", val: "AISI 304, 316L" },
+      { label: "WIRE ORIGIN", val: "Primary Mills Only" },
+      { label: "STRUCTURE", val: "Spheroidized Annealed" }
+    ]
+  },
+  heat_treatment: {
+    title: "Heat Treatment",
+    description: "Continuous Mesh Belt Furnace for uniform core hardening.",
+    items: [
+      { label: "METHOD", val: "Gas Carburizing" },
+      { label: "CASE DEPTH", val: "0.05mm - 0.40mm" },
+      { label: "CORE HARDNESS", val: "32 - 39 HRC" },
+      { label: "SURFACE HARDNESS", val: "Min 550 HV" }
+    ]
+  },
+  surface_finish: {
+    title: "Surface Finish",
+    description: "High-performance coatings for extreme environment protection.",
+    items: [
+      { label: "PLATING", val: "Zinc (Blue/Yel/Blk)" },
+      { label: "HIGH PERF.", val: "Ruspert / Geomet" },
+      { label: "SST LIFE", val: "72Hrs - 1000Hrs" },
+      { label: "HYDROGEN", val: "De-Embrittled" }
+    ]
+  }
+};
+
 const OEMPlatform: React.FC = () => {
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -279,10 +312,9 @@ const OEMPlatform: React.FC = () => {
   const specs = content?.technical_specs || {};
   const liveHeadStyles = content?.head_styles || [];
   const liveDriveSystems = content?.drive_systems || [];
-  
-  // NEW: Fetching dynamic Lists
   const liveThreading = content?.threading_types || [];
   const liveSurfaces = content?.surface_finishes || [];
+  const quality = content?.quality_standards || DEFAULT_QUALITY_STANDARDS;
 
   if (loading) return (
     <div className="min-h-screen bg-[#030305] flex items-center justify-center">
@@ -300,17 +332,12 @@ const OEMPlatform: React.FC = () => {
         <meta name="description" content="India's leading OEM platform for custom industrial fasteners." />
       </Helmet>
 
-      {/* =========================================
-          1. HERO: HOLOGRAPHIC BLUEPRINT
-      ========================================= */}
+      {/* 1. HERO */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-        {/* Animated Grid */}
         <div className="absolute inset-0 z-0">
            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:80px_80px] opacity-[0.07]"></div>
            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030305]/80 to-[#030305]"></div>
         </div>
-
-        {/* Ambient Glows */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
@@ -360,15 +387,8 @@ const OEMPlatform: React.FC = () => {
         </div>
       </section>
 
-      {/* =========================================
-          2. DATA TICKER
-      ========================================= */}
-    
-      {/* =========================================
-          3. TECHNICAL BASELINE (Dynamic Lists)
-      ========================================= */}
-     <section className="py-32 px-6 relative bg-[#050505] overflow-hidden">
-        {/* Abstract Technical Background */}
+      {/* 2. TECHNICAL SPECS */}
+      <section className="py-32 px-6 relative bg-[#050505] overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:40px_40px]"></div>
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-900/50 to-transparent"></div>
         
@@ -400,10 +420,10 @@ const OEMPlatform: React.FC = () => {
             </div>
           </div>
 
-          {/* === THE BENTO GRID === */}
+          {/* BENTO GRID */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             
-            {/* 1. MATERIAL */}
+            {/* MATERIAL */}
             <div className="md:col-span-5 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
                <div className="flex justify-between items-start mb-6">
                  <div>
@@ -444,7 +464,7 @@ const OEMPlatform: React.FC = () => {
                </div>
             </div>
 
-            {/* 2. DIAMETER */}
+            {/* DIAMETER */}
             <div className="md:col-span-3 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all relative overflow-hidden">
                <div>
                   <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Cross Section</span>
@@ -465,7 +485,7 @@ const OEMPlatform: React.FC = () => {
                </div>
             </div>
 
-            {/* 3. LENGTH */}
+            {/* LENGTH */}
             <div className="md:col-span-4 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all">
                <div className="flex justify-between items-start">
                   <div>
@@ -491,7 +511,7 @@ const OEMPlatform: React.FC = () => {
                </div>
             </div>
 
-            {/* 4. Threads (Dynamic from DB) */}
+            {/* THREADS */}
             <div className="md:col-span-5 bg-[#0A0A0C] p-6 group hover:bg-[#0F1115] transition-colors border-t md:border-t-0 border-white/10 relative overflow-hidden">
                <div className="flex items-start justify-between mb-6 relative z-10">
                  <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Threading Spec</span>
@@ -500,14 +520,12 @@ const OEMPlatform: React.FC = () => {
                
                <h4 className="text-2xl font-mono text-white font-medium mb-6 relative z-10">{specs.thread || "Fine, Coarse & Metric"}</h4>
                
-               {/* DYNAMIC THREAD GRID */}
                <div className="grid grid-cols-4 gap-2 relative z-10">
                  {liveThreading.length > 0 ? (
                     liveThreading.map((item: any, i: number) => {
                       const { name, img } = getCleanData(item);
                       return (
                         <div key={i} className="bg-white/5 border border-white/10 rounded-lg py-4 px-1 hover:border-blue-500/50 hover:bg-white/10 transition-all group/thread cursor-default relative flex flex-col items-center gap-3">
-                           {/* THE IMAGE FROM ADMIN PANEL */}
                            <div className="h-24 w-full flex items-center justify-center overflow-hidden">
                               {img ? (
                                 <img src={img} alt={name} className="h-full w-auto object-contain drop-shadow-lg opacity-80 group-hover/thread:opacity-100 transition-opacity" />
@@ -527,9 +545,8 @@ const OEMPlatform: React.FC = () => {
                </div>
             </div>
 
-            {/* 5. Surface Finishes (Dynamic from DB) */}
+            {/* SURFACE */}
             <div className="md:col-span-7 bg-[#0A0A0C] p-8 group border-t md:border-t-0 border-l md:border-l-0 border-white/10 relative overflow-hidden">
-               {/* Blue Accent Line */}
                <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 shadow-[0_0_15px_#2563eb]"></div>
                
                <div className="flex flex-col h-full justify-between relative z-10">
@@ -541,19 +558,15 @@ const OEMPlatform: React.FC = () => {
                    </div>
                  </div>
 
-                 {/* DYNAMIC FINISH CHIPS */}
                  <div className="flex flex-wrap gap-3 content-start">
                    {liveSurfaces.length > 0 ? (
                        liveSurfaces.map((finish: any, i: number) => {
-                         // Finish object structure from DB should be { name: "...", color: "#..." }
                          return (
                            <div key={i} className="group/chip flex items-center gap-3 bg-[#13161C] border border-white/10 rounded-full pl-1.5 pr-5 py-1.5 hover:border-blue-500/40 hover:bg-white/5 transition-all cursor-default">
-                             {/* The Colored Dot from DB Hex */}
                              <div 
-                                style={{ background: finish.color }}
-                                className="w-5 h-5 rounded-full shadow-lg shrink-0 border border-white/10"
+                               style={{ background: finish.color }}
+                               className="w-5 h-5 rounded-full shadow-lg shrink-0 border border-white/10"
                              ></div>
-                             
                              <span className="text-slate-300 text-xs font-bold uppercase tracking-wide group-hover/chip:text-white transition-colors">
                                {finish.name}
                              </span>
@@ -569,7 +582,6 @@ const OEMPlatform: React.FC = () => {
                    </div>
                  </div>
 
-                 {/* Compliance Badges */}
                  <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-4">
                     <span className="text-[10px] text-slate-600 font-mono">COMPLIANCE:</span>
                     <div className="flex gap-2">
@@ -585,7 +597,6 @@ const OEMPlatform: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom Decoration */}
           <div className="flex justify-between items-center mt-4 opacity-50">
              <div className="flex gap-4">
                <span className="text-[10px] text-slate-600 font-mono">REF: MFG-2025-A</span>
@@ -600,12 +611,9 @@ const OEMPlatform: React.FC = () => {
         </div>
      </section>
 
-      {/* =========================================
-          6. VISUAL CAPABILITIES
-      ========================================= */}
-      <section className="py-32 px-6 bg-[#030304] relative overflow-hidden">
+     {/* 3. CATALOGUE */}
+     <section className="py-32 px-6 bg-[#030304] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#1e293b_0%,#030304_70%)] opacity-30"></div>
-        
         <div className="max-w-7xl mx-auto relative z-10">
           <ScrollReveal>
             <div className="text-center mb-20">
@@ -615,7 +623,7 @@ const OEMPlatform: React.FC = () => {
           </ScrollReveal>
 
           <div className="grid lg:grid-cols-2 gap-20">
-            {/* --- Head Styles Section --- */}
+            {/* Head Styles */}
             <div>
               <ScrollReveal>
                 <div className="flex items-center gap-4 mb-8 pl-2 border-l-4 border-blue-500">
@@ -642,7 +650,7 @@ const OEMPlatform: React.FC = () => {
                             <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
                               <div className="text-white font-bold text-sm uppercase tracking-wider">{name}</div>
                               <div className="flex items-center gap-2 mt-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                <span className="text-[10px] text-blue-400 font-mono border border-blue-500/30 px-1.5 rounded bg-blue-500/5">{info.std}</span>
+                                <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase scale-0 group-hover:scale-100 transition-transform delay-75">{info.label}</span>
                               </div>
                             </div>
                           </div>
@@ -654,7 +662,7 @@ const OEMPlatform: React.FC = () => {
               </div>
             </div>
 
-            {/* --- Drive Systems Section --- */}
+            {/* Drive Systems */}
             <div>
               <ScrollReveal>
                 <div className="flex items-center gap-4 mb-8 pl-2 border-l-4 border-emerald-500">
@@ -675,13 +683,12 @@ const OEMPlatform: React.FC = () => {
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
                             <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
                                <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
-                                {img ? <img src={img} alt={name} className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" /> : <Cpu size={48} className="text-slate-700" />}
+                                {img ? <img src={img} alt={name} className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" /> : <Microscope size={48} className="text-slate-700" />}
                               </motion.div>
                             </div>
                             <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
                               <div className="text-white font-bold text-sm uppercase tracking-wider">{name}</div>
                               <div className="flex flex-col items-center mt-1 gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                <span className="text-[10px] text-emerald-400 font-mono border border-emerald-500/30 px-1.5 rounded bg-emerald-500/5">{info.std}</span>
                                 <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase scale-0 group-hover:scale-100 transition-transform delay-75">{info.label}</span>
                               </div>
                             </div>
@@ -693,179 +700,124 @@ const OEMPlatform: React.FC = () => {
                 })}
               </div>
             </div>
-
           </div>
         </div>
-      </section>
+     </section>
 
-
-{/* =========================================
-    6. QUALITY STANDARDS (MAXIMUM VISIBILITY VERSION)
-========================================= */}
-<section className="py-32 px-6 bg-[#050505] relative border-t border-white/5">
-  <div className="max-w-7xl mx-auto relative z-10">
-    
-    <ScrollReveal>
-      <div className="mb-20">
-        <span className="text-blue-500 font-mono text-sm uppercase tracking-[0.3em] font-bold block mb-4">
-          Specification Breakdown
-        </span>
-        <h2 className="text-5xl md:text-6xl font-black text-white leading-tight">
-          Quality <span className="text-white/40">Standards.</span>
-        </h2>
-      </div>
-    </ScrollReveal>
-
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      
-      {/* CARD 1: RAW MATERIAL (Blue Theme) */}
-      <ScrollReveal delay={0.1}>
-        <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-blue-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
+     {/* =========================================
+         4. QUALITY STANDARDS (DYNAMICALLY LOADED)
+     ========================================= */}
+     <section className="py-32 px-6 bg-[#050505] relative border-t border-white/5">
+        <div className="max-w-7xl mx-auto relative z-10">
           
-          <div className="flex items-center gap-5 mb-8">
-            <div className="w-16 h-16 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
-              <Layers size={32} />
+          <ScrollReveal>
+            <div className="mb-20">
+              <span className="text-blue-500 font-mono text-sm uppercase tracking-[0.3em] font-bold block mb-4">
+                Specification Breakdown
+              </span>
+              <h2 className="text-5xl md:text-6xl font-black text-white leading-tight">
+                Quality <span className="text-white/40">Standards.</span>
+              </h2>
             </div>
-            {/* BIGGER TITLE */}
-            <h3 className="text-3xl font-bold text-white tracking-tight">Raw Material</h3>
-          </div>
+          </ScrollReveal>
 
-          {/* BIGGER DESCRIPTION - HIGH CONTRAST */}
-          <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-blue-500 pl-5 font-medium">
-            Zero-scrap policy. 100% sourced from Tata/JSW primary mills.
-          </p>
-
-          <div className="space-y-2">
-            {[
-              { label: "STEEL GRADES", val: "SAE 1010, 1022, 10B21" },
-              { label: "STAINLESS", val: "AISI 304, 316L" },
-              { label: "WIRE ORIGIN", val: "Primary Mills Only" },
-              { label: "STRUCTURE", val: "Spheroidized Annealed" }
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-blue-500/50 transition-colors">
-                {/* LABEL: Bright Silver, Bold, Readable */}
-                <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">
-                  {item.label}
-                </span>
-                {/* VALUE: Pure White, Large, Mono Font */}
-                <span className="text-base text-white font-mono font-bold text-right bg-blue-500/10 px-3 py-1 rounded border border-blue-500/20">
-                  {item.val}
-                </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            {/* CARD 1: RAW MATERIAL (Blue Theme) */}
+            <ScrollReveal delay={0.1}>
+              <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-blue-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
+                <div className="flex items-center gap-5 mb-8">
+                  <div className="w-16 h-16 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
+                    <Layers size={32} />
+                  </div>
+                  <h3 className="text-3xl font-bold text-white tracking-tight">{quality.raw_material.title}</h3>
+                </div>
+                <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-blue-500 pl-5 font-medium">
+                  {quality.raw_material.description}
+                </p>
+                <div className="space-y-2">
+                  {quality.raw_material.items.map((item: any, i: number) => (
+                    <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-blue-500/50 transition-colors">
+                      <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">{item.label}</span>
+                      <span className="text-base text-white font-mono font-bold text-right bg-blue-500/10 px-3 py-1 rounded border border-blue-500/20">{item.val}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </ScrollReveal>
+            </ScrollReveal>
 
-      {/* CARD 2: THERMAL PROCESSING (Amber Theme) */}
-      <ScrollReveal delay={0.2}>
-        <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-amber-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
-          
-          <div className="flex items-center gap-5 mb-8">
-            <div className="w-16 h-16 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 border border-amber-500/20 group-hover:scale-110 transition-transform duration-500">
-              <Flame size={32} />
-            </div>
-            <h3 className="text-3xl font-bold text-white tracking-tight">Heat Treatment</h3>
-          </div>
-
-          <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-amber-500 pl-5 font-medium">
-             Continuous Mesh Belt Furnace for uniform core hardening.
-          </p>
-
-          <div className="space-y-2">
-            {[
-              { label: "METHOD", val: "Gas Carburizing" },
-              { label: "CASE DEPTH", val: "0.05mm - 0.40mm" },
-              { label: "CORE HARDNESS", val: "32 - 39 HRC" },
-              { label: "SURFACE HV", val: "Min 550 HV" }
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-amber-500/50 transition-colors">
-                <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">
-                  {item.label}
-                </span>
-                <span className="text-base text-white font-mono font-bold text-right bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">
-                  {item.val}
-                </span>
+            {/* CARD 2: HEAT TREATMENT (Amber Theme) */}
+            <ScrollReveal delay={0.2}>
+              <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-amber-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
+                <div className="flex items-center gap-5 mb-8">
+                  <div className="w-16 h-16 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 border border-amber-500/20 group-hover:scale-110 transition-transform duration-500">
+                    <Flame size={32} />
+                  </div>
+                  <h3 className="text-3xl font-bold text-white tracking-tight">{quality.heat_treatment.title}</h3>
+                </div>
+                <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-amber-500 pl-5 font-medium">
+                  {quality.heat_treatment.description}
+                </p>
+                <div className="space-y-2">
+                  {quality.heat_treatment.items.map((item: any, i: number) => (
+                    <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-amber-500/50 transition-colors">
+                      <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">{item.label}</span>
+                      <span className="text-base text-white font-mono font-bold text-right bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">{item.val}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </ScrollReveal>
+            </ScrollReveal>
 
-      {/* CARD 3: SURFACE ENGINEERING (Emerald Theme) */}
-      <ScrollReveal delay={0.3}>
-        <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-emerald-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
-          
-          <div className="flex items-center gap-5 mb-8">
-            <div className="w-16 h-16 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-500">
-              <Droplets size={32} />
-            </div>
-            <h3 className="text-3xl font-bold text-white tracking-tight">Surface Finish</h3>
-          </div>
-
-          <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-emerald-500 pl-5 font-medium">
-            High-performance coatings for extreme environment protection.
-          </p>
-
-          <div className="space-y-2">
-            {[
-              { label: "PLATING", val: "Zinc (Blue/Yel/Blk)" },
-              { label: "HIGH PERF.", val: "Ruspert / Geomet" },
-              { label: "SST LIFE", val: "72Hrs - 1000Hrs" },
-              { label: "HYDROGEN", val: "De-Embrittled" }
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-emerald-500/50 transition-colors">
-                <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">
-                  {item.label}
-                </span>
-                <span className="text-base text-white font-mono font-bold text-right bg-emerald-500/10 px-3 py-1 rounded border border-emerald-500/20">
-                  {item.val}
-                </span>
+            {/* CARD 3: SURFACE FINISH (Emerald Theme) */}
+            <ScrollReveal delay={0.3}>
+              <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-emerald-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
+                <div className="flex items-center gap-5 mb-8">
+                  <div className="w-16 h-16 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-500">
+                    <Droplets size={32} />
+                  </div>
+                  <h3 className="text-3xl font-bold text-white tracking-tight">{quality.surface_finish.title}</h3>
+                </div>
+                <p className="text-slate-200 text-lg leading-relaxed mb-10 border-l-4 border-emerald-500 pl-5 font-medium">
+                  {quality.surface_finish.description}
+                </p>
+                <div className="space-y-2">
+                  {quality.surface_finish.items.map((item: any, i: number) => (
+                    <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/10 py-4 group/item hover:border-emerald-500/50 transition-colors">
+                      <span className="text-sm text-slate-400 font-bold tracking-widest uppercase mb-1 sm:mb-0 group-hover/item:text-white transition-colors">{item.label}</span>
+                      <span className="text-base text-white font-mono font-bold text-right bg-emerald-500/10 px-3 py-1 rounded border border-emerald-500/20">{item.val}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            </ScrollReveal>
+
           </div>
         </div>
-      </ScrollReveal>
+     </section>
+     
+     {/* 7. THE GOLDEN SAMPLE */}
+     <ProtocolVisualization 
+        theme="amber" 
+        icon={CustomScrew} 
+        title={<>The <span className="text-amber-500">Golden Sample</span> Protocol.</>}
+        subtitle="We eliminate import risk. You receive a lab-verified pre-production sample. Mass production only starts when you say 'GO'."
+        steps={["Drawing Approval", "Lab Testing", "Sample Dispatch", "Mass Production"]}
+     />
 
-    </div>
-  </div>
-</section>
-   
-      
-  {/* =========================================
-    7. THE GOLDEN SAMPLE
-========================================= */}
-<ProtocolVisualization 
-  theme="amber" 
-  icon={CustomScrew}  // <--- Use your new custom component here
-  title={
-    <>
-      The <span className="text-amber-500">Golden Sample</span> Protocol.
-    </>
-  }
-  subtitle="We eliminate import risk. You receive a lab-verified pre-production sample. Mass production only starts when you say 'GO'."
-  steps={["Drawing Approval", "Lab Testing", "Sample Dispatch", "Mass Production"]}
-/>
-
-      {/* =========================================
-          8. FOOTER CTA
-      ========================================= */}
-      <section className="py-24 bg-white text-black relative">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-           <ScrollReveal>
-             <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8">
-               READY TO <span className="text-blue-600">SCALE?</span>
-             </h2>
-           </ScrollReveal>
-           <ScrollReveal delay={0.2}>
-             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <a href="mailto:info@durablefastener.com" className="px-10 py-5 bg-black text-white font-bold rounded-sm hover:scale-105 transition-transform flex items-center justify-center gap-3 text-lg shadow-2xl">
-                   <Phone size={22} /> BOOK ENGINEERING CALL
-                </a>
-             </div>
-           </ScrollReveal>
-        </div>
-      </section>
+     {/* 8. FOOTER CTA */}
+     <section className="py-24 bg-white text-black relative">
+       <div className="max-w-4xl mx-auto px-6 text-center">
+          <ScrollReveal>
+            <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8">READY TO <span className="text-blue-600">SCALE?</span></h2>
+          </ScrollReveal>
+          <ScrollReveal delay={0.2}>
+            <a href="mailto:info@durablefastener.com" className="px-10 py-5 bg-black text-white font-bold rounded-sm hover:scale-105 transition-transform inline-flex items-center gap-3 text-lg shadow-2xl">
+               <Phone size={22} /> BOOK ENGINEERING CALL
+            </a>
+          </ScrollReveal>
+       </div>
+     </section>
 
     </div>
   );

@@ -5,7 +5,8 @@ import {
   Hammer, Grid, Armchair, Wrench, ArrowUpRight,
   ChevronRight, ShoppingCart, Loader2, Share2, Printer, 
   Ruler, Maximize2, Info, X,
-  ArrowRight, Lock, Activity, FileCheck, Layers, Hash
+  ArrowRight, Lock, Activity, FileCheck, Layers, Hash,
+  ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MagicZoomClone from '../components/MagicZoomClone'; 
@@ -571,134 +572,170 @@ const ProductDetail: React.FC = () => {
       </div>
       
       {/* --- TECHNICAL VAULT --- */}
-      <div className="bg-[#aaaaab] border-t border-neutral-300 relative z-20 overflow-hidden text-neutral-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-            {showDimensions && (
-                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={containerVar}>
-                
-                <div className="flex items-center gap-3 mb-10">
-                    <Activity className="text-yellow-600" size={32} />
-                    <h3 className="text-4xl font-bold text-neutral-900 uppercase tracking-wider" style={fontHeading}>Technical Specifications</h3>
-                </div>
+     {/* --- TECHNICAL VAULT --- */}
+<div className="bg-[#aaaaab] border-t border-neutral-300 relative z-20 overflow-hidden text-neutral-900">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    {showDimensions && (
+      <motion.div 
+        initial="hidden" 
+        whileInView="visible" 
+        viewport={{ once: true }} 
+        variants={containerVar}
+      >
+        
+        {/* HEADER WITH ISO BADGE */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          
+          {/* Left: Title */}
+          <div className="flex items-center gap-3">
+            <Activity className="text-yellow-600" size={32} />
+            <h3 className="text-3xl md:text-4xl font-bold text-neutral-900 uppercase tracking-wider" style={fontHeading}>
+              Technical Specifications
+            </h3>
+          </div>
 
-                <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden flex flex-col lg:flex-row shadow-xl">
-                    
-                    {/* LEFT: Blueprint Viewer */}
-                    <div className="lg:w-2/3 relative p-12 bg-white flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-neutral-200 group">
-                        <div className="absolute inset-0 opacity-100" style={blueprintGridStyleLight}></div>
-                        <motion.div 
-                            className="absolute inset-0 bg-gradient-to-b from-transparent via-yellow-500/5 to-transparent z-10 pointer-events-none border-b border-yellow-500/20"
-                            animate={{ top: ['-100%', '200%'] }}
-                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-                        />
-                        <div className="absolute top-6 left-6 z-20">
-                             <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded bg-neutral-100 border border-neutral-300 text-[11px] font-mono uppercase text-neutral-600 font-bold tracking-wider`}>
-                                ISO View
-                             </span>
-                        </div>
-                        {product.technical_drawing ? (
-                            <motion.img 
-                                initial={{ opacity: 0, scale: 0.9 }} 
-                                whileInView={{ opacity: 1, scale: 1 }} 
-                                transition={{ duration: 0.8 }}
-                                src={product.technical_drawing} 
-                                className="relative z-10 max-h-[450px] w-auto object-contain opacity-90 transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
-                                alt="Technical Drawing"
-                            />
-                        ) : <div className="text-neutral-500 font-mono text-sm tracking-wide border border-neutral-200 px-6 py-3 rounded bg-neutral-50">[ DRAWING DATA UNAVAILABLE ]</div>}
-                    </div>
-
-                    {/* RIGHT: Performance Data */}
-                    <div className="lg:w-1/3 bg-neutral-50 p-8 flex flex-col border-l border-neutral-200 relative">
-                          <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none text-neutral-900">
-                             <Activity size={140} />
-                          </div>
-
-                          <div className="mb-6 pb-4 border-b border-neutral-200 flex items-center justify-between relative z-10">
-                             <h4 className="text-lg font-bold uppercase tracking-widest text-neutral-900 flex items-center gap-2" style={fontHeading}>
-                                  <Layers size={18} className="text-yellow-600" /> Performance Data
-                             </h4>
-                             <div className="flex gap-2 items-center bg-white px-3 py-1 rounded border border-neutral-200 shadow-sm">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span className="text-[15px] text-green-700 font-mono uppercase font-bold">Verified</span>
-                             </div>
-                          </div>
-
-                          <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2">
-                            {PERFORMANCE_KEYS_DISPLAY.map((key, i) => {
-                                const hasSpec = product.specifications.find((s:any) => s.key.toLowerCase() === key.toLowerCase());
-                                if (!hasSpec) return null;
-                                return (
-                                    <motion.div 
-                                        key={i} 
-                                        initial={{ x: 20, opacity: 0 }}
-                                        whileInView={{ x: 0, opacity: 1 }}
-                                        transition={{ delay: i * 0.1 }}
-                                        className="flex justify-between items-center p-3.5 bg-white rounded border border-neutral-200 hover:border-neutral-400 transition-colors group shadow-sm"
-                                    >
-                                        <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider group-hover:text-neutral-800 transition-colors" style={fontHeading}>{key}</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-neutral-900 font-mono text-sm font-bold tracking-wide">{hasSpec.value}</span>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
-                            {!product.specifications.some((s:any) => PERFORMANCE_KEYS_DISPLAY.map(k=>k.toLowerCase()).includes(s.key.toLowerCase())) && (
-                                <div className="text-center text-neutral-500 text-xs italic py-4 font-mono">No specific performance data listed.</div>
-                            )}
-                          </div>
-
-                          <button className="w-full mt-6 flex items-center justify-center gap-2 bg-neutral-900 text-white py-3.5 rounded text-sm font-bold uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all relative z-10 border border-neutral-900 hover:border-yellow-500 shadow-md" style={fontHeading}>
-                             <Lock size={14} /> Unlock Engineering Report
-                          </button>
-                    </div>
-                </div>
-
-                {/* DIMENSIONS TABLE */}
-                <div className="w-full bg-white border border-t-0 border-neutral-200 mt-0 rounded-b-2xl overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[600px]">
-                            <thead>
-                                <tr className="border-b border-neutral-200 bg-neutral-100">
-                                    <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>Feature</th>
-                                    <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>Symbol</th>
-                                    {uniqueDiameters.map((dia: any) => (
-                                        <th key={dia} className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'}`} style={fontHeading}>
-                                             {dia}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-100 text-sm font-mono">
-                                 {product.dimensional_specifications?.map((dim: any, idx: number) => (
-                                    <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
-                                        <td className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 transition-colors border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]" style={fontHeading}>
-                                          {dim.label}
-                                        </td>
-                                        <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">{dim.symbol || '-'}</td>
-                                        {uniqueDiameters.map((dia: any) => {
-                                            let val = '-';
-                                            if (dim.values && typeof dim.values === 'object') val = dim.values[dia] || '-';
-                                            else if (dia === selectedDia) val = dim.value || '-';
-                                            
-                                            const isActive = selectedDia === dia;
-                                            return (
-                                                <td key={dia} className={`py-5 text-center transition-colors font-medium ${isActive ? 'bg-yellow-50 text-neutral-900 font-bold text-base shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]' : 'text-neutral-500'}`}>
-                                                    {val}
-                                                </td>
-                                            )
-                                        })}
-                                    </tr>
-                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                </motion.div>
-            )}
+          {/* Right: ISO Badge (Designed per image) */}
+         <div className="flex flex-wrap gap-4 mt-6">
+  {product.certifications && product.certifications.length > 0 ? (
+    product.certifications.map((cert: any, idx: number) => (
+      <div key={idx} className="bg-neutral-900 rounded-md py-2 px-3 flex items-center gap-3 border border-neutral-800 shadow-2xl self-start md:self-auto transform hover:scale-105 transition-transform duration-300">
+        <div className="p-1 rounded-full border-2 border-emerald-500/30">
+           <ShieldCheck className="text-emerald-500" size={24} strokeWidth={2.5} />
+        </div>
+        <div className="flex flex-col justify-center">
+           <span className="text-white font-black text-sm tracking-wide leading-none font-sans">
+             {cert.title}
+           </span>
+           <span className="text-emerald-500 text-[9px] font-bold tracking-[0.25em] uppercase leading-none mt-1.5 font-mono">
+             {cert.subtitle}
+           </span>
         </div>
       </div>
+    ))
+  ) : (
+    /* Fallback if nothing added */
+    <div className="hidden"></div> 
+  )}
+</div>
+</div>
 
+        <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden flex flex-col lg:flex-row shadow-xl">
+            
+            {/* LEFT: Blueprint Viewer */}
+            <div className="lg:w-2/3 relative p-12 bg-white flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-neutral-200 group">
+                <div className="absolute inset-0 opacity-100" style={blueprintGridStyleLight}></div>
+                <motion.div 
+                    className="absolute inset-0 bg-gradient-to-b from-transparent via-yellow-500/5 to-transparent z-10 pointer-events-none border-b border-yellow-500/20"
+                    animate={{ top: ['-100%', '200%'] }}
+                    transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                />
+                <div className="absolute top-6 left-6 z-20">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded bg-neutral-100 border border-neutral-300 text-[11px] font-mono uppercase text-neutral-600 font-bold tracking-wider`}>
+                        ISO View
+                      </span>
+                </div>
+                {product.technical_drawing ? (
+                    <motion.img 
+                        initial={{ opacity: 0, scale: 0.9 }} 
+                        whileInView={{ opacity: 1, scale: 1 }} 
+                        transition={{ duration: 0.8 }}
+                        src={product.technical_drawing} 
+                        className="relative z-10 max-h-[450px] w-auto object-contain opacity-90 transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
+                        alt="Technical Drawing"
+                    />
+                ) : <div className="text-neutral-500 font-mono text-sm tracking-wide border border-neutral-200 px-6 py-3 rounded bg-neutral-50">[ DRAWING DATA UNAVAILABLE ]</div>}
+            </div>
+
+            {/* RIGHT: Performance Data */}
+            <div className="lg:w-1/3 bg-neutral-50 p-8 flex flex-col border-l border-neutral-200 relative">
+                  <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none text-neutral-900">
+                     <Activity size={140} />
+                  </div>
+
+                  <div className="mb-6 pb-4 border-b border-neutral-200 flex items-center justify-between relative z-10">
+                     <h4 className="text-lg font-bold uppercase tracking-widest text-neutral-900 flex items-center gap-2" style={fontHeading}>
+                          <Layers size={18} className="text-yellow-600" /> Performance Data
+                     </h4>
+                     <div className="flex gap-2 items-center bg-white px-3 py-1 rounded border border-neutral-200 shadow-sm">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span className="text-[15px] text-green-700 font-mono uppercase font-bold">Verified</span>
+                     </div>
+                  </div>
+
+                  <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2">
+                    {PERFORMANCE_KEYS_DISPLAY.map((key, i) => {
+                        const hasSpec = product.specifications.find((s:any) => s.key.toLowerCase() === key.toLowerCase());
+                        if (!hasSpec) return null;
+                        return (
+                            <motion.div 
+                                key={i} 
+                                initial={{ x: 20, opacity: 0 }}
+                                whileInView={{ x: 0, opacity: 1 }}
+                                transition={{ delay: i * 0.1 }}
+                                className="flex justify-between items-center p-3.5 bg-white rounded border border-neutral-200 hover:border-neutral-400 transition-colors group shadow-sm"
+                            >
+                                <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider group-hover:text-neutral-800 transition-colors" style={fontHeading}>{key}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-neutral-900 font-mono text-sm font-bold tracking-wide">{hasSpec.value}</span>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                    {!product.specifications.some((s:any) => PERFORMANCE_KEYS_DISPLAY.map(k=>k.toLowerCase()).includes(s.key.toLowerCase())) && (
+                        <div className="text-center text-neutral-500 text-xs italic py-4 font-mono">No specific performance data listed.</div>
+                    )}
+                  </div>
+
+                  <button className="w-full mt-6 flex items-center justify-center gap-2 bg-neutral-900 text-white py-3.5 rounded text-sm font-bold uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all relative z-10 border border-neutral-900 hover:border-yellow-500 shadow-md" style={fontHeading}>
+                     <Lock size={14} /> Unlock Engineering Report
+                  </button>
+            </div>
+        </div>
+
+        {/* DIMENSIONS TABLE */}
+        <div className="w-full bg-white border border-t-0 border-neutral-200 mt-0 rounded-b-2xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left border-collapse min-w-[600px]">
+                    <thead>
+                        <tr className="border-b border-neutral-200 bg-neutral-100">
+                            <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>Feature</th>
+                            <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>Symbol</th>
+                            {uniqueDiameters.map((dia: any) => (
+                                <th key={dia} className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'}`} style={fontHeading}>
+                                     {dia}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 text-sm font-mono">
+                         {product.dimensional_specifications?.map((dim: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
+                                    <td className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 transition-colors border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]" style={fontHeading}>
+                                      {dim.label}
+                                    </td>
+                                    <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">{dim.symbol || '-'}</td>
+                                    {uniqueDiameters.map((dia: any) => {
+                                        let val = '-';
+                                        if (dim.values && typeof dim.values === 'object') val = dim.values[dia] || '-';
+                                        else if (dia === selectedDia) val = dim.value || '-';
+                                        
+                                        const isActive = selectedDia === dia;
+                                        return (
+                                            <td key={dia} className={`py-5 text-center transition-colors font-medium ${isActive ? 'bg-yellow-50 text-neutral-900 font-bold text-base shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]' : 'text-neutral-500'}`}>
+                                                {val}
+                                            </td>
+                                        )
+                                    })}
+                            </tr>
+                         ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      </motion.div>
+    )}
+  </div>
+</div>
       {/* --- APPLICATIONS --- */}
       {product.applications && product.applications.length > 0 && (
             <div className={`py-24 ${THEME.bg}`}>
