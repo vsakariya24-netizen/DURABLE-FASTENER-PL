@@ -44,8 +44,7 @@ const RevealText = ({ text, className }: { text: string, className?: string }) =
   </div>
 );
 
-// --- SCROLL WORD COMPONENT (FIXED) ---
-// We use React.FC to explicitly tell TypeScript this component accepts 'key'
+// --- SCROLL WORD COMPONENT ---
 interface ScrollWordProps {
   children: React.ReactNode;
   progress: any;
@@ -177,7 +176,6 @@ const IntroLoader = ({ onComplete }: { onComplete: () => void }) => {
 // --- ANIMATED MANIFESTO ---
 const AnimatedManifesto = () => {
   const ref = useRef(null);
-  // Jaise hi 20% element screen par dikhega, animation start hoga
   const isInView = useInView(ref, { once: true, margin: "-10% 0px -10% 0px" });
 
   const words = [
@@ -194,21 +192,19 @@ const AnimatedManifesto = () => {
     { text: "precision.", className: "font-serif italic font-normal text-white/70" }
   ];
 
-  // Container animation logic
   const container = {
     hidden: { opacity: 0 },
     visible: (i = 1) => ({
       opacity: 1,
-      transition: { staggerChildren: 0.03, delayChildren: 0.1 } // Speed control
+      transition: { staggerChildren: 0.03, delayChildren: 0.1 }
     })
   };
 
-  // Individual word animation
   const child = {
     hidden: { 
-      opacity: 0.1, // Thoda sa dikhega (ghost text)
-      y: 20,        // Niche se upar aayega
-      filter: "blur(5px)" // Starting mein blur rahega
+      opacity: 0.1, 
+      y: 20,       
+      filter: "blur(5px)" 
     },
     visible: {
       opacity: 1,
@@ -274,16 +270,15 @@ const Home: React.FC = () => {
   
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
 
-  // 1. Fetch Content from Supabase (site_content)
+  // 1. Fetch Content
   useEffect(() => {
     const fetchContent = async () => {
       const { data } = await supabase.from('site_content').select('*').single();
       if (data) {
-        // Hero
         if (data.hero_images && Array.isArray(data.hero_images) && data.hero_images.length > 0) {
           setHeroImages(data.hero_images);
         } else if (data.hero_bg) {
-           setHeroImages([data.hero_bg]); // Fallback to old single image
+           setHeroImages([data.hero_bg]); 
         }
         
         setHeroText({
@@ -292,20 +287,17 @@ const Home: React.FC = () => {
           line3: data.hero_title_3 || "VALUE"
         });
 
-        // Stats
         setStats({
             dealers: data.stat_dealers || 350,
             years: data.stat_years || 13,
             products: data.stat_products || 120
         });
 
-        // Categories
-       // Categories
         setCategoryImages({
             industrial: data.cat_fasteners || categoryImages.industrial,
             fittings: data.cat_fittings || categoryImages.fittings,
             automotive: data.cat_automotive || categoryImages.automotive,
-            oem: data.cat_oem || categoryImages.oem // <--- THIS CONNECTS IT TO ADMIN
+            oem: data.cat_oem || categoryImages.oem
         });
       }
       setTimeout(() => setIsLoading(false), 1500);
@@ -335,7 +327,14 @@ const Home: React.FC = () => {
         {isLoading && <IntroLoader onComplete={() => setIsLoading(false)} />}
       </AnimatePresence>
 
-      <main ref={containerRef} className="bg-[#050505] text-white selection:bg-yellow-500 selection:text-black overflow-hidden">
+      {/* FIX: Added negative margin (-mt-20 md:-mt-24) to pull the content UP 
+         and hide the white gap caused by the Navbar. 
+         Added relative and z-0 to ensure proper stacking context.
+      */}
+      <main 
+        ref={containerRef} 
+        className="bg-[#050505] text-white selection:bg-yellow-500 selection:text-black overflow-hidden relative z-0 -mt-20 md:-mt-24"
+      >
         
         {/* === HERO SECTION (Dynamic) === */}
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -356,7 +355,8 @@ const Home: React.FC = () => {
           </motion.div>
 
           <div className="container relative z-20 px-4 md:px-6 mt-0">
-            <div className="flex flex-col items-center text-center justify-center h-full pt-20 md:pt-0">
+            {/* Added extra padding top here to compensate for the page being pulled up, ensuring text isn't hidden behind nav */}
+            <div className="flex flex-col items-center text-center justify-center h-full pt-32 md:pt-0">
               {!isLoading && (
                 <>
                   <SectionReveal>
@@ -464,14 +464,12 @@ const Home: React.FC = () => {
 
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4">
     {[
-      // 1. I added a 'link' property to each item here
       { title: "Industrial", img: categoryImages.industrial, delay: 0, link: "/products?category=industrial" },
       { title: "Automotive", img: categoryImages.automotive, delay: 0.1, link: "/products?category=automotive" },
       { title: "Fittings", img: categoryImages.fittings, delay: 0.2, link: "/products?category=fittings" },
       { title: "OEM/Custom", img: categoryImages.oem, delay: 0.3, link: "/products?category=oem" }
     ].map((cat, i) => (
       <SectionReveal key={i} delay={cat.delay}>
-        {/* 2. Wrapped the motion.div inside a Link component */}
         <Link to={cat.link} className="block h-full">
             <motion.div 
                 whileHover={{ scale: 0.98 }} 
@@ -490,7 +488,6 @@ const Home: React.FC = () => {
                     <p className="text-white/60 uppercase tracking-widest text-xs">Explore Division</p>
                 </div>
 
-                {/* The VIEW button (Only visible on hover due to opacity-0 group-hover:opacity-100) */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30">
                     <div className="w-24 h-24 bg-yellow-500 text-black rounded-full flex items-center justify-center font-black text-xs rotate-12 shadow-2xl scale-0 group-hover:scale-100 transition-transform duration-500">
                         VIEW
@@ -503,16 +500,11 @@ const Home: React.FC = () => {
   </div>
 </section>
 
-        {/* INFRASTRUCTURE */}
         {/* MANUFACTURING PROCESS: "THE JOURNEY" */}
         <section className="py-24 md:py-32 relative bg-[#050505] overflow-hidden border-y border-neutral-900">
-          
-          {/* Background Gradient Mesh */}
           <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-yellow-500/5 blur-[150px] rounded-full pointer-events-none" />
 
           <div className="container mx-auto px-6 relative z-10">
-              
-              {/* Header */}
               <SectionReveal>
                 <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
                    <div className="max-w-2xl">
@@ -531,54 +523,21 @@ const Home: React.FC = () => {
                 </div>
               </SectionReveal>
 
-              {/* PROCESS GRID */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                  {[
-                    {
-                       step: "01",
-                       title: "Material Sourcing",
-                       desc: "We only procure high-grade C1022 Carbon Steel & Stainless Steel from certified mills. Every batch undergoes spectroscopic analysis.",
-                       icon: Layers
-                    },
-                    {
-                       step: "02",
-                       title: "Cold Forging",
-                       desc: "High-speed CNC headers form the perfect head geometry and drive recess without breaking the metal grain flow.",
-                       icon: Hammer
-                    },
-                    {
-                       step: "03",
-                       title: "Thread Rolling",
-                       desc: "Threads are rolled, not cut. This densifies the material structure, increasing tensile strength by 30% vs standard cutting.",
-                       icon: ScanLine
-                    },
-                    {
-                       step: "04",
-                       title: "Heat Treatment",
-                       desc: "Computer-controlled Carbo-Nitriding furnaces ensure the core is tough while the surface remains diamond-hard.",
-                       icon: Thermometer
-                    },
-                    {
-                       step: "05",
-                       title: "Surface Engineering",
-                       desc: "Advanced Zinc & Phosphate plating lines provide 720+ hours of salt-spray resistance against corrosion.",
-                       icon: ShieldCheck
-                    },
-                    {
-                       step: "06",
-                       title: "Zero-Defect QC",
-                       desc: "Optical sorting machines check dimensions, while our lab tests torque, ductility, and pull-out strength.",
-                       icon: FileCheck
-                    }
+                    { step: "01", title: "Material Sourcing", desc: "We only procure high-grade C1022 Carbon Steel & Stainless Steel from certified mills. Every batch undergoes spectroscopic analysis.", icon: Layers },
+                    { step: "02", title: "Cold Forging", desc: "High-speed CNC headers form the perfect head geometry and drive recess without breaking the metal grain flow.", icon: Hammer },
+                    { step: "03", title: "Thread Rolling", desc: "Threads are rolled, not cut. This densifies the material structure, increasing tensile strength by 30% vs standard cutting.", icon: ScanLine },
+                    { step: "04", title: "Heat Treatment", desc: "Computer-controlled Carbo-Nitriding furnaces ensure the core is tough while the surface remains diamond-hard.", icon: Thermometer },
+                    { step: "05", title: "Surface Engineering", desc: "Advanced Zinc & Phosphate plating lines provide 720+ hours of salt-spray resistance against corrosion.", icon: ShieldCheck },
+                    { step: "06", title: "Zero-Defect QC", desc: "Optical sorting machines check dimensions, while our lab tests torque, ductility, and pull-out strength.", icon: FileCheck }
                  ].map((item, i) => (
                     <SectionReveal key={i} delay={i * 0.1}>
                        <motion.div 
                          whileHover={{ y: -10 }}
                          className="group relative p-8 h-full bg-neutral-900/50 border border-neutral-800 hover:border-yellow-500/50 rounded-3xl transition-all duration-300"
                        >
-                          {/* Hover Glow */}
                           <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
-                          
                           <div className="relative z-10 flex flex-col h-full justify-between">
                              <div>
                                 <div className="flex justify-between items-start mb-6">
@@ -589,7 +548,6 @@ const Home: React.FC = () => {
                                       {item.step}
                                    </span>
                                 </div>
-                                
                                 <h3 className="text-xl font-bold text-white mb-3 group-hover:text-yellow-400 transition-colors">
                                    {item.title}
                                 </h3>
@@ -597,8 +555,6 @@ const Home: React.FC = () => {
                                    {item.desc}
                                 </p>
                              </div>
-
-                             {/* Bottom Line Indicator */}
                              <div className="w-full h-px bg-neutral-800 mt-8 group-hover:bg-yellow-500/50 transition-colors relative">
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-neutral-800 rounded-full group-hover:bg-yellow-500 transition-colors" />
                              </div>
@@ -608,7 +564,6 @@ const Home: React.FC = () => {
                  ))}
               </div>
 
-              {/* Bottom CTA */}
               <SectionReveal delay={0.6}>
                  <div className="mt-20 flex flex-col md:flex-row items-center justify-center gap-6 bg-neutral-900/80 border border-neutral-800 rounded-2xl p-8 backdrop-blur-sm">
                     <div className="flex items-center gap-4">
@@ -626,7 +581,6 @@ const Home: React.FC = () => {
                     </Link>
                  </div>
               </SectionReveal>
-
           </div>
         </section>
 

@@ -1,354 +1,400 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Target, Eye, Heart, TrendingUp, Award, MapPin, Users, Calendar, ArrowUpRight, CheckCircle2, Factory, Crown, Star, Sparkles, MoveRight } from 'lucide-react';
-import { Helmet } from 'react-helmet-async'; // 👈 Add this
-// --- Helper Components for Animation ---
+import React, { useRef } from 'react';
+import { Target, TrendingUp, Users, Calendar, CheckCircle2, Factory, Crown, Sparkles, MapPin, Globe2, ArrowRight, ShieldCheck, Microscope } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { motion, useScroll, useTransform, useInView, useSpring } from 'framer-motion';
 
-const RevealSection: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) entry.target.classList.add('active');
-    }, { threshold: 0.1 });
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  // Note: Ensure your global CSS has .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s; } .reveal.active { opacity: 1; transform: translateY(0); }
-  return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
+// --- 1. Reusable Animation Components ---
+
+const FadeInUp: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ children, delay = 0, className = "" }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.8, delay: delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
 };
 
-const useCounter = (end: number, duration: number = 2000, start: number = 0) => {
-  const [count, setCount] = useState(start);
-  const [hasStarted, setHasStarted] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+const CountUp: React.FC<{ end: number; suffix?: string; duration?: number }> = ({ end, suffix = "", duration = 2 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+  
+  // Create a motion value starting at 0
+  const count = useSpring(0, { duration: duration * 1000, bounce: 0 });
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !hasStarted) setHasStarted(true);
-    }, { threshold: 0.5 });
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [hasStarted]);
+  React.useEffect(() => {
+    if (isInView) count.set(end);
+  }, [isInView, end, count]);
 
-  useEffect(() => {
-    if (!hasStarted) return;
-    let startTime: number;
-    const step = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      setCount(Math.floor(progress * (end - start) + start));
-      if (progress < 1) window.requestAnimationFrame(step);
-    };
-    window.requestAnimationFrame(step);
-  }, [hasStarted, end, duration, start]);
+  const [displayValue, setDisplayValue] = React.useState(0);
 
-  return { count, ref };
+  React.useEffect(() => {
+    return count.on("change", (latest) => {
+      setDisplayValue(Math.floor(latest));
+    });
+  }, [count]);
+
+  return <span ref={ref}>{displayValue}{suffix}</span>;
 };
+
+// --- 2. Main Page Component ---
 
 const About: React.FC = () => {
-  const [offsetY, setOffsetY] = useState(0);
-  
-  useEffect(() => {
-    const handleScroll = () => setOffsetY(window.pageYOffset);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
 
-  const statOfficeStart = useCounter(35, 1500);
-  const statOfficeNow = useCounter(7000, 2500);
-  const statSuppliers = useCounter(350, 2000);
+  // Parallax for Hero
+  const yHero = useTransform(scrollYProgress, [0, 0.2], ["0%", "50%"]);
+  const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
 
   return (
-    <div className="bg-[#fcfcfc] min-h-screen overflow-x-hidden font-sans text-gray-900">
+    <div ref={containerRef} className="bg-slate-50 min-h-screen overflow-x-hidden font-sans text-slate-900 selection:bg-blue-200">
       <Helmet>
-        {/* 1. Story & Trust-Building Title */}
-        <title>About Durable Fastener | 15+ Years of Manufacturing Excellence in Rajkot</title>
-        
-        <meta 
-          name="description" 
-          content="Founded in 2018, Durable Fastener Pvt Ltd has grown from a small workshop to a massive 7000 sq. ft. manufacturing hub in Rajkot. ISO 9001:2015 Certified." 
-        />
-        
-        <meta 
-          name="keywords" 
-          content="durable fastener history, about durable fastener pvt ltd, screw manufacturer rajkot, fastener factory india, industrial hardware company profile" 
-        />
-
-        {/* 2. ABOUT PAGE SCHEMA (Entity Identity) */}
-        <script type="application/ld+json">
-          {`
-            {
-              "@context": "https://schema.org",
-              "@type": "AboutPage",
-              "mainEntity": {
-                "@type": "Organization",
-                "name": "Durable Fastener Pvt Ltd",
-                "alternateName": "Durable Enterprise",
-                "foundingDate": "2018",
-                "description": "Leading manufacturer of high-tensile industrial fasteners and architectural hardware.",
-                "logo": "https://durablefastener.com/durablefastener.png",
-                "founder": {
-                  "@type": "Person",
-                  "name": "Khushi Chovatiya"
-                },
-                "location": {
-                  "@type": "Place",
-                  "address": {
-                    "@type": "PostalAddress",
-                    "addressLocality": "Rajkot",
-                    "addressRegion": "Gujarat",
-                    "addressCountry": "IN"
-                  }
-                },
-                "contactPoint": {
-                  "@type": "ContactPoint",
-                  "telephone": "+91 87587 00709",
-                  "contactType": "sales",
-                  "areaServed": "IN"
-                },
-                "sameAs": [
-                  "https://www.facebook.com/durablefastener",
-                  "https://www.linkedin.com/company/durablefastener"
-                ]
-              }
-            }
-          `}
-        </script>
+        <title>About Durable Fastener | Engineering Excellence Since 2018</title>
+        <meta name="description" content="Discover the journey of Durable Fastener Pvt Ltd, from a small workshop to a global manufacturing hub." />
       </Helmet>
-      {/* 1. POWER HERO SECTION */}
-      <div className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-[#0a0f1a] text-white">
-        <div 
-          className="absolute inset-0 opacity-30 z-0 grayscale"
-          style={{ 
-            backgroundImage: `url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=2000')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            transform: `scale(${1 + offsetY * 0.0005}) translateY(${offsetY * 0.2}px)`
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1a] via-transparent to-black/60 z-10" />
-        
-        {/* Animated Grid Overlay */}
-        <div className="absolute inset-0 z-10 opacity-20 pointer-events-none" 
-             style={{ backgroundImage: 'radial-gradient(circle, #444 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
+      {/* ================= HERO SECTION ================= */}
+      <div className="relative h-screen flex items-center justify-center overflow-hidden bg-[#0a0f1a] text-white">
+        {/* Parallax Background */}
+        <motion.div 
+          style={{ y: yHero, opacity: opacityHero }}
+          className="absolute inset-0 z-0"
+        >
+          <div 
+            className="absolute inset-0 bg-cover bg-center grayscale opacity-40 mix-blend-overlay"
+            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=2000')` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0f1a]/50 to-[#0a0f1a]" />
+        </motion.div>
+
+        {/* Content */}
         <div className="relative z-20 max-w-7xl mx-auto px-6 text-center">
-          <RevealSection>
-            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-amber-500/20 bg-amber-500/5 text-amber-500 text-xs font-black tracking-[0.3em] uppercase mb-8 backdrop-blur-xl shadow-2xl">
-               Engineering Trust Since 2018
-            </div>
-            <h1 className="text-6xl md:text-8xl font-black mb-8 tracking-tighter leading-[0.9]">
-              THE ART OF <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-600">
-                STRENGTH
-              </span>
-            </h1>
-            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
-              We started in a 35 sq. ft. room with a big dream. Today, we anchor the infrastructure of a nation through <span className="text-white font-medium">Precision Fastening solutions.</span>
-            </p>
-          </RevealSection>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-black tracking-[0.3em] uppercase mb-8 backdrop-blur-md"
+          >
+            Since 2018
+          </motion.div>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-6xl md:text-9xl font-black mb-6 tracking-tighter leading-[0.85]"
+          >
+            PRECISION <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-white to-blue-400">
+              IN MOTION
+            </span>
+          </motion.h1>
+
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 1 }}
+            className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed"
+          >
+            From a 35 sq. ft. workshop to a national infrastructure partner. <br/>
+            We don't just manufacture fasteners; we build <span className="text-white font-semibold">trust.</span>
+          </motion.p>
         </div>
+
+        {/* Scroll Indicator */}
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ delay: 1, duration: 1 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-slate-500"
+        >
+          <span className="text-[10px] uppercase tracking-widest">Scroll to Explore</span>
+          <div className="w-[1px] h-12 bg-gradient-to-b from-blue-500 to-transparent"></div>
+        </motion.div>
       </div>
 
-      {/* 2. SCALE DASHBOARD (Animated Stats) */}
-      <section className="relative z-30 -mt-20 px-4">
+      {/* ================= STATS DASHBOARD ================= */}
+      <section className="relative z-30 -mt-24 px-4 pb-24">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-10 rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col items-center group transition-all duration-500 hover:border-amber-500/30">
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 group-hover:text-amber-500 transition-colors">Foundation</div>
-              <div className="text-5xl font-black text-slate-900 mb-2" ref={statOfficeStart.ref}>
-                {statOfficeStart.count}<span className="text-lg text-slate-300 ml-1">SQ FT</span>
+            {/* Stat 1 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="bg-white p-10 rounded-[2rem] shadow-xl border border-slate-100 group hover:border-blue-200 transition-colors"
+            >
+              <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Origins</div>
+              <div className="text-6xl font-black text-slate-900 mb-2 tracking-tighter">
+                <CountUp end={35} suffix="" />
+                <span className="text-lg text-slate-400 ml-2 font-medium">SQ FT</span>
               </div>
-              <div className="h-1 w-8 bg-slate-100 rounded-full group-hover:w-16 transition-all"></div>
-              <p className="mt-4 text-slate-500 text-sm font-medium">Initial Office (2018)</p>
-            </div>
+              <p className="text-slate-500 font-medium">Where we started (2018)</p>
+            </motion.div>
 
-            <div className="bg-[#111827] p-10 rounded-[2.5rem] shadow-2xl border-t-4 border-amber-500 flex flex-col items-center transform scale-105 z-10 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-16 bg-amber-500/10 blur-[80px] rounded-full -mr-10 -mt-10"></div>
-              <div className="relative z-10 text-[10px] font-black uppercase tracking-widest text-amber-500 mb-4">Current Hub</div>
-              <div className="relative z-10 text-7xl font-black text-white mb-2" ref={statOfficeNow.ref}>
-                {statOfficeNow.count}<span className="text-xl text-amber-500 ml-1">FT²</span>
+            {/* Stat 2 (Featured) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="bg-[#1e293b] p-10 rounded-[2rem] shadow-2xl border-t-4 border-blue-500 relative overflow-hidden transform md:-translate-y-6"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-[50px] pointer-events-none"></div>
+              <div className="relative z-10">
+                <div className="text-xs font-black uppercase tracking-widest text-blue-400 mb-4">Current Capacity</div>
+                <div className="text-7xl font-black text-white mb-2 tracking-tighter">
+                  <CountUp end={7000} suffix="" />
+                  <span className="text-2xl text-blue-500 ml-2 font-medium">FT²</span>
+                </div>
+                <p className="text-slate-400 font-light">Advanced Manufacturing Hub</p>
               </div>
-              <p className="relative z-10 mt-4 text-slate-400 text-sm font-light tracking-wide uppercase">Industrial Powerhouse</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white p-10 rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col items-center group transition-all duration-500 hover:border-blue-500/30">
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 group-hover:text-blue-500 transition-colors">Market Presence</div>
-              <div className="text-5xl font-black text-slate-900 mb-2" ref={statSuppliers.ref}>
-                {statSuppliers.count}<span className="text-amber-500 ml-1">+</span>
+            {/* Stat 3 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="bg-white p-10 rounded-[2rem] shadow-xl border border-slate-100 group hover:border-amber-200 transition-colors"
+            >
+              <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Network</div>
+              <div className="text-6xl font-black text-slate-900 mb-2 tracking-tighter">
+                <CountUp end={350} suffix="+" />
               </div>
-              <div className="h-1 w-8 bg-slate-100 rounded-full group-hover:w-16 transition-all"></div>
-              <p className="mt-4 text-slate-500 text-sm font-medium">B2B Network Partners</p>
-            </div>
+              <p className="text-slate-500 font-medium">Active Dealers & Partners</p>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* 3. EVOLUTION TIMELINE (High-End Industrial Design) */}
-      <section className="py-32 bg-white overflow-hidden">
+      {/* ================= PROCESS FLOW (NEW: STEP BY STEP DETAILS) ================= */}
+      <section className="py-24 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col items-center text-center mb-24">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter uppercase italic">The Evolution</h2>
-            <div className="h-2 w-24 bg-gradient-to-r from-amber-500 to-yellow-200 rounded-full"></div>
+          <div className="mb-16 md:flex justify-between items-end">
+            <div>
+               <span className="text-blue-600 font-black text-xs tracking-[0.3em] uppercase mb-4 block">Transparency</span>
+               <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight">
+                 How We Build <br /> <span className="text-blue-600">Perfection</span>
+               </h2>
+            </div>
+            <p className="md:w-1/3 text-slate-500 mt-6 md:mt-0">
+              Understanding our quality means understanding our process. Here is the step-by-step journey of a Durable Fastener.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+             {/* Step 1 */}
+             <div className="group relative bg-slate-50 p-8 rounded-3xl hover:bg-slate-900 transition-all duration-500 hover:shadow-2xl">
+                <div className="absolute top-6 right-6 text-6xl font-black text-slate-200 group-hover:text-white/10 transition-colors">01</div>
+                <div className="w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center mb-16 group-hover:scale-110 transition-transform">
+                  <Factory className="text-blue-600" size={24}/>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-white">Raw Material</h3>
+                <p className="text-sm text-slate-500 group-hover:text-slate-400">We source only premium grade steel wire. Every batch undergoes tensile testing before entering the floor.</p>
+             </div>
+
+             {/* Step 2 */}
+             <div className="group relative bg-slate-50 p-8 rounded-3xl hover:bg-blue-600 transition-all duration-500 hover:shadow-2xl">
+                <div className="absolute top-6 right-6 text-6xl font-black text-slate-200 group-hover:text-white/10 transition-colors">02</div>
+                <div className="w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center mb-16 group-hover:scale-110 transition-transform">
+                  <Target className="text-blue-600" size={24}/>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-white">Cold Forging</h3>
+                <p className="text-sm text-slate-500 group-hover:text-blue-100">High-speed headers form the screw head and body with micron-level precision and structural integrity.</p>
+             </div>
+
+             {/* Step 3 */}
+             <div className="group relative bg-slate-50 p-8 rounded-3xl hover:bg-slate-900 transition-all duration-500 hover:shadow-2xl">
+                <div className="absolute top-6 right-6 text-6xl font-black text-slate-200 group-hover:text-white/10 transition-colors">03</div>
+                <div className="w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center mb-16 group-hover:scale-110 transition-transform">
+                  <CheckCircle2 className="text-blue-600" size={24}/>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-white">Threading & Heat</h3>
+                <p className="text-sm text-slate-500 group-hover:text-slate-400">Threads are rolled (not cut) for strength. Heat treatment ensures the perfect balance of hardness and flexibility.</p>
+             </div>
+
+             {/* Step 4 */}
+             <div className="group relative bg-slate-50 p-8 rounded-3xl hover:bg-amber-400 transition-all duration-500 hover:shadow-2xl">
+                <div className="absolute top-6 right-6 text-6xl font-black text-slate-200 group-hover:text-white/20 transition-colors">04</div>
+                <div className="w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center mb-16 group-hover:scale-110 transition-transform">
+                  <Crown className="text-amber-500" size={24}/>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-white">QC & Finish</h3>
+                <p className="text-sm text-slate-500 group-hover:text-slate-900/80">Anti-corrosive plating is applied. Final QC checks dimensions, finish, and packing before dispatch.</p>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= EVOLUTION TIMELINE (SCROLL DRAWN) ================= */}
+      <section className="py-32 bg-[#0f172a] relative overflow-hidden">
+        {/* Background Grid */}
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+        
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-24">
+            <span className="text-blue-400 font-black text-xs tracking-[0.3em] uppercase">Our History</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-4">The Evolution Timeline</h2>
           </div>
 
           <div className="relative">
-            {/* Timeline Center Line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-[2px] bg-slate-100 hidden md:block"></div>
+            {/* The Vertical Line Container */}
+            <div className="absolute left-[20px] md:left-1/2 top-0 bottom-0 w-[2px] bg-slate-800 md:-translate-x-1/2"></div>
+            
+            {/* The Animated Line */}
+            <motion.div 
+              style={{ scaleY: scrollYProgress, transformOrigin: "top" }}
+              className="absolute left-[20px] md:left-1/2 top-0 bottom-0 w-[2px] bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.6)] md:-translate-x-1/2 z-10"
+            ></motion.div>
 
-            {/* Timeline Item 1 */}
-            <div className="relative flex flex-col md:flex-row items-center justify-between mb-32 group">
-              <div className="md:w-[45%] text-right pr-0 md:pr-12">
-                <span className="text-amber-600 font-black text-xs tracking-widest uppercase">Aug 2018</span>
-                <h3 className="text-3xl font-black text-slate-900 mt-2 mb-4">Durable Enterprise</h3>
-                <p className="text-slate-500 font-light leading-relaxed">
-                  The journey began as a proprietorship with one machine and a vision to fix the inconsistencies in the architectural hardware market.
-                </p>
-              </div>
-              <div className="absolute left-1/2 -translate-x-1/2 w-12 h-12 bg-white border-[6px] border-slate-100 rounded-full z-10 hidden md:flex items-center justify-center group-hover:border-amber-500 transition-colors">
-                <Sparkles size={16} className="text-amber-500" />
-              </div>
-              <div className="md:w-[45%] pl-0 md:pl-12 mt-8 md:mt-0">
-                <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden shadow-xl border border-white group-hover:scale-105 transition-all duration-500">
-                  <img src="https://images.unsplash.com/photo-1516937941344-00b4e0337589?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="Origin" />
-                </div>
-              </div>
+            {/* --- Timeline Item 1 --- */}
+            <div className="relative flex flex-col md:flex-row items-center justify-between mb-32">
+               {/* Content Left */}
+               <div className="md:w-1/2 md:pr-16 pl-16 md:pl-0 md:text-right mb-8 md:mb-0">
+                  <FadeInUp>
+                    <div className="inline-block px-3 py-1 rounded border border-blue-500/30 text-blue-400 text-sm font-bold mb-3">2018</div>
+                    <h3 className="text-3xl font-bold text-white mb-3">The Spark</h3>
+                    <p className="text-slate-400 leading-relaxed">Durable Enterprise is born in a 35 sq. ft. room. A small space with a massive vision: to redefine hardware quality in Gujarat.</p>
+                  </FadeInUp>
+               </div>
+               
+               {/* Dot */}
+               <div className="absolute left-[20px] md:left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0f172a] border-2 border-blue-500 rounded-full z-20"></div>
+
+               {/* Image Right */}
+               <div className="md:w-1/2 md:pl-16 pl-16 md:pl-0">
+                 <FadeInUp delay={0.2}>
+                   <div className="relative rounded-xl overflow-hidden border border-slate-700">
+                     <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600" alt="Workshop" className="w-full h-48 object-cover opacity-60 hover:opacity-100 transition-opacity" />
+                   </div>
+                 </FadeInUp>
+               </div>
             </div>
 
-            {/* Timeline Item 2 - Reverse */}
-            <div className="relative flex flex-col md:flex-row items-center justify-between mb-32 group">
-              <div className="md:w-[45%] order-2 md:order-1 pr-0 md:pr-12 mt-8 md:mt-0">
-                <div className="aspect-video bg-slate-100 rounded-3xl overflow-hidden shadow-xl border border-white group-hover:scale-105 transition-all duration-500">
-                  <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="Scale" />
-                </div>
-              </div>
-              <div className="absolute left-1/2 -translate-x-1/2 w-12 h-12 bg-white border-[6px] border-slate-100 rounded-full z-10 hidden md:flex items-center justify-center group-hover:border-blue-500 transition-colors">
-                <TrendingUp size={16} className="text-blue-500" />
-              </div>
-              <div className="md:w-[45%] order-1 md:order-2 pl-0 md:pl-12 text-left">
-                <span className="text-blue-600 font-black text-xs tracking-widest uppercase">Transition Era</span>
-                <h3 className="text-3xl font-black text-slate-900 mt-2 mb-4">Pvt. Ltd. Incorporation</h3>
-                <p className="text-slate-500 font-light leading-relaxed">
-                  Expanding our horizons, we formalized as Durable Fastener Pvt. Ltd. This shift allowed us to handle bulk OEM contracts and global quality standards.
-                </p>
-              </div>
+            {/* --- Timeline Item 2 --- */}
+            <div className="relative flex flex-col md:flex-row-reverse items-center justify-between mb-32">
+               <div className="md:w-1/2 md:pl-16 pl-16 md:pl-0 mb-8 md:mb-0">
+                  <FadeInUp>
+                    <div className="inline-block px-3 py-1 rounded border border-blue-500/30 text-blue-400 text-sm font-bold mb-3">Expansion Era</div>
+                    <h3 className="text-3xl font-bold text-white mb-3">Becoming Private Limited</h3>
+                    <p className="text-slate-400 leading-relaxed">Transitioned to <strong className="text-white">Durable Fastener Pvt. Ltd.</strong> We moved to a 7000 sq. ft. facility, automating production to meet high-volume OEM demands.</p>
+                  </FadeInUp>
+               </div>
+               <div className="absolute left-[20px] md:left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0f172a] border-2 border-white rounded-full z-20"></div>
+               <div className="md:w-1/2 md:pr-16 pl-16 md:pl-0">
+                 <FadeInUp delay={0.2}>
+                   <div className="relative rounded-xl overflow-hidden border border-slate-700">
+                     <img src="https://images.unsplash.com/photo-1565515263731-06915ec52960?auto=format&fit=crop&q=80&w=600" alt="Factory" className="w-full h-48 object-cover opacity-60 hover:opacity-100 transition-opacity" />
+                   </div>
+                 </FadeInUp>
+               </div>
             </div>
+
+            {/* --- Timeline Item 3 --- */}
+            <div className="relative flex flex-col md:flex-row items-center justify-between mb-32">
+               <div className="md:w-1/2 md:pr-16 pl-16 md:pl-0 md:text-right mb-8 md:mb-0">
+                  <FadeInUp>
+                    <div className="inline-block px-3 py-1 rounded border border-amber-500/30 text-amber-500 text-sm font-bold mb-3">Brand Launch</div>
+                    <h3 className="text-3xl font-bold text-white mb-3">ClassOne Arrives</h3>
+                    <p className="text-slate-400 leading-relaxed">Identifying a gap in the premium architectural market, we launched <span className="text-amber-500 font-bold">ClassOne</span>. Superior finish, higher strength, aesthetic perfection.</p>
+                  </FadeInUp>
+               </div>
+               <div className="absolute left-[20px] md:left-1/2 -translate-x-1/2 w-6 h-6 bg-[#0f172a] border-2 border-amber-500 rounded-full z-20 flex items-center justify-center">
+                 <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+               </div>
+               <div className="md:w-1/2 md:pl-16 pl-16 md:pl-0">
+                 <FadeInUp delay={0.2}>
+                   <div className="relative rounded-xl overflow-hidden border border-amber-500/30">
+                     <img src="https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&q=80&w=600" alt="ClassOne" className="w-full h-48 object-cover opacity-80 hover:opacity-100 transition-opacity" />
+                   </div>
+                 </FadeInUp>
+               </div>
+            </div>
+
+            {/* --- Timeline Item 4 --- */}
+            <div className="relative flex flex-col md:flex-row-reverse items-center justify-between">
+               <div className="md:w-1/2 md:pl-16 pl-16 md:pl-0 mb-8 md:mb-0">
+                  <FadeInUp>
+                    <div className="inline-block px-3 py-1 rounded border border-blue-500/30 text-blue-400 text-sm font-bold mb-3">Future Vision</div>
+                    <h3 className="text-3xl font-bold text-white mb-3">2030 Roadmap</h3>
+                    <p className="text-slate-400 leading-relaxed">Our goal is clear: A Durable Fastener product in every district of India. We are expanding our dealer network to over 1000+ partners.</p>
+                  </FadeInUp>
+               </div>
+               <div className="absolute left-[20px] md:left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-500 border-2 border-white rounded-full z-20 shadow-[0_0_10px_rgba(59,130,246,1)]"></div>
+               <div className="md:w-1/2 md:pr-16 pl-16 md:pl-0">
+                 <FadeInUp delay={0.2}>
+                   <div className="p-6 rounded-xl bg-blue-900/20 border border-blue-500/20">
+                      <div className="flex items-center gap-4 text-white">
+                        <Globe2 size={32} className="text-blue-500" />
+                        <div>
+                          <div className="font-bold">Pan-India Reach</div>
+                          <div className="text-xs text-blue-300">Expanding Territories</div>
+                        </div>
+                      </div>
+                   </div>
+                 </FadeInUp>
+               </div>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* 4. BRAND ASPIRATION (Luxury Highlight) - UPDATED WITH IMAGE */}
-      <section className="py-32 bg-[#0a0f1a] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
-        
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-20">
-            <h2 className="text-amber-500 text-xs font-black tracking-[0.5em] uppercase mb-4">Our Flagship Jewel</h2>
-            <div className="flex justify-center mb-8">
-               <div className="w-20 h-[1px] bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
-            </div>
-          </div>
-
-          <div className="relative group cursor-default">
-            {/* LOGO IMAGE REPLACEMENT */}
-            <div className="text-center">
-                {/* IMPORTANT: 'filter invert brightness-0' turns the black logo white.
-                    Adjust 'max-w-[500px]' to change the size of the logo.
-                */}
-                <img s
-                  src="classone.png" 
-                  alt="Classone Logo" 
-                  className="mx-auto w-full max-w-[600px] h-auto filter invert brightness-0 opacity-90 mb-8"
-                />
-
-                <p className="text-amber-500/60 tracking-[1em] uppercase text-sm md:text-lg font-black">Architectural Hardware</p>
-            </div>
-
-            {/* Glowing Backdrop */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-32 bg-amber-500/10 blur-[100px] -z-10"></div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-12 mt-32">
-            {[
-              { icon: Crown, title: "No.1 Aspiration", text: "Striving to be the gold standard in premium architectural fastening." },
-              { icon: Users, title: "Customer First", text: "Every thread and head we manufacture is centered around user safety." },
-              { icon: Heart, title: "Legacy Built", text: "Creating a workspace that attracts the finest engineering talent in India." }
-            ].map((item, i) => (
-              <div key={i} className="text-center p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
-                <item.icon className="mx-auto text-amber-500 mb-6 group-hover:scale-110 transition-transform" size={40} />
-                <h4 className="text-white font-black mb-3">{item.title}</h4>
-                <p className="text-slate-400 text-lg font-light leading-relaxed max-w-sm">
-  Decades of expertise inside our <b>fastener manufacturing factory</b> producing international grade hardware.
-</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. BENTO ADVANTAGE GRID */}
-      <section className="py-32 px-6">  
+      {/* ================= WHY CHOOSE US (STAGGERED GRID) ================= */}
+      <section className="py-24 px-4 bg-slate-50">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-end mb-16">
-            <div>
-              <span className="text-amber-600 font-black text-xs tracking-widest uppercase">The Durable Edge</span>
-              <h2 className="text-4xl md:text-5xl font-black text-slate-900 mt-2 tracking-tighter italic">Why Choose Us?</h2>
-            </div>
-            <div className="hidden md:block">
-               <div className="flex items-center gap-2 text-slate-400 text-sm italic">
-                 Scroll for more <MoveRight size={16} />
-               </div>
-            </div>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-black text-slate-900 mb-4">Why Industry Leaders Choose Us</h2>
+            <div className="h-1 w-20 bg-blue-600 mx-auto rounded-full"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="md:col-span-2 bg-slate-900 p-12 rounded-[3rem] text-white relative overflow-hidden group">
-               <div className="relative z-10">
-                <Calendar size={48} className="text-amber-500 mb-8" />
-                <h3 className="text-5xl font-black mb-4 tracking-tighter">13+ Years</h3>
-                <p className="text-slate-400 text-lg font-light leading-relaxed max-w-sm">
-                  Decades of metallurgical expertise combined into every single fastener we produce.
-                </p>
-               </div>
-               <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:scale-110 transition-transform duration-700">
-                 <Factory size={300} />
-               </div>
-            </div>
-
-            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl hover:shadow-2xl transition-all group">
-              <CheckCircle2 size={40} className="text-green-500 mb-6" />
-              <h4 className="text-2xl font-black text-slate-900 mb-3 tracking-tighter uppercase">Quality 1st</h4>
-              <p className="text-slate-500 text-sm leading-relaxed">Multi-stage testing ensuring zero-defect delivery for critical OEM lines.</p>
-            </div>
-
-            <div className="bg-amber-500 p-10 rounded-[3rem] shadow-xl hover:scale-[1.02] transition-all group">
-              <Target size={40} className="text-black mb-6" />
-              <h4 className="text-2xl font-black text-black mb-3 tracking-tighter uppercase">Factory Direct</h4>
-              <p className="text-black/70 text-sm leading-relaxed font-bold italic">Unbeatable pricing by eliminating every middleman from the supply chain.</p>
-            </div>
-
-            {/* Bottom Row */}
-            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl hover:shadow-2xl transition-all">
-              <Users size={32} className="text-blue-500 mb-6" />
-              <h4 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tighter">Expert Team</h4>
-              <p className="text-slate-500 text-xs leading-relaxed">Skilled engineers managing high-precision threading and heading.</p>
-            </div>
-
-            <div className="md:col-span-2 bg-gradient-to-r from-blue-600 to-indigo-700 p-10 rounded-[3rem] text-white flex flex-col md:flex-row items-center gap-8 shadow-2xl">
-              <div className="p-6 bg-white/10 rounded-3xl backdrop-blur-md">
-                <MapPin size={40} className="text-white" />
-              </div>
-              <div>
-                <h4 className="text-2xl font-black mb-2 uppercase tracking-tighter italic">Pan-India Mission</h4>
-                <p className="text-white/80 text-sm font-light leading-relaxed">Our goal is to be present in every district of India through our vast dealer network by 2030.</p>
-              </div>
-            </div>
-
-            <div className="bg-slate-100 p-10 rounded-[3rem] border-2 border-dashed border-slate-300 flex flex-col justify-center items-center text-center group hover:bg-white hover:border-amber-500 transition-all">
-               <ArrowUpRight size={40} className="text-slate-400 group-hover:text-amber-500 transition-colors" />
-               <h4 className="mt-4 text-slate-900 font-black uppercase tracking-tighter">Full Support</h4>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {[
+               { icon: <Calendar size={24}/>, title: "13+ Years Legacy", desc: "Deep manufacturing roots since 2013, ensuring we understand the technical nuances of your requirements.", color: "text-blue-600", bg: "bg-blue-50" },
+               { icon: <TrendingUp size={24}/>, title: "Direct Cost Benefit", desc: "Buy directly from the manufacturer. We eliminate middleman margins, passing the savings straight to distributors.", color: "text-green-600", bg: "bg-green-50" },
+               { icon: <ShieldCheck size={24}/>, title: "Quality Assurance", desc: "Rigorous ISO-standard testing protocols. Every batch is checked for dimension, torque, and plating quality.", color: "text-purple-600", bg: "bg-purple-50" },
+               { icon: <Factory size={24}/>, title: "Inventory Control", desc: "Our 7000 sq ft warehouse ensures we always have stock. Just-in-time delivery for your urgent needs.", color: "text-orange-600", bg: "bg-orange-50" },
+               { icon: <Users size={24}/>, title: "Fair Dealing", desc: "Transparency is our policy. Professional handling of orders with clear communication and ethical pricing.", color: "text-indigo-600", bg: "bg-indigo-50" },
+               { icon: <Target size={24}/>, title: "After Sales Support", desc: "We don't vanish after dispatch. We track delivery and ensure the product meets your exact performance needs.", color: "text-pink-600", bg: "bg-pink-50" },
+             ].map((item, index) => (
+               <FadeInUp key={index} delay={index * 0.1}>
+                 <div className="h-full bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-default">
+                    <div className={`w-12 h-12 ${item.bg} rounded-xl flex items-center justify-center mb-6`}>
+                      <div className={item.color}>{item.icon}</div>
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-3">{item.title}</h3>
+                    <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
+                 </div>
+               </FadeInUp>
+             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ================= CTA FOOTER ================= */}
+      <section className="py-20 bg-blue-600 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-5 rounded-full blur-[80px] -mr-20 -mt-20"></div>
+        <div className="max-w-4xl mx-auto text-center px-6 relative z-10">
+          <h2 className="text-3xl md:text-5xl font-black mb-6">Ready to upgrade your inventory?</h2>
+          <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">Join our network of 350+ satisfied dealers and experience the ClassOne difference today.</p>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-white text-blue-600 px-8 py-4 rounded-full font-bold shadow-2xl inline-flex items-center gap-2 hover:bg-slate-50 transition-colors"
+          >
+            Become a Partner <ArrowRight size={20}/>
+          </motion.button>
         </div>
       </section>
 
