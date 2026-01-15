@@ -109,7 +109,7 @@ const Navbar = () => {
             {/* ACTION BUTTONS & MOBILE HAMBURGER */}
             <div className="flex items-center space-x-2 xs:space-x-4 flex-shrink-0">
                {/* AI Finder */}
-               <Link to="/ai-finder" className="hidden md:flex items-center gap-2 px-5 py-3 rounded-full text-xs font-bold uppercase text-white bg-slate-900 hover:bg-black">
+               <Link to="/ai-finder" className="hidden md:flex items-center gap-2 px-5 py-3 rounded-full text-xs font-bold uppercase text-white bg-slate-900 hover:bg-black"></Link>
                  <Sparkles size={14} className="text-yellow-400" /> <span>AI Finder</span>
                </Link>
                
