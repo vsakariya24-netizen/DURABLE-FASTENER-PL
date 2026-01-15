@@ -27,7 +27,7 @@ const Navbar = () => {
     { name: 'Manufacturing', path: '/manufacturing', icon: <Factory size={18} /> },
     { name: 'About Us', path: '/about', icon: <Users size={18} /> },
     { name: 'Blog', path: '/blog', icon: <BookOpen size={18} /> },
-   
+    
     { name: 'Careers', path: '/careers', icon: <Briefcase size={18} /> },
     { name: 'Contact Us', path:'/contact', icon: <Headset size={18} /> }
   ];
@@ -55,7 +55,7 @@ const Navbar = () => {
                 <img 
                   src="/durablelogo.png" 
                   alt="Durable Fasteners" 
-                  className="h-16 xs:h-18 md:h-[170px] w-auto object-contain transition-transform duration-300" 
+                  className="h-16 xs:h-18 md:h-[230px] w-auto object-contain transition-transform duration-300" 
                 />
                 
                 {/* Separator Line */}
@@ -65,7 +65,7 @@ const Navbar = () => {
                 <img 
                   src="/classone.png" 
                   alt="Classone" 
-                  className="h-14 xs:h-16 md:h-[170px] w-auto object-contain mt-1"
+                  className="h-14 xs:h-16 md:h-[210px] w-auto object-contain mt-1"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
               </Link>
@@ -109,7 +109,7 @@ const Navbar = () => {
             {/* ACTION BUTTONS & MOBILE HAMBURGER */}
             <div className="flex items-center space-x-2 xs:space-x-4 flex-shrink-0">
                {/* AI Finder */}
-               <Link to="/ai-finder" className="hidden md:flex items-center gap-2 px-5 py-3 rounded-full text-xs font-bold uppercase text-white bg-slate-900 hover:bg-black"></Link>
+               <Link to="/ai-finder" className="hidden md:flex items-center gap-2 px-5 py-3 rounded-full text-xs font-bold uppercase text-white bg-slate-900 hover:bg-black">
                  <Sparkles size={14} className="text-yellow-400" /> <span>AI Finder</span>
                </Link>
                
