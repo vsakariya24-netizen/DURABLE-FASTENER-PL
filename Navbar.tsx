@@ -27,7 +27,7 @@ const Navbar = () => {
     { name: 'Manufacturing', path: '/manufacturing', icon: <Factory size={18} /> },
     { name: 'About Us', path: '/about', icon: <Users size={18} /> },
     { name: 'Blog', path: '/blog', icon: <BookOpen size={18} /> },
-    { name: 'Life at Durable', path: '/life-at-durable', icon: <Heart size={18} /> },
+   
     { name: 'Careers', path: '/careers', icon: <Briefcase size={18} /> },
     { name: 'Contact Us', path:'/contact', icon: <Headset size={18} /> }
   ];
