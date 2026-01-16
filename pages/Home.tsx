@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { supabase } from '../lib/supabase';
 import { 
   ArrowRight, ShieldCheck, Layers, Globe, ArrowUpRight, Users, 
-  Hammer, ScanLine, Thermometer, FileCheck
+  Hammer, ScanLine, Thermometer, FileCheck, Container, Ship
 } from 'lucide-react';
 import { 
   motion, useScroll, useTransform, useSpring, AnimatePresence, 
@@ -44,41 +44,28 @@ const RevealText = ({ text, className }: { text: string, className?: string }) =
   </div>
 );
 
-// --- SCROLL WORD COMPONENT ---
-interface ScrollWordProps {
-  children: React.ReactNode;
-  progress: any;
-  range: [number, number];
-  className?: string;
-}
-
-const ScrollWord: React.FC<ScrollWordProps> = ({ 
-  children, 
-  progress, 
-  range, 
-  className 
-}) => {
-  const opacity = useTransform(progress, range, [0.1, 1]);
-  return (
-    <motion.span 
-      style={{ opacity }} 
-      className={`inline-block mr-[0.25em] ${className || ""}`}
-    >
-      {children}
-    </motion.span>
-  );
-};
-
 // --- ANIMATED ICONS ---
-const AnimatedCultureIcon = () => (
+// NEW: Global Logistics Icon replacing Culture Icon
+const AnimatedGlobalIcon = () => (
     <div className="relative w-24 h-24 mb-6">
-      <motion.div className="absolute inset-0 m-auto w-4 h-4 bg-white rounded-full z-10" animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} />
-      {[0, 1, 2].map((i) => (
-        <motion.div key={i} className="absolute inset-0 border border-white/30 rounded-full" initial={{ rotate: i * 60 }} animate={{ rotate: 360 + (i * 60) }} transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "linear" }}>
-          <div className="w-3 h-3 bg-yellow-500 rounded-full absolute -top-1.5 left-1/2 -translate-x-1/2 shadow-[0_0_10px_rgba(234,179,8,0.8)]" />
-        </motion.div>
-      ))}
-      <div className="absolute inset-0 flex items-center justify-center"><Users className="w-8 h-8 text-white/50" /></div>
+      <motion.div 
+        className="absolute inset-0 border border-white/20 rounded-full" 
+        animate={{ rotate: 360 }} 
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }} 
+      />
+      <motion.div 
+        className="absolute inset-2 border border-dashed border-yellow-500/50 rounded-full" 
+        animate={{ rotate: -360 }} 
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }} 
+      />
+       <div className="absolute inset-0 flex items-center justify-center">
+        <Globe className="w-10 h-10 text-white" />
+       </div>
+       <motion.div 
+         className="absolute top-0 right-0 bg-yellow-500 w-3 h-3 rounded-full shadow-[0_0_10px_#eab308]"
+         animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+         transition={{ duration: 2, repeat: Infinity }}
+       />
     </div>
 );
 
@@ -203,8 +190,8 @@ const AnimatedManifesto = () => {
   const child = {
     hidden: { 
       opacity: 0.1, 
-      y: 20,       
-      filter: "blur(5px)" 
+      y: 20,        
+      filter: "blur(5px)"
     },
     visible: {
       opacity: 1,
@@ -270,7 +257,7 @@ const Home: React.FC = () => {
   
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
 
-  // 1. Fetch Content
+  // 1. Fetch Content from Supabase
   useEffect(() => {
     const fetchContent = async () => {
       const { data } = await supabase.from('site_content').select('*').single();
@@ -278,7 +265,7 @@ const Home: React.FC = () => {
         if (data.hero_images && Array.isArray(data.hero_images) && data.hero_images.length > 0) {
           setHeroImages(data.hero_images);
         } else if (data.hero_bg) {
-           setHeroImages([data.hero_bg]); 
+           setHeroImages([data.hero_bg]);
         }
         
         setHeroText({
@@ -327,14 +314,7 @@ const Home: React.FC = () => {
         {isLoading && <IntroLoader onComplete={() => setIsLoading(false)} />}
       </AnimatePresence>
 
-      {/* FIX: Added negative margin (-mt-20 md:-mt-24) to pull the content UP 
-         and hide the white gap caused by the Navbar. 
-         Added relative and z-0 to ensure proper stacking context.
-      */}
-      <main 
-        ref={containerRef} 
-        className="bg-[#050505] text-white selection:bg-yellow-500 selection:text-black overflow-hidden relative z-0 -mt-20 md:-mt-24"
-      >
+      <main ref={containerRef} className="bg-[#050505] text-white selection:bg-yellow-500 selection:text-black overflow-hidden">
         
         {/* === HERO SECTION (Dynamic) === */}
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -355,8 +335,7 @@ const Home: React.FC = () => {
           </motion.div>
 
           <div className="container relative z-20 px-4 md:px-6 mt-0">
-            {/* Added extra padding top here to compensate for the page being pulled up, ensuring text isn't hidden behind nav */}
-            <div className="flex flex-col items-center text-center justify-center h-full pt-32 md:pt-0">
+            <div className="flex flex-col items-center text-center justify-center h-full pt-20 md:pt-0">
               {!isLoading && (
                 <>
                   <SectionReveal>
@@ -453,58 +432,60 @@ const Home: React.FC = () => {
 
         {/* PRODUCT SHOWCASE */}
         <section className="py-40">
-  <div className="container mx-auto px-6 mb-20 flex justify-between items-end">
-    <SectionReveal>
-      <h2 className="text-6xl md:text-8xl font-black tracking-tighter">THE CORE<br/>PORTFOLIO</h2>
-    </SectionReveal>
-    <Link to="/products" className="hidden md:flex items-center gap-4 text-yellow-500 font-bold group">
-      BROWSE ALL CATEGORIES <div className="w-12 h-12 rounded-full border border-yellow-500 flex items-center justify-center group-hover:bg-yellow-500 group-hover:text-black transition-all"><ArrowRight size={20}/></div>
-    </Link>
-  </div>
+          <div className="container mx-auto px-6 mb-20 flex justify-between items-end">
+            <SectionReveal>
+              <h2 className="text-6xl md:text-8xl font-black tracking-tighter">THE CORE<br/>PORTFOLIO</h2>
+            </SectionReveal>
+            <Link to="/products" className="hidden md:flex items-center gap-4 text-yellow-500 font-bold group">
+              BROWSE ALL CATEGORIES <div className="w-12 h-12 rounded-full border border-yellow-500 flex items-center justify-center group-hover:bg-yellow-500 group-hover:text-black transition-all"><ArrowRight size={20}/></div>
+            </Link>
+          </div>
 
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4">
-    {[
-      { title: "Industrial", img: categoryImages.industrial, delay: 0, link: "/products?category=industrial" },
-      { title: "Automotive", img: categoryImages.automotive, delay: 0.1, link: "/products?category=automotive" },
-      { title: "Fittings", img: categoryImages.fittings, delay: 0.2, link: "/products?category=fittings" },
-      { title: "OEM/Custom", img: categoryImages.oem, delay: 0.3, link: "/products?category=oem" }
-    ].map((cat, i) => (
-      <SectionReveal key={i} delay={cat.delay}>
-        <Link to={cat.link} className="block h-full">
-            <motion.div 
-                whileHover={{ scale: 0.98 }} 
-                className="relative h-[600px] rounded-[2rem] overflow-hidden group cursor-pointer"
-            >
-                <img 
-                    src={cat.img} 
-                    loading="lazy" 
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0 will-change-transform" 
-                    alt={cat.title} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                
-                <div className="absolute bottom-10 left-10 z-20">
-                    <h3 className="text-4xl font-black mb-2">{cat.title}</h3>
-                    <p className="text-white/60 uppercase tracking-widest text-xs">Explore Division</p>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4">
+            {[
+              { title: "Industrial", img: categoryImages.industrial, delay: 0, link: "/products?category=industrial" },
+              { title: "Automotive", img: categoryImages.automotive, delay: 0.1, link: "/products?category=automotive" },
+              { title: "Fittings", img: categoryImages.fittings, delay: 0.2, link: "/products?category=fittings" },
+              { title: "OEM/Custom", img: categoryImages.oem, delay: 0.3, link: "/products?category=oem" }
+            ].map((cat, i) => (
+              <SectionReveal key={i} delay={cat.delay}>
+                <Link to={cat.link} className="block h-full">
+                    <motion.div 
+                        whileHover={{ scale: 0.98 }} 
+                        className="relative h-[600px] rounded-[2rem] overflow-hidden group cursor-pointer"
+                    >
+                        <img 
+                            src={cat.img} 
+                            loading="lazy" 
+                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0 will-change-transform" 
+                            alt={cat.title} 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                        
+                        <div className="absolute bottom-10 left-10 z-20">
+                            <h3 className="text-4xl font-black mb-2">{cat.title}</h3>
+                            <p className="text-white/60 uppercase tracking-widest text-xs">Explore Division</p>
+                        </div>
 
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30">
-                    <div className="w-24 h-24 bg-yellow-500 text-black rounded-full flex items-center justify-center font-black text-xs rotate-12 shadow-2xl scale-0 group-hover:scale-100 transition-transform duration-500">
-                        VIEW
-                    </div>
-                </div>
-            </motion.div>
-        </Link>
-      </SectionReveal>
-    ))}
-  </div>
-</section>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30">
+                            <div className="w-24 h-24 bg-yellow-500 text-black rounded-full flex items-center justify-center font-black text-xs rotate-12 shadow-2xl scale-0 group-hover:scale-100 transition-transform duration-500">
+                                VIEW
+                            </div>
+                        </div>
+                    </motion.div>
+                </Link>
+              </SectionReveal>
+            ))}
+          </div>
+        </section>
 
         {/* MANUFACTURING PROCESS: "THE JOURNEY" */}
         <section className="py-24 md:py-32 relative bg-[#050505] overflow-hidden border-y border-neutral-900">
+          
           <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-yellow-500/5 blur-[150px] rounded-full pointer-events-none" />
 
           <div className="container mx-auto px-6 relative z-10">
+              
               <SectionReveal>
                 <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
                    <div className="max-w-2xl">
@@ -538,6 +519,7 @@ const Home: React.FC = () => {
                          className="group relative p-8 h-full bg-neutral-900/50 border border-neutral-800 hover:border-yellow-500/50 rounded-3xl transition-all duration-300"
                        >
                           <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
+                          
                           <div className="relative z-10 flex flex-col h-full justify-between">
                              <div>
                                 <div className="flex justify-between items-start mb-6">
@@ -548,6 +530,7 @@ const Home: React.FC = () => {
                                       {item.step}
                                    </span>
                                 </div>
+                                
                                 <h3 className="text-xl font-bold text-white mb-3 group-hover:text-yellow-400 transition-colors">
                                    {item.title}
                                 </h3>
@@ -555,6 +538,7 @@ const Home: React.FC = () => {
                                    {item.desc}
                                 </p>
                              </div>
+
                              <div className="w-full h-px bg-neutral-800 mt-8 group-hover:bg-yellow-500/50 transition-colors relative">
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-neutral-800 rounded-full group-hover:bg-yellow-500 transition-colors" />
                              </div>
@@ -581,32 +565,37 @@ const Home: React.FC = () => {
                     </Link>
                  </div>
               </SectionReveal>
+
           </div>
         </section>
 
-        {/* CULTURE & CAREERS */}
+        {/* GLOBAL REACH & CAREERS (REPLACED CULTURE WITH GLOBAL LOGISTICS) */}
         <section className="py-20 bg-[#050505]">
           <SectionReveal>
             <div className="flex flex-col md:flex-row h-[70vh] border-y border-white/10">
-                {/* CULTURE */}
-                <Link to="/life-at-durable" className="flex-1 relative group overflow-hidden border-r border-white/10 bg-[#0a0a0a]">
+                {/* REPLACEMENT: GLOBAL REACH / LOGISTICS */}
+                <Link to="/contact" className="flex-1 relative group overflow-hidden border-r border-white/10 bg-[#0a0a0a]">
                     <div className="absolute inset-0 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover opacity-50 grayscale contrast-125 transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110" alt="Team Culture" />
+                        <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover opacity-40 grayscale contrast-125 transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110" alt="Global Shipping" />
                     </div>
-                    <motion.div className="absolute inset-0 w-full h-full bg-gradient-to-b from-transparent via-yellow-500/10 to-transparent z-10 opacity-20 pointer-events-none" animate={{ top: ['-100%', '100%'] }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }} />
-                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10" />
+                    {/* Industrial Grid Overlay */}
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent z-10" />
+                    
                     <div className="relative z-20 h-full flex flex-col items-center justify-center p-10 text-center">
-                        <div className="scale-100 transition-transform duration-500 group-hover:-translate-y-4"><AnimatedCultureIcon /></div>
-                        <h3 className="text-5xl font-black mt-4 text-white tracking-tighter group-hover:text-yellow-400 transition-colors drop-shadow-2xl">CULTURE</h3>
-                        <p className="mt-2 text-white/60 uppercase tracking-[0.3em] text-[10px] group-hover:text-white transition-colors font-mono">Life at Durable</p>
+                        <div className="scale-100 transition-transform duration-500 group-hover:-translate-y-4">
+                           <AnimatedGlobalIcon />
+                        </div>
+                        <h3 className="text-5xl font-black mt-4 text-white tracking-tighter group-hover:text-yellow-400 transition-colors drop-shadow-2xl">GLOBAL REACH</h3>
+                        <p className="mt-2 text-white/60 uppercase tracking-[0.3em] text-[10px] group-hover:text-white transition-colors font-mono">Logistics & Export</p>
+                        
                         <div className="absolute bottom-20 opacity-0 translate-y-10 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out">
-                            <span className="px-6 py-2 bg-yellow-500 text-black font-bold text-xs uppercase tracking-widest rounded-full">View Gallery</span>
+                            <span className="px-6 py-2 bg-yellow-500 text-black font-bold text-xs uppercase tracking-widest rounded-full">Shipping Data</span>
                         </div>
                     </div>
                 </Link>
 
-                {/* CAREERS */}
+                {/* CAREERS (KEPT AS IS FOR BALANCE) */}
                 <Link to="/careers" className="flex-1 relative group overflow-hidden bg-[#0a0a0a]">
                     <div className="absolute inset-0 overflow-hidden">
                         <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover opacity-50 grayscale contrast-125 transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110" alt="Engineering Career" />
