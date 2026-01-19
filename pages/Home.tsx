@@ -574,7 +574,7 @@ const Home: React.FC = () => {
           <SectionReveal>
             <div className="flex flex-col md:flex-row h-[70vh] border-y border-white/10">
                 {/* REPLACEMENT: GLOBAL REACH / LOGISTICS */}
-                <Link to="/contact" className="flex-1 relative group overflow-hidden border-r border-white/10 bg-[#0a0a0a]">
+                <Link to="/Manufacturing" className="flex-1 relative group overflow-hidden border-r border-white/10 bg-[#0a0a0a]">
                     <div className="absolute inset-0 overflow-hidden">
                         <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover opacity-40 grayscale contrast-125 transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110" alt="Global Shipping" />
                     </div>
