@@ -53,12 +53,18 @@ const Manufacturing: React.FC = () => {
     <div className="bg-[#0f172a] min-h-screen pt-20 font-sans text-slate-200 overflow-x-hidden selection:bg-blue-500 selection:text-white">
       <Helmet>
         {/* 1. Industrial & Factory Specific Title */}
-        <title>fastener manufacturing factory|Durable Fastener</title>
+        <title>Fastener Manufacturing Factory in R
+         ajkot | Durable Fastener</title>
         
         <meta 
           name="description" 
           content="Inside Durable Fastener's Rajkot factory: Explore our Cold Forging, Thread Rolling, and Heat Treatment lines. 400T+ monthly capacity with ISO 9001:2015 QC lab." 
         />
+        <meta name="geo.region" content="IN-GJ" />
+<meta name="geo.placename" content="Rajkot, Gujarat, India" />
+<meta name="ICBM" content="22.2587,70.7993" />
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
         
         <meta 
           name="keywords" 
@@ -69,44 +75,79 @@ const Manufacturing: React.FC = () => {
         <script type="application/ld+json">
           {`
             {
-              "@context": "https://schema.org",
-              "@type": "HowTo",
-              "name": "How Industrial Fasteners are Manufactured",
-              "description": "Step-by-step industrial process of manufacturing high-tensile screws and bolts at Durable Fastener Pvt Ltd.",
-              "totalTime": "P2D",
-              "supply": [
-                { "@type": "HowToSupply", "name": "Steel Wire Rod (10B21, SAE 1010)" }
-              ],
-              "tool": [
-                { "@type": "HowToTool", "name": "Cold Heading Machine" },
-                { "@type": "HowToTool", "name": "Thread Rolling Machine" },
-                { "@type": "HowToTool", "name": "Mesh Belt Furnace" }
-              ],
-              "step": [
-                {
-                  "@type": "HowToStep",
-                  "name": "Cold Heading",
-                  "text": "The raw wire is cut and formed into the screw shape using 5-station bolt formers."
-                },
-                {
-                  "@type": "HowToStep",
-                  "name": "Thread Rolling",
-                  "text": "Threads are formed onto the screw blank using high-pressure dies."
-                },
-                {
-                  "@type": "HowToStep",
-                  "name": "Heat Treatment",
-                  "text": "Screws are hardened in a continuous mesh belt furnace to achieve Grade 8.8 or 10.9."
-                },
-                {
-                  "@type": "HowToStep",
-                  "name": "Surface Finishing",
-                  "text": "Zinc or Phosphate coating is applied for corrosion resistance."
-                }
-              ]
-            }
+         "@context": "https://schema.org",
+         "@type": "FAQPage",
+          "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the production capacity of Durable Fastener Factory?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Our Rajkot facility produces over 400T+ fasteners monthly with full QC lab support."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Durable Fastener supply across India?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, we supply industrial fasteners throughout India with OEM partnerships."
+      }
+    }
+  ]
+}
           `}
         </script>
+        <script type="application/ld+json">
+{`
+{
+  "@context": "https://schema.org",
+  "@type": "ManufacturingBusiness",
+  "name": "Durable Fastener Pvt Ltd",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Rajkot",
+    "addressRegion": "Gujarat",
+    "addressCountry": "IN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 22.2587,
+    "longitude": 70.7993
+  },
+  "url": "https://durablefastener.com",
+  "logo": "https://durablefastener.com/logo.png",
+  "sameAs": [
+    "https://www.linkedin.com/company/durable-fastener",
+    "https://www.facebook.com/durablefastener"
+  ]
+},
+"@type": "LocalBusiness",
+"name": "Durable Fastener Pvt Ltd",
+"image": "https://durablefastener.com/logo.png",
+"address": {
+  "@type": "PostalAddress",
+  "streetAddress": "Your Street Address",
+  "addressLocality": "Rajkot",
+  "addressRegion": "Gujarat",
+  "postalCode": "360001",
+  "addressCountry": "IN"
+},
+"geo": {
+  "@type": "GeoCoordinates",
+  "latitude": 22.2587,
+  "longitude": 70.7993
+},
+"url": "https://durablefastener.com",
+"telephone": "+91-1234567890",
+"openingHours": "Mo-Fr 08:00-18:00",
+"sameAs": [
+   "https://www.linkedin.com/company/durable-fastener",
+   "https://www.facebook.com/durablefastener"
+]
+
+`}
+</script>
 
         {/* 3. ITEM LIST SCHEMA (Machinery List ke liye) */}
         <script type="application/ld+json">
@@ -306,7 +347,7 @@ const Manufacturing: React.FC = () => {
                       </ul>
                    </div>
                    <div className="relative h-80 md:h-auto min-h-[400px]">
-                       <img src="https://images.unsplash.com/photo-1535063404286-f3655131a48c?q=80&w=2069&auto=format&fit=crop" alt="Steel Wire Coils" className="absolute inset-0 w-full h-full object-cover opacity-80 grayscale group-hover:grayscale-0 transition-all duration-700"/>
+                       <img src="https://images.unsplash.com/photo-1535063404286-f3655131a48c?q=80&w=2069&auto=format&fit=crop" alt="Cold Heading Machine at Durable Fastener Factory Rajkot" className="absolute inset-0 w-full h-full object-cover opacity-80 grayscale group-hover:grayscale-0 transition-all duration-700"/>
                        <div className="absolute inset-0 bg-blue-900/20 mix-blend-multiply"></div>
                    </div>
                 </div>

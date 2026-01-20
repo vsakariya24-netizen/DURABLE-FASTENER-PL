@@ -308,7 +308,109 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <Helmet><title>Durable Fasteners | Extreme Engineering</title></Helmet>
+      <Helmet>
+  {/* Primary SEO */}
+  <title>Screw Manufacturer in Rajkot | Self Drilling & Drywall Screws India – Durable Fastener</title>
+  <meta
+    name="description"
+    content="Durable Fastener Pvt Ltd is a leading screw manufacturer in Rajkot, Gujarat. We manufacture Self Drilling Screws, Drywall Screws, SS Screws & Industrial Fasteners supplying all over India."
+  />
+
+  {/* GEO SEO */}
+  <meta name="geo.region" content="IN-GJ" />
+  <meta name="geo.placename" content="Rajkot, Gujarat, India" />
+  <meta name="geo.position" content="22.2587;70.7993" />
+  <meta name="ICBM" content="22.2587, 70.7993" />
+
+  {/* AEO / AI Search */}
+  <meta name="author" content="Durable Fastener Private Limited" />
+  <meta name="publisher" content="Durable Fastener Pvt Ltd" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
+  {/* Open Graph */}
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Top Screw Manufacturer in Rajkot | Durable Fastener" />
+  <meta
+    property="og:description"
+    content="ISO 9001:2015 certified screw manufacturer producing Self Drilling, Drywall & Stainless Steel Screws in Rajkot, India."
+  />
+  <meta property="og:url" content="https://durablefastener.com/" />
+  <meta property="og:image" content="https://durablefastener.com/durablefastener.png" />
+
+  {/* Twitter */}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Durable Fastener – Industrial Screw Manufacturer India" />
+  <meta
+    name="twitter:description"
+    content="Premium Industrial Screws & Fasteners Manufacturer from Rajkot, Gujarat."
+  />
+
+  {/* Manufacturing Business Schema */}
+  <script type="application/ld+json">
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ManufacturingBusiness",
+      "name": "Durable Fastener Private Limited",
+      "alternateName": ["Durable Fastener", "Classone Screws"],
+      "url": "https://durablefastener.com",
+      "logo": "https://durablefastener.com/durablefastener.png",
+      "description":
+        "Manufacturer of Self Drilling Screws, Drywall Screws, SS Screws and Industrial Fasteners based in Rajkot, Gujarat, India.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Rajkot",
+        "addressRegion": "Gujarat",
+        "addressCountry": "IN"
+      },
+      "areaServed": "India",
+      "foundingLocation": "Rajkot",
+      "makesOffer": [
+        { "@type": "Product", "name": "Self Drilling Screws" },
+        { "@type": "Product", "name": "Drywall Screws" },
+        { "@type": "Product", "name": "Stainless Steel Screws" },
+        { "@type": "Product", "name": "Industrial Fasteners" }
+      ]
+    })}
+  </script>
+
+  {/* FAQ Schema – AEO BOOST */}
+  <script type="application/ld+json">
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Who is the best screw manufacturer in Rajkot?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text":
+              "Durable Fastener Pvt Ltd is a leading screw manufacturer in Rajkot, Gujarat, producing high-quality Self Drilling, Drywall and Stainless Steel screws."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Durable Fastener supply screws across India?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text":
+              "Yes, Durable Fastener supplies industrial screws and fasteners across India through a strong dealer and logistics network."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What types of screws does Durable Fastener manufacture?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text":
+              "Durable Fastener manufactures Self Drilling Screws, Drywall Screws, SS Screws, Self Tapping Screws and OEM fasteners."
+          }
+        }
+      ]
+    })}
+  </script>
+</Helmet>
+
 
       <AnimatePresence mode="wait">
         {isLoading && <IntroLoader onComplete={() => setIsLoading(false)} />}

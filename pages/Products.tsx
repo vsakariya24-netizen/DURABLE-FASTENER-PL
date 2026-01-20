@@ -197,10 +197,73 @@ const Products: React.FC = () => {
       ? 'Top Screw Manufacturer in Rajkot | Industrial Fasteners India' 
       : `${activeFilter.name} Manufacturers in India | Durable Fastener`}
   </title>
+  <meta name="geo.region" content="IN-GJ" />
+<meta name="geo.placename" content="Rajkot, Gujarat, India" />
+
   <meta 
-    name="description" 
-    content={`Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality Self Drilling Screws, Drywall Screws, and Stainless Steel Fasteners for industrial use.`} 
-  />
+ name="description"
+ content={
+   activeFilter.name === 'All Products'
+   ? 'Durable Fastener Pvt Ltd is a leading screw and industrial fastener manufacturer in Rajkot, Gujarat supplying all over India.'
+   : `Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality industrial fasteners.`
+ }
+/>
+
+  <script type="application/ld+json">
+{JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": activeFilter.name,
+  "description": `Browse ${activeFilter.name} manufactured by Durable Fastener Pvt Ltd in Rajkot, India.`,
+  "url": `https://durablefastener.com/products${urlCategory ? `/${urlCategory}` : ''}${urlSubCategory ? `/${urlSubCategory}` : ''}`
+,
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Durable Fastener",
+    "url": "https://durablefastener.com",
+
+    "publisher": {
+ "@type": "Organization",
+ "name": "Durable Fastener Pvt Ltd",
+ "address": {
+   "@type": "PostalAddress",
+  "addressLocality": "Rajkot",
+   "addressRegion": "Gujarat",
+   "addressCountry": "IN"
+ }
+}
+
+  }
+})}
+</script>
+<script type="application/ld+json">
+{JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Products",
+      "item": "https://durablefastener.com/products"
+    },
+    urlCategory && {
+      "@type": "ListItem",
+      "position": 2,
+      "name": activeFilter.name,
+      "item": `https://durablefastener.com/products/${urlCategory}`
+    }
+  ].filter(Boolean)
+})}
+</script>
+
+
+
+  <link
+  rel="canonical"
+  href={`https://durablefastener.com/products${urlCategory ? `/${urlCategory}` : ''}${urlSubCategory ? `/${urlSubCategory}` : ''}`}
+/>
+
 </Helmet>
 
       {/* HERO */}

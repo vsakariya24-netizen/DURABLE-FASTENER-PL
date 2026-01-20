@@ -328,9 +328,83 @@ const OEMPlatform: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#030305] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden">
       <Helmet>
-        <title>OEM Fastener Manufacturer | Custom Automotive Bolts India - Durable Fastener</title>
-        <meta name="description" content="India's leading OEM platform for custom industrial fasteners." />
-      </Helmet>
+  {/* Primary SEO */}
+  <title>OEM Fastener Manufacturer in India | Automotive & Industrial Screws – Durable Fastener</title>
+  <meta
+    name="description"
+    content="Durable Fastener is an ISO 9001:2015 certified OEM fastener manufacturer in Rajkot, India. We specialize in custom automotive, industrial, and precision fasteners with global export standards."
+  />
+
+  {/* GEO SEO */}
+  <meta name="geo.region" content="IN-GJ" />
+  <meta name="geo.placename" content="Rajkot, Gujarat, India" />
+  <meta name="geo.position" content="22.3039;70.8022" />
+  <meta name="ICBM" content="22.3039, 70.8022" />
+
+  {/* AEO / AI Search */}
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+
+  {/* Open Graph */}
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="OEM Fastener Manufacturer in India – Durable Fastener" />
+  <meta
+    property="og:description"
+    content="Custom OEM fasteners engineered for automotive, construction, and industrial supply chains. Manufactured in India, supplied globally."
+  />
+  <meta property="og:url" content="https://durablefastener.com/oem" />
+  <meta property="og:site_name" content="Durable Fastener" />
+
+  {/* Twitter */}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OEM Fastener Manufacturer | Durable Fastener" />
+  <meta name="twitter:description" content="Precision engineered OEM fasteners from India for global industries." />
+
+   <script type="application/ld+json">
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Manufacturer",
+      "@id": "https://durablefastener.com/#manufacturer",
+      "name": "Durable Fastener",
+      "url": "https://durablefastener.com",
+      "logo": "https://durablefastener.com/logo.png",
+      "description":
+        "Durable Fastener is an ISO certified OEM manufacturer of automotive and industrial fasteners based in Rajkot, India.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Rajkot",
+        "addressRegion": "Gujarat",
+        "addressCountry": "IN"
+      },
+      "areaServed": [
+        { "@type": "Country", "name": "India" },
+        { "@type": "Continent", "name": "Europe" },
+        { "@type": "Continent", "name": "Africa" },
+        { "@type": "Place", "name": "Middle East" }
+      ],
+      "knowsAbout": [
+        "OEM Fasteners",
+        "Automotive Screws",
+        "Industrial Bolts",
+        "Precision Fasteners",
+        "Surface Coating",
+        "Heat Treatment"
+      ]
+    })}
+  </script>
+  <script type="application/ld+json">
+{JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "@id": "https://durablefastener.com/oem#webpage",
+  "url": "https://durablefastener.com/oem",
+  "name": "OEM Fastener Manufacturer in India",
+  "about": {
+    "@id": "https://durablefastener.com/#manufacturer"
+  }
+})}
+</script>
+</Helmet>
 
       {/* 1. HERO */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">

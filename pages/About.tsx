@@ -79,16 +79,25 @@ const About: React.FC = () => {
             {
               "@context": "https://schema.org",
               "@type": "AboutPage",
+              "@id": "https://durablefastener.com/about#aboutpage",
+              "url": "https://durablefastener.com/about",
+
+              
               "mainEntity": {
                 "@type": "Organization",
+                "@id": "https://durablefastener.com/#organization",
                 "name": "Durable Fastener Pvt Ltd",
                 "alternateName": "Durable Enterprise",
+
+
+
+
                 "foundingDate": "2018",
                 "description": "Leading manufacturer of high-tensile industrial fasteners and architectural hardware.",
                 "logo": "https://durablefastener.com/durablefastener.png",
                 "founder": {
                   "@type": "Person",
-                  "name": "Khushi Chovatiya"
+                 
                 },
                 "location": {
                   "@type": "Place",
