@@ -143,7 +143,7 @@ const FilterSection: React.FC<{ title: string; options: { label: string; count: 
 // 3. Internship Card (Same as before)
 const InternshipCard: React.FC = () => {
     const handleInternshipApply = () => {
-      const phoneNumber = "919876543210"; 
+      const phoneNumber = "918758700783"; 
       const message = "Hello, I am interested in the *Internship / Training Program* at Durable Fastener.";
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const url = isMobile 
@@ -627,3 +627,4 @@ const isFiltered = selectedDepts.length > 0;
 
 
 export default Careers;
+
