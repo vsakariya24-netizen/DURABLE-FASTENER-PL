@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { 
   motion, useScroll, useTransform, useSpring, AnimatePresence, 
-  useMotionValue, useMotionTemplate, useInView 
+  useMotionValue, useMotionTemplate, useInView,Variants 
 } from 'framer-motion';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -440,11 +440,7 @@ const Home: React.FC = () => {
             <div className="flex flex-col items-center text-center justify-center h-full pt-20 md:pt-0">
               {!isLoading && (
                 <>
-                  <SectionReveal>
-                    <div className="px-3 py-1.5 md:px-4 md:py-1 border border-yellow-500/30 rounded-full bg-yellow-500/10 backdrop-blur-md mb-6 md:mb-8 inline-block">
-                        <span className="text-yellow-400 text-[10px] md:text-xs font-black tracking-[0.2em] md:tracking-[0.3em] uppercase">ISO 9001:2015 Global Standard</span>
-                    </div>
-                  </SectionReveal>
+                 
 
                   <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[6vw] font-black leading-[0.9] tracking-tighter mb-8 md:mb-12 max-w-7xl mx-auto flex flex-col items-center">
                     <RevealText text={heroText.line1} />

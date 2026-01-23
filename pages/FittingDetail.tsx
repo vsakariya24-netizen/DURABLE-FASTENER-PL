@@ -188,7 +188,7 @@ const FittingDetail = ({ product }: { product: any }) => {
             <div className="flex-1 w-full max-w-5xl flex flex-col gap-8">
                 
                 {/* A. IMAGE VIEWER */}
-                <div className="relative w-full bg-white rounded-3xl shadow-sm border border-neutral-200 aspect-[4/3] md:aspect-[16/9] flex items-center justify-center p-8 md:p-12 overflow-hidden group">
+                
                       {/* Cert Badge */}
                       <div className="absolute top-6 left-6 z-20 flex flex-col gap-2">
                           {certifications[0] && (
@@ -219,8 +219,7 @@ const FittingDetail = ({ product }: { product: any }) => {
                             alt={product?.name} 
                         />
                     </motion.div>
-                </div>
-
+                
                 {/* B. CONFIGURATOR (Finish & Actions) - Directly Below Image */}
                 <div className="flex flex-col gap-8 px-1 md:px-0">
                     
@@ -335,14 +334,21 @@ const FittingDetail = ({ product }: { product: any }) => {
 
             <div className="space-y-6">
                 {/* Material Item */}
-                <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Base Material</span>
-                    <div className="flex flex-wrap gap-2">
-                        {materials.map((m, i) => (
-                            <span key={i} className="text-lg font-bold text-white border-b-2 border-yellow-500/30">{m}</span>
-                        ))}
-                    </div>
-                </div>
+              <div className="flex flex-col gap-1">
+    <span className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Base Material</span>
+    
+    {/* Classes changed from 'flex flex-wrap gap-2' to 'flex flex-col gap-2' */}
+    <div className="flex flex-col gap-2 mt-1">
+        {materials.map((m, i) => (
+            <span 
+                key={i} 
+                className="text-lg font-bold text-white border-b-2 border-yellow-500/30 w-fit"
+            >
+                {m}
+            </span>
+        ))}
+    </div>
+</div>
 
                 {/* Packing Item */}
                 <div className="flex flex-col gap-1">

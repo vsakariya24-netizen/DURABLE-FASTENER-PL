@@ -197,73 +197,10 @@ const Products: React.FC = () => {
       ? 'Top Screw Manufacturer in Rajkot | Industrial Fasteners India' 
       : `${activeFilter.name} Manufacturers in India | Durable Fastener`}
   </title>
-  <meta name="geo.region" content="IN-GJ" />
-<meta name="geo.placename" content="Rajkot, Gujarat, India" />
-
   <meta 
- name="description"
- content={
-   activeFilter.name === 'All Products'
-   ? 'Durable Fastener Pvt Ltd is a leading screw and industrial fastener manufacturer in Rajkot, Gujarat supplying all over India.'
-   : `Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality industrial fasteners.`
- }
-/>
-
-  <script type="application/ld+json">
-{JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  "name": activeFilter.name,
-  "description": `Browse ${activeFilter.name} manufactured by Durable Fastener Pvt Ltd in Rajkot, India.`,
-  "url": `https://durablefastener.com/products${urlCategory ? `/${urlCategory}` : ''}${urlSubCategory ? `/${urlSubCategory}` : ''}`
-,
-  "isPartOf": {
-    "@type": "WebSite",
-    "name": "Durable Fastener",
-    "url": "https://durablefastener.com",
-
-    "publisher": {
- "@type": "Organization",
- "name": "Durable Fastener Pvt Ltd",
- "address": {
-   "@type": "PostalAddress",
-  "addressLocality": "Rajkot",
-   "addressRegion": "Gujarat",
-   "addressCountry": "IN"
- }
-}
-
-  }
-})}
-</script>
-<script type="application/ld+json">
-{JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {
-      "@type": "ListItem",
-      "position": 1,
-      "name": "Products",
-      "item": "https://durablefastener.com/products"
-    },
-    urlCategory && {
-      "@type": "ListItem",
-      "position": 2,
-      "name": activeFilter.name,
-      "item": `https://durablefastener.com/products/${urlCategory}`
-    }
-  ].filter(Boolean)
-})}
-</script>
-
-
-
-  <link
-  rel="canonical"
-  href={`https://durablefastener.com/products${urlCategory ? `/${urlCategory}` : ''}${urlSubCategory ? `/${urlSubCategory}` : ''}`}
-/>
-
+    name="description" 
+    content={`Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality Self Drilling Screws, Drywall Screws, and Stainless Steel Fasteners for industrial use.`} 
+  />
 </Helmet>
 
       {/* HERO */}
@@ -289,6 +226,7 @@ const Products: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-12">
           
           {/* SIDEBAR */}
+          
           <aside className="lg:w-[300px] shrink-0">
             <div className="sticky top-32 space-y-6">
               {/* Search */}
@@ -375,77 +313,80 @@ const Products: React.FC = () => {
           </aside>
 
           {/* MAIN GRID */}
-          <main className="flex-1">
-            <div className="flex items-center justify-between mb-8">
-              <p className="text-zinc-500 font-medium text-sm">
-                Showing <strong className="text-black">{products.length}</strong> results
-              </p>
-            </div>
+          {/* MAIN GRID */}
+<main className="flex-1">
+  <div className="flex items-center justify-between mb-6">
+    <p className="text-zinc-500 font-medium text-xs">
+      Showing <strong className="text-black">{products.length}</strong> results
+    </p>
+  </div>
 
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="h-[350px] bg-zinc-100 animate-pulse rounded-3xl" />
-                ))}
+  {loading ? (
+    /* Loading Skeleton - Adjusted for smaller cards */
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
+        <div key={i} className="h-[250px] bg-white/50 animate-pulse rounded-2xl" />
+      ))}
+    </div>
+  ) : products.length === 0 ? (
+    <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200">
+      <h3 className="text-xl font-bold text-zinc-400">No products found</h3>
+      <button onClick={resetFilter} className="mt-4 text-sm text-blue-600 font-bold underline">Clear Filters</button>
+    </div>
+  ) : (
+    <motion.div 
+      variants={containerVars}
+      initial="hidden"
+      animate="show"
+      /* INCREASED COLUMNS: 2 on mobile, 3 on tablet, 4 on desktop, 5 on wide screens */
+      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
+    >
+      <AnimatePresence mode='wait'>
+        {products.map((product) => (
+          <motion.div 
+            layout
+            variants={itemVars}
+            key={product.id}
+            className="group bg-white rounded-xl border border-zinc-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
+          >
+            <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
+              {/* SMALLER IMAGE CONTAINER: Changed aspect and reduced padding */}
+     <div className="relative aspect-square bg-[#f8f8f8] flex items-center justify-center p-4 md:p-0 overflow-hidden">
+  {/* Yahan p-4 ko p-6 ya p-8 kar diya hai */}
+  {product.images && product.images[0] ? (
+    <img 
+      src={product.images[0]} 
+      alt={product.name}
+      loading="lazy"
+      className="max-w-full max-h-full w-auto h-auto object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+    />
+  ) : (
+    <div className="text-zinc-300 text-[10px] font-bold uppercase">No Image</div>
+  )}
+</div>
+              {/* COMPACT CONTENT: Reduced padding and font sizes */}
+              <div className="p-3 flex flex-col flex-grow bg-white">
+                <span className="inline-block text-[9px] font-bold text-yellow-600 uppercase tracking-wider mb-1">
+                  {product.category}
+                </span>
+                <h3 className="text-xs md:text-sm font-bold text-zinc-900 leading-snug group-hover:text-yellow-600 transition-colors line-clamp-2 mb-2">
+                  {product.name}
+                </h3>
+                
+                <div className="mt-auto flex items-center justify-between border-t border-zinc-50 pt-2">
+                  <span className="text-[10px] font-semibold text-green-600 flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> In Stock
+                  </span>
+                  <ArrowRight size={12} className="text-zinc-300 group-hover:text-yellow-600 group-hover:translate-x-1 transition-all" />
+                </div>
               </div>
-            ) : products.length === 0 ? (
-               <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200">
-                  <h3 className="text-xl font-bold text-zinc-400">No products found for {activeFilter.name}</h3>
-                  <button onClick={resetFilter} className="mt-4 text-sm text-blue-600 font-bold underline">Clear Filters</button>
-               </div>
-            ) : (
-              <motion.div 
-                variants={containerVars}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-              >
-                <AnimatePresence mode='wait'>
-                  {products.map((product) => (
-                    <motion.div 
-                      layout
-                      variants={itemVars}
-                      key={product.id}
-                      className="group bg-white rounded-[1.5rem] border border-zinc-200 overflow-hidden hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-300 flex flex-col"
-                    >
-                       <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
-                          <div className="relative aspect-[1.1/1] bg-[#f2f2f2] flex items-center justify-center p-6">
-                            {product.images && product.images[0] ? (
-                              <img 
-                                src={product.images[0]} 
-                                alt={product.name}
-                                loading="lazy"
-                                className="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-500 ease-out"
-                              />
-                            ) : (
-                              <div className="text-zinc-300 font-bold">No Image</div>
-                            )}
-                          </div>
-
-                          <div className="p-5 flex flex-col flex-grow bg-white relative z-10">
-                            <span className="inline-block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">
-                              {product.category}
-                            </span>
-                            <h3 className="text-lg font-bold text-zinc-900 leading-tight group-hover:text-yellow-600 transition-colors line-clamp-2 mb-4">
-                              {product.name}
-                            </h3>
-                            
-                            <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
-                              <span className="text-xs font-medium text-green-600 flex items-center gap-1.5">
-                                <ShoppingBag size={12} fill="currentColor" /> In Stock
-                              </span>
-                              <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                <ArrowRight size={14} />
-                              </div>
-                            </div>
-                          </div>
-                       </Link>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </main>
+            </Link>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </motion.div>
+  )}
+</main>
         </div>
       </div>
     </div>

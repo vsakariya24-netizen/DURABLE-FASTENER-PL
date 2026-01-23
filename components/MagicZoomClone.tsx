@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ZoomIn } from 'lucide-react';
 
+// Inside ../components/MagicZoomClone.tsx
+
 interface MagicZoomProps {
   src: string;
-  zoomSrc?: string;
-  alt?: string;
-  zoomLevel?: number;
-  glassSize?: number;
+  zoomSrc: string;
+  alt: string;
+  zoomLevel: number;
+  glassSize: number;
+  className?: string; // Add this line
 }
-
 const MagicZoomClone: React.FC<MagicZoomProps> = ({ 
   src, 
   zoomSrc, 

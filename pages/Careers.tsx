@@ -625,6 +625,4 @@ const isFiltered = selectedDepts.length > 0;
   );
 };
 
-
 export default Careers;
-

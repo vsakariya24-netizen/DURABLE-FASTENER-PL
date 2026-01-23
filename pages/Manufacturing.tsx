@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { 
   Factory, Anvil, Flame, Layers, Microscope, Truck, 
   ShieldCheck, CheckCircle2, Package, Settings, 
-  Activity, ArrowRight, FileCheck, Scale, Play, Video
+  Activity, ArrowRight, FileCheck, Scale, Play, Video,
+  Globe
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 // --- REUSABLE ANIMATION COMPONENT ---
@@ -179,49 +180,56 @@ const Manufacturing: React.FC = () => {
       </Helmet>
       {/* ================= 1. HERO SECTION ================= */}
       <div className="relative py-32 md:py-48 border-b border-white/10 overflow-hidden group">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1565193566173-7a641a980755?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-[20s] group-hover:scale-110"></div>
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1565193566173-7a641a980755?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-[20s] group-hover:scale-105 opacity-40"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#0f172a]/95 to-transparent"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6">
-           <div className="max-w-4xl">
+            <div className="max-w-4xl">
               <RevealOnScroll>
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm font-bold mb-8 uppercase tracking-widest shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                   <Factory size={16} /> Rajkot Facility: 100% In-House Control
+                    <Globe size={16} /> Global Supply Chain & Quality Hub
                 </div>
               </RevealOnScroll>
               
               <RevealOnScroll delay={100}>
-                {/* Heading Font Improved: Extrabold & Tighter Tracking */}
                 <h1 className="text-6xl md:text-8xl font-extrabold text-white mb-8 leading-[1.1] tracking-tight drop-shadow-lg">
-                   IN-HOUSE <br/>
-                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-white">
-                     MANUFACTURING
-                   </span>
+                    PRODUCTION <br/>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-white">
+                      EXCELLENCE
+                    </span>
                 </h1>
               </RevealOnScroll>
 
               <RevealOnScroll delay={200}>
-                {/* Paragraph Font Improved: Larger text, Relaxed Line Height */}
                 <p className="text-xl md:text-2xl text-slate-300 mb-10 font-medium leading-relaxed border-l-4 border-blue-500 pl-8 max-w-2xl">
-                   From raw wire to finished fastener – fully controlled under one roof. 
-                   We are not traders; we are <span className="text-white font-bold underline decoration-blue-500 decoration-2 underline-offset-4">Precision Manufacturers.</span>
+                    From technical blueprints to global delivery. We manage a high-precision manufacturing ecosystem with 
+                    <span className="text-white font-bold underline decoration-blue-500 decoration-2 underline-offset-4 ml-2">Total Quality Supervision.</span>
                 </p>
               </RevealOnScroll>
 
               <RevealOnScroll delay={300}>
-                <div className="flex flex-col sm:flex-row gap-5">
-                   <button className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20 hover:-translate-y-1">
-                      Schedule Factory Visit <ArrowRight size={22} />
-                   </button>
-                   <button className="bg-white/5 hover:bg-white/10 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all border border-white/10 flex items-center justify-center gap-3 hover:-translate-y-1 backdrop-blur-sm">
-                      <Play size={22} fill="white" /> Watch Facility Video
-                   </button>
-                </div>
-              </RevealOnScroll>
-           </div>
+  <div className="flex flex-col sm:flex-row gap-5">
+    {/* Internal Link to your Quality/Standards page */}
+    <Link 
+      to="/Products" 
+      className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20 hover:-translate-y-1"
+    >
+      View Production Standards <ArrowRight size={22} />
+    </Link>
+
+    {/* Direct Download Link for your PDF Profile */}
+    <a 
+      href="/assets/Durable-Fastener-Capability-Profile.pdf" 
+      download 
+      className="bg-white/5 hover:bg-white/10 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all border border-white/10 flex items-center justify-center gap-3 hover:-translate-y-1 backdrop-blur-sm"
+    >
+      Download Capability Profile
+    </a>
+  </div>
+</RevealOnScroll>
+            </div>
         </div>
       </div>
-
       {/* ================= 2. MANUFACTURING OVERVIEW ================= */}
       <section className="py-24 px-6 bg-[#0b1120]">
          <RevealOnScroll>
@@ -347,7 +355,7 @@ const Manufacturing: React.FC = () => {
                       </ul>
                    </div>
                    <div className="relative h-80 md:h-auto min-h-[400px]">
-                       <img src="https://images.unsplash.com/photo-1535063404286-f3655131a48c?q=80&w=2069&auto=format&fit=crop" alt="Cold Heading Machine at Durable Fastener Factory Rajkot" className="absolute inset-0 w-full h-full object-cover opacity-80 grayscale group-hover:grayscale-0 transition-all duration-700"/>
+                       <img src="/row.png" alt="Cold Heading Machine at Durable Fastener Factory Rajkot" className="absolute inset-0 w-full h-full object-cover opacity-80  transition-all duration-700"/>
                        <div className="absolute inset-0 bg-blue-900/20 mix-blend-multiply"></div>
                    </div>
                 </div>
@@ -469,7 +477,7 @@ const Manufacturing: React.FC = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20 text-left">
                {[
-                  { t: "Fully In-House", d: "No outsourcing, full control." },
+                  { t: "Strategic Production", d: "Managed manufacturing ecosystem." },
                   { t: "Consistent Quality", d: "Repeatable precision." },
                   { t: "On-Time Delivery", d: "Committed to schedules." },
                   { t: "OEM Focus", d: "Industrial supply chains." }

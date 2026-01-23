@@ -361,34 +361,32 @@ const ProductDetail: React.FC = () => {
                   </div>
 
                   {/* Main Viewer */}
-                  <div className="flex-1 relative flex items-center justify-center h-[400px] md:h-full overflow-visible group">
-                      
-                      <div className="absolute top-4 right-4 z-20">
-                          <button className="p-2 bg-neutral-200/50 hover:bg-white/80 backdrop-blur rounded-full text-neutral-600 hover:text-neutral-900 transition-all">
-                             <Maximize2 size={24} />
-                          </button>
-                      </div>
+                 <div className="flex-1 relative flex items-center justify-center h-[400px] md:h-full overflow-visible group">
+  <AnimatePresence mode='wait'>
+    <motion.div 
+        key={currentImage} 
+        initial={{ opacity: 0, scale: 0.9 }} 
+        animate={{ opacity: 1, scale: 1 }} 
+        className="w-full h-full flex items-center justify-center relative z-10 p-8"
+    >
+        <MagicZoomClone 
+            src={currentImage} 
+            zoomSrc={currentImage} 
+            alt={product.name} 
+            zoomLevel={2.5} 
+            glassSize={isMobile ? 120 : 200} 
+            /* IMAGE RENDERING FIX: 
+               - 'drop-shadow' screw ki shape par shadow dega
+               - 'image-render-auto' quality maintain rakhega
+            */
+           
+           className="max-h-full max-w-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] contrast-[1.05] brightness-[1.02] product-image-sharp" 
 
-                      <AnimatePresence mode='wait'>
-                        <motion.div 
-                            key={currentImage} 
-                            initial={{ opacity: 0, scale: 0.9 }} 
-                            animate={{ opacity: 1, scale: 1 }} 
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.4 }}
-                            className="w-full h-full flex items-center justify-center relative z-10"
-                        >
-                            <MagicZoomClone 
-                                src={currentImage} 
-                                zoomSrc={currentImage} 
-                                alt={product.name} 
-                                zoomLevel={2.5} 
-                                glassSize={isMobile ? 120 : 200} 
-                                className="max-h-full max-w-full object-contain drop-shadow-2xl" 
-                            />
-                        </motion.div>
-                      </AnimatePresence>
-                  </div>
+           
+        />
+    </motion.div>
+  </AnimatePresence>
+</div>
               </motion.div>
           </div>
           {/* --- RIGHT COLUMN: Configurator --- */}
@@ -737,62 +735,141 @@ const ProductDetail: React.FC = () => {
   </div>
 </div>
       {/* --- APPLICATIONS --- */}
-      {product.applications && product.applications.length > 0 && (
-            <div className={`py-24 ${THEME.bg}`}>
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center gap-6 mb-16">
-                        <div className="h-px bg-neutral-200 flex-1"></div>
-                        <h3 className={`text-3xl font-bold text-neutral-900 uppercase tracking-widest`} style={fontHeading}>Industry Applications</h3>
-                        <div className="h-px bg-neutral-200 flex-1"></div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-                        {product.applications.map((app: any, idx: number) => {
-                            const appName = typeof app === 'string' ? app : app.name;
-                            const appImage = typeof app === 'object' ? app.image : null;
-                            const slugUrl = appName.toLowerCase().replace(/\s+/g, '-');
+      {/* --- UNIQUE INDUSTRIAL STAGE: APPLICATIONS --- */}
+{product.applications && product.applications.length > 0 && (
+  <section className={`py-32 ${THEME.bg} overflow-hidden border-t border-neutral-300`}>
+    <div className="max-w-7xl mx-auto px-4">
+      
+      {/* SECTION HEADER */}
+      <div className="mb-20">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="h-px w-12 bg-yellow-500"></div>
+          <span className="font-mono text-sm font-bold tracking-[0.4em] uppercase text-neutral-500">Industry Deployment</span>
+        </div>
+        <h3 className="text-5xl md:text-7xl font-black text-neutral-900 uppercase tracking-tighter" style={fontHeading}>
+          Where Excellence <br />
+          <span className="text-white drop-shadow-[2px_2px_0_#171717] [-webkit-text-stroke:1px_#171717]">Meets Integrity</span>
+        </h3>
+      </div>
 
-                            return (
-                              <div key={idx} className="group h-72 [perspective:1000px]">
-                                <div className="relative h-full w-full transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                                    <div className="absolute inset-0 bg-white border border-neutral-200 rounded-xl flex flex-col items-center justify-center p-8 [backface-visibility:hidden] hover:border-yellow-500 hover:shadow-lg transition-all">
-                                        <Hash className="text-neutral-300 mb-6 group-hover:text-yellow-500 transition-colors" size={36} />
-                                        <h4 className="text-neutral-900 text-lg font-bold uppercase tracking-widest text-center leading-relaxed" style={fontHeading}>{appName}</h4>
-                                        <div className="mt-6 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-neutral-400 uppercase tracking-widest flex items-center gap-1 font-bold">
-                                            Flip for Details <ChevronRight size={10} />
-                                        </div>
-                                    </div>
-                                    <div className="absolute inset-0 bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden [transform:rotateY(180deg)] [backface-visibility:hidden] shadow-xl">
-                                        {appImage ? (
-                                            <>
-                                                <img src={appImage} className="h-full w-full object-cover opacity-60 group-hover:opacity-80 transition-all duration-700 group-hover:scale-110" />
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 gap-4">
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); setFullScreenAppImage(appImage); }}
-                                                        className="text-white hover:text-yellow-400 transition-colors bg-white/10 p-2 rounded-full backdrop-blur-sm"
-                                                    >
-                                                        <Maximize2 size={24} />
-                                                    </button>
-                                                    <Link to={`/applications/${slugUrl}`} className="border border-white/40 bg-black/60 backdrop-blur px-5 py-2.5 rounded-md text-white text-xs font-bold uppercase tracking-widest hover:bg-yellow-500 hover:border-yellow-500 hover:text-black transition-all" style={fontHeading}>
-                                                        View Case Study
-                                                    </Link>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="h-full w-full flex items-center justify-center bg-neutral-900">
-                                                <Link to={`/applications/${slugUrl}`} className="text-yellow-500 text-xs font-bold uppercase tracking-widest border-b border-yellow-500 pb-1 hover:text-white hover:border-white transition-colors" style={fontHeading}>Read More</Link>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                              </div>
-                            );
-                        })}
-                    </div>
+      {/* THE INTERACTIVE STAGE */}
+      <div className="relative flex flex-col lg:flex-row gap-12 items-start">
+        
+        {/* LEFT: VERTICAL NAVIGATOR (Sticky) */}
+        <div className="w-full lg:w-1/3 space-y-4 sticky top-[250px] z-20">
+          {product.applications.map((app: any, idx: number) => {
+            const appName = typeof app === 'string' ? app : app.name;
+            return (
+              <motion.div
+                key={idx}
+                onMouseEnter={() => setSelectedImageIndex(idx)} // Using your existing index state to drive the stage
+                className={`group flex items-center gap-6 p-6 rounded-xl border transition-all duration-500 cursor-pointer 
+                  ${selectedImageIndex === idx 
+                    ? 'bg-neutral-900 border-neutral-900 shadow-2xl translate-x-4' 
+                    : 'bg-white border-neutral-200 hover:border-yellow-500'}`}
+              >
+                <span className={`font-mono text-lg font-bold ${selectedImageIndex === idx ? 'text-yellow-500' : 'text-neutral-300'}`}>
+                  0{idx + 1}
+                </span>
+                <div className="flex-1">
+                  <h4 className={`text-xl font-bold uppercase tracking-tight transition-colors 
+                    ${selectedImageIndex === idx ? 'text-white' : 'text-neutral-800'}`} style={fontHeading}>
+                    {appName}
+                  </h4>
+                  {selectedImageIndex === idx && (
+                    <motion.p 
+                      initial={{ opacity: 0, height: 0 }} 
+                      animate={{ opacity: 1, height: 'auto' }} 
+                      className="text-neutral-400 text-xs mt-2 uppercase tracking-widest font-bold"
+                    >
+                      View Technical Case
+                    </motion.p>
+                  )}
                 </div>
-            </div>
-      )}
-       
+                <ChevronRight className={`${selectedImageIndex === idx ? 'text-yellow-500' : 'text-neutral-200'}`} />
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* RIGHT: THE TECHNICAL SHOWCASE (The Stage) */}
+        <div className="w-full lg:w-2/3 aspect-[4/3] lg:aspect-square relative group perspective-1000">
+          <AnimatePresence mode="wait">
+            {product.applications.map((app: any, idx: number) => {
+              if (selectedImageIndex !== idx) return null;
+              const appImage = typeof app === 'object' ? app.image : null;
+
+              return (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, scale: 1.1, rotateY: 10 }}
+                  animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, rotateY: -10 }}
+                  transition={{ duration: 0.6, ease: "circOut" }}
+                  className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] bg-neutral-800"
+                >
+                  {/* The X-Ray Image Effect */}
+                  <div className="relative w-full h-full overflow-hidden group">
+                    <img 
+                      src={appImage || 'https://via.placeholder.com/800'} 
+                      className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
+                      alt="Application"
+                    />
+                    
+                    {/* BLUEPRINT OVERLAY (The Unique Feature) */}
+                    <div 
+                      className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-700 pointer-events-none mix-blend-screen"
+                      style={{
+                        backgroundImage: `url(${product.technical_drawing || ''})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        filter: 'invert(1) brightness(2) sepia(1) hue-rotate(180deg)'
+                      }}
+                    />
+
+                    {/* DYNAMIC MEASUREMENT TAGS (Hotspots) */}
+                    <div className="absolute top-[20%] left-[30%] z-20">
+                       <div className="w-3 h-3 bg-yellow-500 rounded-full animate-ping absolute"></div>
+                       <div className="w-3 h-3 bg-yellow-500 rounded-full relative"></div>
+                       <div className="absolute left-6 top-0 bg-black/80 backdrop-blur px-3 py-1 border border-yellow-500/50 rounded whitespace-nowrap">
+                          
+                       </div>
+                    </div>
+
+                    <div className="absolute bottom-[40%] right-[25%] z-20">
+                       <div className="w-3 h-3 bg-yellow-500 rounded-full animate-ping absolute"></div>
+                       <div className="w-3 h-3 bg-yellow-500 rounded-full relative"></div>
+                       <div className="absolute left-6 top-0 bg-black/80 backdrop-blur px-3 py-1 border border-yellow-500/50 rounded whitespace-nowrap">
+                         
+                       </div>
+                    </div>
+
+                    {/* Gradient & Labels */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    
+                    <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end">
+                      <div className="space-y-1">
+                         <p className="text-yellow-500 font-mono text-xs uppercase tracking-widest font-bold">Standard Optimized</p>
+                         <h5 className="text-3xl font-bold text-white uppercase tracking-tight" style={fontHeading}>{typeof app === 'string' ? app : app.name}</h5>
+                      </div>
+                      <Link 
+                        to={`/applications/${(typeof app === 'string' ? app : app.name).toLowerCase().replace(/\s+/g, '-')}`}
+                        className="bg-white text-black p-4 rounded-full hover:bg-yellow-500 transition-colors shadow-xl"
+                      >
+                        <ArrowUpRight size={28} />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+      </div>
+    </div>
+  </section>
+)}
       <AnimatePresence>
         {fullScreenAppImage && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setFullScreenAppImage(null)}>
