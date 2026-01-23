@@ -42,7 +42,7 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
 
   const handleApply = (e: React.MouseEvent) => {
     e.preventDefault();
-    const phoneNumber = "919876543210"; 
+    const phoneNumber = "918758700783"; 
     const message = `Hello, I am interested in the position of *${job.title}* at Durable Fastener.`;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     let url = isMobile 
@@ -624,5 +624,6 @@ const isFiltered = selectedDepts.length > 0;
     </div>
   );
 };
+
 
 export default Careers;
