@@ -6,7 +6,7 @@ import {
   X, Check, Ruler, Image as ImageIcon,
   LayoutGrid, Settings, Hammer, Plus, Info,
   Search, ListPlus, Activity, ShieldCheck,
-  Palette, Box, Tag
+  Palette, Box, Tag, Layers
 } from 'lucide-react';
 
 // --- TYPES ---
@@ -28,7 +28,28 @@ type CertItem = { title: string; subtitle: string };
 type MaterialRow = { name: string; grades: string };
 type AppItem = { name: string; image: string; loading?: boolean };
 
-// --- SUGGESTIONS & CONSTANTS ---
+type SizeImageItem = {
+  labels: string;
+  name: string;
+  image: string;
+  loading: boolean;
+};
+
+// --- NEW VARIANT TYPES ---
+type VariantFinish = {
+    id: string; 
+    name: string;
+    image: string;
+    loading: boolean;
+};
+
+type VariantGroup = {
+    id: string; 
+    sizeLabel: string; 
+    finishes: VariantFinish[];
+};
+
+// --- CONSTANTS ---
 const HEAD_TYPES = ["Bugle Head", "Countersunk (CSK)", "Pan Head", "Wafer Head"];
 const DRIVE_TYPES = ["Phillips No.2", "Pozi (PZ)", "Torx (Star)", "Slotted"];
 const THREAD_TYPES = ["Fine Thread", "Coarse Thread", "Twinfast", "Hi-Lo"];
@@ -56,14 +77,21 @@ const AddProduct: React.FC = () => {
 
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([{ name: '', grades: '' }]);
 
+  // --- NEW VARIANT STATE (Connected Size & Finish) ---
+  const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
+
+  // --- SIZE IMAGES STATE (Buttons) ---
+  const [sizeImages, setSizeImages] = useState<SizeImageItem[]>([
+    { labels: 'M1,M2,M3', name: 'WHITE', image: '', loading: false }
+  ]);
+
   // --- EXPERT / FITTING DATA ---
   const [expertData, setExpertData] = useState({ seo_keywords: '' });
   
-  // Specific Data for Fittings (from Code 1)
   const [fittingExtras, setFittingExtras] = useState({
-    colors: '',       // "Available Colors"
-    general_names: '', // "General Names"
-    packing: ''        // "Standard Packing"
+    colors: '',       
+    general_names: '', 
+    packing: ''        
   });
 
   // Main Form Data
@@ -84,25 +112,17 @@ const AddProduct: React.FC = () => {
     certifications: [] as CertItem[]
   });
 
-  // --- DYNAMIC CORE SPECS STATE (Fasteners) ---
   const [dynamicCoreSpecs, setDynamicCoreSpecs] = useState<SpecItem[]>([
     { key: 'Head Type', value: '' },
     { key: 'Drive Type', value: '' },
     { key: 'Thread Type', value: '' }
   ]);
 
-  // --- DYNAMIC PERFORMANCE STATE (Fasteners) ---
   const [availablePerfKeys, setAvailablePerfKeys] = useState<string[]>(DEFAULT_PERFORMANCE_KEYS);
   const [selectedPerformance, setSelectedPerformance] = useState<string[]>([]);
   const [isAddingPerf, setIsAddingPerf] = useState(false);
   const [newPerfName, setNewPerfName] = useState('');
 
-  // --- VARIANTS ---
-  const [sizes, setSizes] = useState<Array<{ diameter: string, length: string }>>([{ diameter: '', length: '' }]);
-  const [finishes, setFinishes] = useState<Array<{ name: string, image: string, loading: boolean }>>([{ name: '', image: '', loading: false }]);
-
-  // --- LOGIC: DETECT CATEGORY TYPE ---
-  // This toggles between "Fastener Layout" and "Fitting Layout"
   const isFittingCategory = useMemo(() => {
     const cat = formData.category?.toLowerCase() || '';
     const sub = formData.sub_category?.toLowerCase() || '';
@@ -159,19 +179,27 @@ const AddProduct: React.FC = () => {
           }
           setMaterialRows(parsedRows.length > 0 ? parsedRows : [{ name: '', grades: '' }]);
 
+          // Load Size Images (Buttons)
+          if (product.size_images && Array.isArray(product.size_images)) {
+              const formattedSizeImages = product.size_images.map((si: any) => ({
+                  labels: si.labels || '',
+                  name: si.name || '',
+                  image: si.image || '',
+                  loading: false
+              }));
+              setSizeImages(formattedSizeImages);
+          }
+
           const specs = Array.isArray(product.specifications) ? product.specifications : [];
-          const getVal = (k:string) => specs.find((s:any) => s.key === k)?.value || '';
           
-          setExpertData({ seo_keywords: getVal('seo_keywords') });
+          setExpertData({ seo_keywords: specs.find((s:any) => s.key === 'seo_keywords')?.value || '' });
           
-          // Populate Fitting Extras
           setFittingExtras({
             colors: specs.find((s:any) => s.key === 'Available Colors')?.value || '',
             general_names: specs.find((s:any) => s.key === 'General Names')?.value || '',
             packing: specs.find((s:any) => s.key === 'Standard Packing')?.value || ''
           });
 
-          // --- SPLIT LOGIC (Core vs Performance vs Other) ---
           const loadedCoreSpecs: SpecItem[] = [];
           const loadedOtherSpecs: SpecItem[] = [];
           const loadedPerfKeys: string[] = [];
@@ -186,7 +214,6 @@ const AddProduct: React.FC = () => {
               const lowerKey = key.toLowerCase();
               const val = s.value || ''; 
 
-              // Skip keys we handle manually
               if (['seo_keywords', 'available colors', 'general names', 'standard packing', 'standard', 'tds_url', 'mtc_url'].includes(lowerKey)) return;
               if (['head type', 'drive type', 'thread type'].includes(lowerKey)) return;
 
@@ -206,7 +233,6 @@ const AddProduct: React.FC = () => {
 
           setAvailablePerfKeys(Array.from(dynamicAvailableKeys));
 
-          // Ensure basic core specs exist
           if (!loadedCoreSpecs.find(x => x.key === 'Head Type')) loadedCoreSpecs.unshift({ key: 'Head Type', value: '' });
           if (!loadedCoreSpecs.find(x => x.key === 'Drive Type')) loadedCoreSpecs.splice(1, 0, { key: 'Drive Type', value: '' });
           if (!loadedCoreSpecs.find(x => x.key === 'Thread Type')) loadedCoreSpecs.splice(2, 0, { key: 'Thread Type', value: '' });
@@ -214,22 +240,18 @@ const AddProduct: React.FC = () => {
           setDynamicCoreSpecs(loadedCoreSpecs);
           setSelectedPerformance(loadedPerfKeys);
 
-          // Handle Dimensions
           let parsedDims: DimItem[] = [];
           if (Array.isArray(product.dimensional_specifications)) {
-             parsedDims = product.dimensional_specifications.map((d: any) => ({
-                 label: d.label || '',
-                 symbol: d.symbol || '',
-                 values: typeof d.values === 'object' ? d.values : {} 
-             }));
+              parsedDims = product.dimensional_specifications.map((d: any) => ({
+                  label: d.label || '',
+                  symbol: d.symbol || '',
+                  values: typeof d.values === 'object' ? d.values : {} 
+              }));
           }
 
-          // Handle Certifications
           let parsedCerts: CertItem[] = [];
           if(Array.isArray(product.certifications) && product.certifications.length > 0) {
-             parsedCerts = product.certifications;
-          } else if (product.iso_certified === true) {
-             parsedCerts = [{ title: "ISO 9001:2015", subtitle: "Certified Facility" }];
+              parsedCerts = product.certifications;
           }
 
           setFormData({
@@ -249,29 +271,45 @@ const AddProduct: React.FC = () => {
             certifications: parsedCerts
           });
 
-          // Variants
+          // --- RECONSTRUCT CONNECTED VARIANTS ---
           const { data: variantData } = await supabase.from('product_variants').select('*').eq('product_id', id);
-          if (variantData && variantData.length > 0) {
-            const uniqueSizes = variantData.reduce((acc: any[], curr) => {
-                const exists = acc.find(s => s.diameter === curr.diameter && s.length === curr.length);
-                if (!exists && (curr.diameter || curr.length)) acc.push({ diameter: curr.diameter, length: curr.length });
-                return acc;
-            }, []);
-            setSizes(uniqueSizes.length ? uniqueSizes : [{ diameter: '', length: '' }]);
+          const finishImagesMap = product.finish_images || {};
 
-            const uniqueFinishes = variantData.reduce((acc: any[], curr) => {
-                const exists = acc.find(f => f.name === curr.finish);
-                if (!exists && curr.finish) {
-                    const img = product.finish_images ? product.finish_images[curr.finish] : '';
-                    acc.push({ name: curr.finish, image: img, loading: false });
-                }
-                return acc;
-            }, []);
-            setFinishes(uniqueFinishes.length ? uniqueFinishes : [{ name: '', image: '', loading: false }]);
+          if (variantData && variantData.length > 0) {
+             const grouped: Record<string, VariantFinish[]> = {};
+             
+             variantData.forEach((v: any) => {
+                 const sizeKey = v.diameter || v.length || "Standard"; 
+                 if (!grouped[sizeKey]) grouped[sizeKey] = [];
+                 
+                 if (v.finish) {
+                     // Check v.image first (new way), then map (legacy way)
+                     const savedImage = v.image ? v.image : (finishImagesMap[v.finish] || '');
+                     grouped[sizeKey].push({
+                         id: Math.random().toString(36).substr(2, 9),
+                         name: v.finish,
+                         image: savedImage, 
+                         loading: false
+                     });
+                 }
+             });
+
+             const reconstructedGroups: VariantGroup[] = Object.keys(grouped).map(sizeLabel => ({
+                 id: Math.random().toString(36).substr(2, 9),
+                 sizeLabel: sizeLabel,
+                 finishes: grouped[sizeLabel]
+             }));
+             
+             setVariantGroups(reconstructedGroups);
+          } else {
+             setVariantGroups([{ id: 'init', sizeLabel: '', finishes: [{id: 'f1', name: '', image: '', loading: false}] }]);
           }
         }
       };
       fetchProduct();
+    } else {
+        // Init empty variant group for new product
+        setVariantGroups([{ id: 'init', sizeLabel: '', finishes: [{id: 'f1', name: '', image: '', loading: false}] }]);
     }
   }, [id, isEditMode]);
 
@@ -288,7 +326,7 @@ const AddProduct: React.FC = () => {
     setFormData(prev => ({ ...prev, material: combinedMaterials }));
   }, [materialRows]);
 
-  // --- HANDLERS ---
+  // --- HANDLERS (Generic) ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -300,11 +338,125 @@ const AddProduct: React.FC = () => {
   
   const handleFittingChange = (e: any) => setFittingExtras(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // Performance Logic
-  const togglePerformanceSpec = (key: string) => {
-    setSelectedPerformance(prev => {
-        return prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
+  // --- VARIANT LOGIC (IMMUTABLE STATE HANDLERS) ---
+  const addVariantGroup = () => {
+    setVariantGroups(prev => [
+      ...prev, 
+      { 
+        id: Math.random().toString(36).substr(2, 9), 
+        sizeLabel: '', 
+        finishes: [{ id: Math.random().toString(36).substr(2, 9), name: '', image: '', loading: false }] 
+      }
+    ]);
+  };
+
+  const removeVariantGroup = (idx: number) => {
+    setVariantGroups(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateGroupSize = (idx: number, val: string) => {
+    setVariantGroups(prev => {
+        const newGroups = [...prev];
+        newGroups[idx] = { ...newGroups[idx], sizeLabel: val };
+        return newGroups;
     });
+  };
+
+  const addFinishToGroup = (groupIdx: number) => {
+    setVariantGroups(prev => {
+        const newGroups = [...prev];
+        newGroups[groupIdx] = {
+            ...newGroups[groupIdx],
+            finishes: [
+                ...newGroups[groupIdx].finishes,
+                { id: Math.random().toString(36).substr(2, 9), name: '', image: '', loading: false }
+            ]
+        };
+        return newGroups;
+    });
+  };
+
+  const removeFinishFromGroup = (groupIdx: number, finishIdx: number) => {
+    setVariantGroups(prev => {
+        const newGroups = [...prev];
+        newGroups[groupIdx] = {
+            ...newGroups[groupIdx],
+            finishes: newGroups[groupIdx].finishes.filter((_, i) => i !== finishIdx)
+        };
+        return newGroups;
+    });
+  };
+
+  const updateFinishName = (groupIdx: number, finishIdx: number, val: string) => {
+    setVariantGroups(prev => {
+        const newGroups = [...prev];
+        newGroups[groupIdx] = {
+            ...newGroups[groupIdx],
+            finishes: newGroups[groupIdx].finishes.map((f, i) => 
+                i === finishIdx ? { ...f, name: val } : f
+            )
+        };
+        return newGroups;
+    });
+  };
+
+  const handleFinishImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, groupIdx: number, finishIdx: number) => {
+    if (!e.target.files?.[0]) return;
+    const file = e.target.files[0];
+
+    setVariantGroups(prev => {
+      const newGroups = [...prev];
+      newGroups[groupIdx] = {
+        ...newGroups[groupIdx],
+        finishes: newGroups[groupIdx].finishes.map((f, i) => 
+          i === finishIdx ? { ...f, loading: true } : f
+        )
+      };
+      return newGroups;
+    });
+
+    try {
+      const url = await uploadFile(file, 'finishes');
+      setVariantGroups(prev => {
+        const newGroups = [...prev];
+        newGroups[groupIdx] = {
+          ...newGroups[groupIdx],
+          finishes: newGroups[groupIdx].finishes.map((f, i) => 
+            i === finishIdx ? { ...f, image: url, loading: false } : f
+          )
+        };
+        return newGroups;
+      });
+    } catch(err) { 
+      alert('Upload failed'); 
+      setVariantGroups(prev => {
+        const newGroups = [...prev];
+        newGroups[groupIdx] = {
+          ...newGroups[groupIdx],
+          finishes: newGroups[groupIdx].finishes.map((f, i) => 
+            i === finishIdx ? { ...f, loading: false } : f
+          )
+        };
+        return newGroups;
+      });
+    }
+  };
+
+  // --- OTHER HANDLERS ---
+  const addSizeImage = () => setSizeImages([...sizeImages, { labels: '', name: '', image: '', loading: false }]);
+  const removeSizeImage = (idx: number) => setSizeImages(sizeImages.filter((_, i) => i !== idx));
+  const updateSizeImageText = (idx: number, field: 'labels' | 'name', val: string) => {
+    const n = [...sizeImages]; n[idx][field] = val; setSizeImages(n);
+  };
+  const handleSizeImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    if (!e.target.files?.[0]) return;
+    const n = [...sizeImages]; n[idx].loading = true; setSizeImages(n);
+    try { const url = await uploadFile(e.target.files[0], 'size-variants'); n[idx].image = url; } catch (err) { alert('Upload failed'); }
+    n[idx].loading = false; setSizeImages(n);
+  };
+
+  const togglePerformanceSpec = (key: string) => {
+    setSelectedPerformance(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   };
 
   const handleAddCustomPerf = () => {
@@ -318,21 +470,16 @@ const AddProduct: React.FC = () => {
     setIsAddingPerf(false);
   };
 
-  // Helper Functions
   const addCoreSpec = () => setDynamicCoreSpecs([...dynamicCoreSpecs, { key: '', value: '' }]);
   const removeCoreSpec = (idx: number) => setDynamicCoreSpecs(dynamicCoreSpecs.filter((_, i) => i !== idx));
   const updateCoreSpec = (idx: number, field: 'key' | 'value', val: string) => {
-    const newSpecs = [...dynamicCoreSpecs];
-    newSpecs[idx][field] = val;
-    setDynamicCoreSpecs(newSpecs);
+    const newSpecs = [...dynamicCoreSpecs]; newSpecs[idx][field] = val; setDynamicCoreSpecs(newSpecs);
   };
 
   const addSpec = () => setFormData(p => ({ ...p, specifications: [...p.specifications, { key: '', value: '' }] }));
   const removeSpec = (idx: number) => setFormData(p => ({ ...p, specifications: p.specifications.filter((_, i) => i !== idx) }));
   const updateSpec = (idx: number, field: 'key'|'value', val: string) => {
-    const newSpecs = [...formData.specifications];
-    newSpecs[idx][field] = val;
-    setFormData(p => ({ ...p, specifications: newSpecs }));
+    const newSpecs = [...formData.specifications]; newSpecs[idx][field] = val; setFormData(p => ({ ...p, specifications: newSpecs }));
   };
 
   const addDim = () => setFormData(p => ({ ...p, dimensional_specifications: [...p.dimensional_specifications, { label: '', symbol: '', values: {} }] }));
@@ -347,25 +494,18 @@ const AddProduct: React.FC = () => {
     setFormData(p => ({ ...p, dimensional_specifications: newDims }));
   };
 
-  // Certifications
   const addCert = () => setFormData(p => ({ ...p, certifications: [...p.certifications, { title: 'ISO 9001:2015', subtitle: 'Certified Facility' }] }));
   const removeCert = (idx: number) => setFormData(p => ({ ...p, certifications: p.certifications.filter((_, i) => i !== idx) }));
   const updateCert = (idx: number, field: 'title' | 'subtitle', val: string) => {
-      const newCerts = [...formData.certifications];
-      newCerts[idx][field] = val;
-      setFormData(p => ({ ...p, certifications: newCerts }));
+      const newCerts = [...formData.certifications]; newCerts[idx][field] = val; setFormData(p => ({ ...p, certifications: newCerts }));
   };
 
-  // Material Helpers
   const addMaterialRow = () => setMaterialRows([...materialRows, { name: '', grades: '' }]);
   const removeMaterialRow = (idx: number) => setMaterialRows(materialRows.filter((_, i) => i !== idx));
   const updateMaterialRow = (idx: number, field: 'name' | 'grades', val: string) => {
-      const newRows = [...materialRows];
-      newRows[idx][field] = val;
-      setMaterialRows(newRows);
+      const newRows = [...materialRows]; newRows[idx][field] = val; setMaterialRows(newRows);
   };
 
-  // Files
   const uploadFile = async (file: File, folder: string) => {
     const fileName = `${folder}/${Date.now()}-${file.name.replace(/\s/g, '-')}`;
     const { error } = await supabase.storage.from('product-images').upload(fileName, file); 
@@ -395,27 +535,13 @@ const AddProduct: React.FC = () => {
     setUploading(false);
   };
 
-  // Apps, Sizes, Finishes Helpers
   const addApp = () => setFormData(p => ({ ...p, applications: [...p.applications, { name: '', image: '' }] }));
   const updateAppName = (idx: number, val: string) => { const newApps = [...formData.applications]; newApps[idx].name = val; setFormData(p => ({ ...p, applications: newApps })); };
   const removeApp = (idx: number) => setFormData(p => ({ ...p, applications: p.applications.filter((_, i) => i !== idx) }));
 
-  const addSizeRow = () => setSizes([...sizes, { diameter: '', length: '' }]);
-  const removeSizeRow = (idx: number) => setSizes(sizes.filter((_, i) => i !== idx));
-  const handleSizeChange = (idx: number, field: 'diameter'|'length', val: string) => { const n = [...sizes]; n[idx][field] = val; setSizes(n); };
-  
-  const addFinishRow = () => setFinishes([...finishes, { name: '', image: '', loading: false }]);
-  const removeFinishRow = (idx: number) => setFinishes(finishes.filter((_, i) => i !== idx));
-  const handleFinishNameChange = (idx: number, val: string) => { const n = [...finishes]; n[idx].name = val; setFinishes(n); };
-  const handleFinishImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-     if(!e.target.files?.[0]) return;
-     const n = [...finishes]; n[idx].loading = true; setFinishes(n);
-     try { const url = await uploadFile(e.target.files[0], 'finishes'); n[idx].image = url; } catch(err) { alert('Finish upload failed'); }
-     n[idx].loading = false; setFinishes(n);
-  };
-
+  // Helper for blueprint columns
   const uniqueDiameters = Array.from(new Set<string>(
-    sizes.map(s => s.diameter.trim()).filter(d => d !== '')
+    variantGroups.map(g => g.sizeLabel.trim()).filter(d => d !== '')
   )).sort((a: string, b: string) => parseFloat(a) - parseFloat(b));
 
   // --- SUBMIT FUNCTION ---
@@ -424,45 +550,36 @@ const AddProduct: React.FC = () => {
     setLoading(true);
 
     const finalSlug = formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    
+    // Build Finish Image Map (Backward compatibility)
     const finishImageMap: Record<string, string> = {};
-    finishes.forEach(f => { if(f.name && f.image) finishImageMap[f.name] = f.image; });
+    variantGroups.forEach(group => {
+        group.finishes.forEach(finish => {
+            if(finish.name.trim() !== '' && finish.image !== '') {
+                finishImageMap[finish.name.trim()] = finish.image; 
+            }
+        });
+    });
 
-    const findValue = (keyName: string) => {
-        const found = dynamicCoreSpecs.find(s => s.key.trim().toLowerCase() === keyName.toLowerCase());
-        return found ? found.value : '';
-    };
+    const cleanedSizeImages = sizeImages
+      .filter(si => si.labels.trim() !== '' || si.image !== '')
+      .map(({ loading, ...rest }) => rest);
 
-    const extraCoreSpecs = dynamicCoreSpecs.filter(s => 
-        !['head type', 'drive type', 'thread type'].includes(s.key.trim().toLowerCase()) && s.key.trim() !== ''
-    );
-
-    const formattedPerformanceSpecs = selectedPerformance.map(key => ({ key: key, value: "Standard" }));
-
-    // MERGE ALL SPECS (General + Performance + Core Extras + Fitting Extras)
     const mergedSpecs = [
         ...formData.specifications.filter(s => s.key && s.value),
-        ...extraCoreSpecs,
-        ...formattedPerformanceSpecs,
         { key: 'Available Colors', value: fittingExtras.colors },
         { key: 'General Names', value: fittingExtras.general_names },
         { key: 'Standard Packing', value: fittingExtras.packing },
         { key: 'seo_keywords', value: expertData.seo_keywords }
-    ].filter(s => s.value && s.value.trim() !== ''); 
-
-    const validDimensions = formData.dimensional_specifications.filter(d => d.label.trim() !== '');
-    const validCerts = formData.certifications.filter(c => c.title.trim() !== '');
+    ].filter(s => s.value && s.value.trim() !== '');
 
     const payload = {
       ...formData,
       slug: finalSlug,
-      certifications: validCerts,
-      head_type: findValue('Head Type'),   
-      drive_type: findValue('Drive Type'),
-      thread_type: findValue('Thread Type'),
-      finish_images: finishImageMap,
-      applications: formData.applications.filter(a => a.name.trim() !== '').map(({loading, ...rest}) => rest),
+      finish_images: finishImageMap, 
+      size_images: cleanedSizeImages, 
       specifications: mergedSpecs,
-      dimensional_specifications: validDimensions
+      applications: formData.applications.filter(a => a.name.trim() !== '').map(({loading, ...rest}) => rest),
     };
 
     try {
@@ -478,27 +595,38 @@ const AddProduct: React.FC = () => {
 
       if (productId) {
         await supabase.from('product_variants').delete().eq('product_id', productId);
-        const validSizes = sizes.filter(s => s.diameter || s.length);
-        const validFinishes = finishes.filter(f => f.name);
+        
         const variantsToInsert: any[] = [];
+        variantGroups.forEach(group => {
+            const size = group.sizeLabel.trim();
+            if(size) {
+                if(group.finishes.length > 0 && group.finishes.some(f => f.name.trim())) {
+                    group.finishes.forEach(f => {
+                        if(f.name.trim()) {
+                            variantsToInsert.push({ 
+                                product_id: productId, 
+                                diameter: size, 
+                                length: '', 
+                                finish: f.name.trim(),
+                                image: f.image 
+                            });
+                        }
+                    });
+                } else {
+                    variantsToInsert.push({ product_id: productId, diameter: size, length: '', finish: '' });
+                }
+            }
+        });
 
-        if (validSizes.length > 0) {
-           validSizes.forEach(size => {
-              if (validFinishes.length > 0) {
-                  validFinishes.forEach(finish => { variantsToInsert.push({ product_id: productId, diameter: size.diameter, length: size.length, finish: finish.name }); });
-              } else { variantsToInsert.push({ product_id: productId, diameter: size.diameter, length: size.length, finish: '' }); }
-           });
-        } else if (validFinishes.length > 0) {
-           validFinishes.forEach(finish => variantsToInsert.push({ product_id: productId, diameter: '', length: '', finish: finish.name }));
+        if (variantsToInsert.length > 0) {
+          const { error: variantError } = await supabase.from('product_variants').insert(variantsToInsert);
+          if (variantError) throw variantError;
         }
-        if (variantsToInsert.length > 0) await supabase.from('product_variants').insert(variantsToInsert);
       }
       
       navigate('/admin/products');
-      
     } catch (error: any) {
-      console.error("Error saving product:", error);
-      alert('Failed to save product: ' + error.message);
+      alert('Error: ' + error.message);
     } finally { setLoading(false); }
   };
 
@@ -557,7 +685,7 @@ const AddProduct: React.FC = () => {
             </div>
         </div>
 
-        {/* 3. CORE SPECS + MATERIAL (Standard for All) */}
+        {/* 3. CORE SPECS + MATERIAL */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-4 border-b pb-2">
                   <h3 className="font-bold text-gray-900 flex items-center gap-2"><Hammer size={18} /> Core Specs</h3>
@@ -566,7 +694,6 @@ const AddProduct: React.FC = () => {
                   )}
               </div>
               
-              {/* Material Builder (Used for both Fasteners and Fittings) */}
               <div className="mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <div className="flex justify-between items-center mb-2">
                       <label className="block text-xs font-bold text-gray-700 uppercase">Material Composition</label>
@@ -583,9 +710,7 @@ const AddProduct: React.FC = () => {
                   </div>
               </div>
 
-              {/* DYNAMIC LAYOUT SWITCH */}
               {isFittingCategory ? (
-                 // --- FITTING LAYOUT: Architectural DNA ---
                  <div className="border border-orange-200 bg-orange-50/50 p-4 rounded-xl">
                     <h3 className="font-bold mb-4 flex gap-2 text-orange-800"><LayoutGrid size={18} className="text-orange-600"/> Architectural DNA</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -604,7 +729,6 @@ const AddProduct: React.FC = () => {
                     </div>
                  </div>
               ) : (
-                 // --- FASTENER LAYOUT: Head/Drive/Thread ---
                  <div className="space-y-3">
                     {dynamicCoreSpecs.map((spec, idx) => (
                         <div key={idx} className="flex gap-4">
@@ -617,7 +741,7 @@ const AddProduct: React.FC = () => {
               )}
         </div>
 
-        {/* 4. PERFORMANCE DATA (Only for Fasteners) */}
+        {/* 4. PERFORMANCE DATA */}
         {!isFittingCategory && (
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                   <div className="flex justify-between items-center mb-4 border-b pb-2 flex-wrap gap-2">
@@ -650,7 +774,7 @@ const AddProduct: React.FC = () => {
             </div>
         )}
 
-        {/* 5. Blueprint Data (Tech Drawing & Dimensions Table) */}
+        {/* 5. Blueprint Data */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="font-bold text-gray-900 flex items-center gap-2"><Ruler size={18} /> Blueprint Data</h3><button type="button" onClick={addDim} className="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded hover:bg-amber-200">+ Add Feature</button></div>
               <div className="mb-8 p-4 bg-slate-50 rounded-lg border border-dashed border-slate-300 flex items-center gap-6">
@@ -659,7 +783,7 @@ const AddProduct: React.FC = () => {
               </div>
               <div className="overflow-x-auto pb-4">
                   {uniqueDiameters.length === 0 ? (
-                      <div className="text-center p-4 text-red-500 bg-red-50 rounded text-sm border border-red-100">⚠️ Please add "Sizes" in the "Dimensions (Variants)" section below to generate columns for this table.</div>
+                      <div className="text-center p-4 text-red-500 bg-red-50 rounded text-sm border border-red-100">⚠️ Please add "Sizes" in the "Variants Configuration" section below to generate columns for this table.</div>
                   ) : (
                       <table className="w-full min-w-[600px] border-collapse text-sm">
                         <thead><tr className="bg-gray-100 text-xs uppercase text-gray-500 font-bold text-left"><th className="p-3 border-b min-w-[150px]">Feature Name</th><th className="p-3 border-b w-[80px]">Symbol</th>{uniqueDiameters.map(dia => (<th key={dia} className="p-3 border-b min-w-[120px] text-blue-600">Dia ({dia})</th>))}<th className="p-3 border-b w-[40px]"></th></tr></thead>
@@ -669,7 +793,85 @@ const AddProduct: React.FC = () => {
               </div>
         </div>
 
-        {/* 6. Additional Specs */}
+        {/* 6. NEW VARIANT CONFIGURATION (REPLACES OLD DIMENSIONS/FINISHES SPLIT) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-200">
+             <div className="flex justify-between items-center mb-6 border-b pb-4">
+                <div>
+                    <h3 className="font-bold text-gray-900 flex items-center gap-2"><Layers size={18} className="text-orange-600"/> Variants Configuration</h3>
+                    <p className="text-xs text-gray-500 mt-1">Connect Sizes directly to Finishes & Images</p>
+                </div>
+                <button type="button" onClick={addVariantGroup} className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-700 flex items-center gap-2"><Plus size={16}/> Add Size Group</button>
+             </div>
+
+             <div className="space-y-6">
+                {variantGroups.map((group, groupIdx) => (
+                    <div key={group.id} className="border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
+                        {/* Size Header */}
+                        <div className="p-4 bg-gray-100 border-b flex items-center gap-4">
+                            <div className="flex-1">
+                                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Size / Dimension Label</label>
+                                <input 
+                                    value={group.sizeLabel} 
+                                    onChange={(e) => updateGroupSize(groupIdx, e.target.value)} 
+                                    placeholder="e.g. M4, 3.5 x 25mm, 4 inch" 
+                                    className="w-full px-3 py-2 border rounded font-bold text-gray-900" 
+                                />
+                            </div>
+                            <button type="button" onClick={() => removeVariantGroup(groupIdx)} className="text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
+                        </div>
+
+                        {/* Finishes List */}
+                        <div className="p-4 bg-white">
+                            <div className="mb-2 flex justify-between items-end">
+                                <label className="text-xs font-bold text-gray-400 uppercase">Available Finishes for this Size</label>
+                                <button type="button" onClick={() => addFinishToGroup(groupIdx)} className="text-xs text-blue-600 font-bold hover:underline">+ Add Finish</button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {group.finishes.map((finish, finishIdx) => (
+                                    <div key={finish.id} className="flex items-center gap-3 border p-2 rounded-lg hover:border-blue-300 transition-colors">
+                                        <div className="w-12 h-12 bg-gray-100 rounded border relative flex-shrink-0 flex items-center justify-center overflow-hidden group">
+                                            {finish.image ? <img src={finish.image} className="w-full h-full object-cover"/> : <ImageIcon size={16} className="text-gray-300"/>}
+                                            {finish.loading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={12} className="animate-spin"/></div>}
+                                            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFinishImageUpload(e, groupIdx, finishIdx)} title="Upload Finish Image" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <input 
+                                                value={finish.name} 
+                                                onChange={(e) => updateFinishName(groupIdx, finishIdx, e.target.value)} 
+                                                placeholder="Finish Name (e.g. Gold)" 
+                                                className="w-full text-sm border-none border-b border-gray-200 focus:ring-0 focus:border-blue-500 px-0 py-1" 
+                                            />
+                                        </div>
+                                        <button type="button" onClick={() => removeFinishFromGroup(groupIdx, finishIdx)} className="text-gray-400 hover:text-red-500"><X size={16}/></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+             </div>
+        </div>
+
+        {/* 7. Size Images (Buttons - Kept from Original for Frontend UI) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+          <h3 className="font-bold mb-6 flex items-center gap-2 text-blue-600">
+              <ImageIcon size={18} /> Image Configurator (Frontend Buttons)
+          </h3>
+          <div className="space-y-4">
+              {sizeImages.map((si, idx) => (
+                  <div key={idx} className="border p-4 bg-gray-50 rounded-lg relative">
+                      <input value={si.labels} onChange={(e) => updateSizeImageText(idx, 'labels', e.target.value)} placeholder="Labels (e.g., M1, M2, M3)" className="w-full px-3 py-2 border mb-2 font-bold"/>
+                      <input type="file" onChange={(e) => handleSizeImageUpload(e, idx)} className="text-xs" />
+                      {si.image && <img src={si.image} className="h-10 mt-2 object-contain" />}
+                      <button type="button" onClick={() => removeSizeImage(idx)} className="absolute top-2 right-2 text-red-500"><X size={16}/></button>
+                  </div>
+              ))}
+              <button type="button" onClick={addSizeImage} className="text-sm font-bold text-blue-600">+ Add Button Group</button>
+          </div>
+        </div>
+
+        {/* 8. Other Specs */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="font-bold text-gray-900 flex items-center gap-2"><Settings size={18} /> Other Specs</h3><button type="button" onClick={addSpec} className="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded">+ Add Spec</button></div>
               <div className="space-y-3">
@@ -683,38 +885,26 @@ const AddProduct: React.FC = () => {
               </div>
         </div>
 
-        {/* 7. Applications */}
+        {/* 9. Applications */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
            <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="font-bold text-gray-900 flex items-center gap-2"><LayoutGrid size={18} /> Applications</h3><button type="button" onClick={addApp} className="text-xs bg-green-100 text-green-800 font-bold px-3 py-1 rounded">+ Add</button></div>
            <div className="bg-yellow-50 text-yellow-800 p-3 rounded text-xs mb-4 flex gap-2"><Info size={16} /><p>Use keywords like "Wood", "Gypsum", "Electrical" in App Name to auto-trigger icons.</p></div>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              {formData.applications.map((app, idx) => (
                 <div key={idx} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                   <div className="relative w-14 h-14 bg-white border border-gray-200 rounded flex-shrink-0 flex items-center justify-center overflow-hidden group">
-                       {app.image ? (<img src={app.image} className="w-full h-full object-cover" />) : (<ImageIcon size={20} className="text-gray-300" />)}
-                       {app.loading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={16} className="animate-spin text-green-600"/></div>}
-                       <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity text-white"><Upload size={16} /><input type="file" className="hidden" onChange={(e) => handleAppImageUpload(e, idx)} /></label>
-                   </div>
-                   <div className="flex-1"><label className="text-[10px] uppercase font-bold text-gray-400">App Name</label><input value={app.name} onChange={(e) => updateAppName(idx, e.target.value)} className="w-full px-2 py-1 border rounded text-sm" /></div>
-                   <button type="button" onClick={() => removeApp(idx)} className="text-red-400 p-2"><Trash2 size={18}/></button>
+                    <div className="relative w-14 h-14 bg-white border border-gray-200 rounded flex-shrink-0 flex items-center justify-center overflow-hidden group">
+                        {app.image ? (<img src={app.image} className="w-full h-full object-cover" />) : (<ImageIcon size={20} className="text-gray-300" />)}
+                        {app.loading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={16} className="animate-spin text-green-600"/></div>}
+                        <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity text-white"><Upload size={16} /><input type="file" className="hidden" onChange={(e) => handleAppImageUpload(e, idx)} /></label>
+                    </div>
+                    <div className="flex-1"><label className="text-[10px] uppercase font-bold text-gray-400">App Name</label><input value={app.name} onChange={(e) => updateAppName(idx, e.target.value)} className="w-full px-2 py-1 border rounded text-sm" /></div>
+                    <button type="button" onClick={() => removeApp(idx)} className="text-red-400 p-2"><Trash2 size={18}/></button>
                 </div>
              ))}
            </div>
         </div>
 
-        {/* 8. Sizes & Finishes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div className="flex justify-between items-center mb-4"><h3 className="font-bold">Dimensions (Variants)</h3><button type="button" onClick={addSizeRow} className="text-blue-600 text-sm font-bold">+ Add Size</button></div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">{sizes.map((s, idx) => (<div key={idx} className="flex gap-2"><input value={s.diameter} onChange={e=>handleSizeChange(idx,'diameter',e.target.value)} placeholder="Dia" className="w-20 px-2 py-1 border rounded" /><input value={s.length} onChange={e=>handleSizeChange(idx,'length',e.target.value)} placeholder="Len" className="flex-1 px-2 py-1 border rounded" /><button type="button" onClick={()=>removeSizeRow(idx)}><Trash2 size={16} className="text-red-400"/></button></div>))}</div>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div className="flex justify-between items-center mb-4"><h3 className="font-bold">Finishes (Variants)</h3><button type="button" onClick={addFinishRow} className="text-purple-600 text-sm font-bold">+ Add Finish</button></div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">{finishes.map((f, idx) => (<div key={idx} className="flex items-center gap-2 border p-2 rounded"><div className="w-10 h-10 bg-gray-100 rounded overflow-hidden relative"><img src={f.image} className="w-full h-full object-cover"/><input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e=>handleFinishImageUpload(e, idx)}/></div><input value={f.name} onChange={e=>handleFinishNameChange(idx,e.target.value)} placeholder="Finish" className="flex-1 px-2 py-1 border rounded" /><button type="button" onClick={()=>removeFinishRow(idx)}><Trash2 size={16} className="text-red-400"/></button></div>))}</div>
-            </div>
-        </div>
-
-        {/* 9. Gallery */}
+        {/* 10. Gallery */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <h3 className="font-bold mb-4">Product Gallery</h3>
             <div className="flex flex-wrap gap-4">
