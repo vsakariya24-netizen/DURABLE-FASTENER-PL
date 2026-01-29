@@ -6,12 +6,11 @@ import {
   ChevronRight, ShoppingCart, Loader2, Share2, Printer, 
   Ruler, Maximize2, Info, X,
   ArrowRight, Lock, Activity, FileCheck, Layers, Hash,
-  ShieldCheck
+  ShieldCheck, Box, Tag, Settings, Component
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MagicZoomClone from '../components/MagicZoomClone'; 
 import { Helmet } from 'react-helmet-async';
-
 
 const { useParams, Link } = ReactRouterDOM;
 
@@ -21,12 +20,12 @@ const THEME = {
   sectionBg: "bg-neutral-50",
   textPrimary: "text-neutral-900",     
   textSecondary: "text-neutral-700",  
-  textMuted: "text-neutral-500",       
+  textMuted: "text-neutral-500",        
   accent: "bg-yellow-500",            
   accentHover: "hover:bg-yellow-400",
   accentText: "text-yellow-700",
   accentBorder: "border-yellow-500",
-  border: "border-neutral-200",       
+  border: "border-neutral-200",        
   surface: "bg-white shadow-sm",
 };
 
@@ -34,15 +33,6 @@ const THEME = {
 const fontHeading = { fontFamily: '"Oswald", sans-serif', letterSpacing: '0.03em' };
 const fontBody = { fontFamily: '"Roboto", sans-serif' };
 const fontMono = { fontFamily: '"Roboto Mono", monospace' };
-
-const getAppIcon = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes('wood')) return Hammer;
-    if (n.includes('furniture')) return Armchair;
-    if (n.includes('metal') || n.includes('framing')) return Grid;
-    if (n.includes('gypsum') || n.includes('pop')) return Layers;
-    return Wrench;
-  };
 
 const blueprintGridStyleLight = {
   backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px)',
@@ -89,6 +79,8 @@ const ProductDetail: React.FC = () => {
   // States
   const [selectedDia, setSelectedDia] = useState<string>('');
   const [selectedLen, setSelectedLen] = useState<string>('');
+  const [selectedUnit, setSelectedUnit] = useState<string>('mm'); // New State for Unit
+  const [selectedType, setSelectedType] = useState<string>(''); 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeImageOverride, setActiveImageOverride] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -138,37 +130,134 @@ const ProductDetail: React.FC = () => {
     fetchProduct();
   }, [slug]);
 
+  // --- DERIVED DATA ---
+
   const uniqueDiameters = useMemo(() => {
       if (!product?.variants) return [];
       const dias = new Set(product.variants.map((v: any) => v.diameter).filter(Boolean));
       return Array.from(dias).sort((a:any,b:any) => parseFloat(a)-parseFloat(b)); 
   }, [product]);
 
-  const availableLengths = useMemo(() => {
+  // Updated to include Unit logic
+  const availableLengthOptions = useMemo(() => {
       if (!product?.variants || !selectedDia) return [];
-      const rawLengths = product.variants.filter((v: any) => v.diameter === selectedDia).map((v: any) => v.length).filter(Boolean);
-      const flatLengths = new Set<string>();
-      rawLengths.forEach((len: string) => {
-        if (len.includes(',')) len.split(',').map(l => l.trim()).forEach(l => flatLengths.add(l));
-        else flatLengths.add(len);
+      // Filter by selected Diameter
+      const filteredVariants = product.variants.filter((v: any) => v.diameter === selectedDia);
+      
+      const lengthMap = new Map();
+
+      filteredVariants.forEach((v: any) => {
+          if (v.length) {
+              const u = v.unit || 'mm'; // Default to mm if not present
+              // Split if CSV (legacy support), though normally it's one row per variant
+              if (v.length.includes(',')) {
+                 v.length.split(',').map((l: string) => l.trim()).forEach((l: string) => {
+                     const key = `${l}_${u}`;
+                     if (!lengthMap.has(key)) lengthMap.set(key, { value: l, unit: u });
+                 });
+              } else {
+                 const key = `${v.length}_${u}`;
+                 if (!lengthMap.has(key)) lengthMap.set(key, { value: v.length, unit: u });
+              }
+          }
       });
-      return Array.from(flatLengths).sort((a: any, b: any) => parseInt(a) - parseInt(b)); 
+      
+      // Sort logic (numeric sort based on value)
+      return Array.from(lengthMap.values()).sort((a, b) => parseFloat(a.value) - parseFloat(b.value));
   }, [product, selectedDia]);
 
+  // Set default length AND unit when available lengths change
   useEffect(() => {
-      if (availableLengths.length > 0 && !availableLengths.includes(selectedLen)) setSelectedLen(availableLengths[0]);
-      else if (availableLengths.length === 0) setSelectedLen('');
-  }, [selectedDia, availableLengths]);
+      if (availableLengthOptions.length > 0) {
+          // Check if current selection is still valid
+          const currentIsValid = availableLengthOptions.some(opt => opt.value === selectedLen && opt.unit === selectedUnit);
+          
+          if (!currentIsValid) {
+             setSelectedLen(availableLengthOptions[0].value);
+             setSelectedUnit(availableLengthOptions[0].unit);
+          }
+      } else {
+          setSelectedLen('');
+          setSelectedUnit('mm');
+      }
+  }, [selectedDia, availableLengthOptions]);
 
   const availableFinishes = useMemo(() => {
       if (!product?.variants) return [];
-      const relevantVariants = product.variants.filter((v: any) => v.diameter === selectedDia && (v.length === selectedLen || (v.length && v.length.includes(selectedLen))));
+      const relevantVariants = product.variants.filter((v: any) => 
+         v.diameter === selectedDia && 
+         (v.length === selectedLen || (v.length && v.length.includes(selectedLen))) &&
+         (v.unit || 'mm') === selectedUnit // Ensure unit matches
+      );
       return Array.from(new Set(relevantVariants.map((v: any) => v.finish).filter(Boolean)));
-  }, [product, selectedDia, selectedLen]);
+  }, [product, selectedDia, selectedLen, selectedUnit]);
+
+  const availableTypes = useMemo(() => {
+      if (!product?.variants) return [];
+      // Filter based on currently selected Diameter, Length AND Unit
+      const relevantVariants = product.variants.filter((v: any) => 
+        v.diameter === selectedDia && 
+        (v.length === selectedLen || (v.length && v.length.includes(selectedLen))) &&
+        (v.unit || 'mm') === selectedUnit
+      );
+      // Extract unique types
+      return Array.from(new Set(relevantVariants.map((v: any) => v.type).filter(Boolean)));
+  }, [product, selectedDia, selectedLen, selectedUnit]);
 
   const handleFinishClick = (finish: string) => {
-      if (product.finish_images && product.finish_images[finish]) { setActiveImageOverride(product.finish_images[finish]); setSelectedImageIndex(0); } 
-      else { setActiveImageOverride(null); }
+      let imageToUse = null;
+
+      // 1. Check Parent Map
+      if (product.finish_images && product.finish_images[finish]) {
+          imageToUse = product.finish_images[finish];
+      } 
+      
+      // 2. Fallback: Check Variant Data
+      if (!imageToUse && product.variants) {
+          const variantMatch = product.variants.find((v: any) => v.finish === finish && v.image);
+          if (variantMatch) imageToUse = variantMatch.image;
+      }
+
+      if (imageToUse) { 
+        setActiveImageOverride(imageToUse); 
+        setSelectedImageIndex(0); 
+      } else { 
+        setActiveImageOverride(null); 
+      }
+  };
+
+  const handleTypeClick = (type: string) => {
+      setSelectedType(type);
+      let imageToUse = null;
+
+      // 1. Try to fetch Type Image from DB map
+      if (product.type_images && product.type_images[type]) { 
+        imageToUse = product.type_images[type];
+      } 
+      
+      // 2. Fallback: Try to fetch from specific Variant
+      if (!imageToUse && product.variants) {
+         const matchingVariant = product.variants.find((v: any) => 
+             v.type === type && 
+             v.diameter === selectedDia && 
+             (v.image && v.image !== "")
+         );
+         
+         const genericTypeMatch = !matchingVariant 
+           ? product.variants.find((v: any) => v.type === type && v.image)
+           : matchingVariant;
+
+         if (genericTypeMatch) {
+             imageToUse = genericTypeMatch.image;
+         }
+      }
+
+      if (imageToUse) {
+        setActiveImageOverride(imageToUse);
+        setSelectedImageIndex(0);
+      } else {
+        setActiveImageOverride(null);
+      }
   };
 
   const displayImages = useMemo(() => {
@@ -187,120 +276,20 @@ const ProductDetail: React.FC = () => {
   const displayHeadType = product.head_type ? product.head_type.replace(/Buggel/gi, 'Bugle') : '';
 
   return (
-    // Padding Top Adjustments:
-    // pt-[140px] for Mobile (Nav 96px + Breadcrumb ~44px)
-    // pt-[200px] for Desktop (Nav 140px + Breadcrumb ~60px)
     <div className={`${THEME.bg} min-h-screen pb-24 pt-[140px] md:pt-[200px] selection:bg-yellow-500/30 selection:text-black`} style={fontBody}>
       <Helmet>
-        {/* 1. Dynamic Title & Description */}
         <title>{product ? `${product.name} Manufacturer | Durable Fastener Rajkot` : 'Product Details'}</title>
-        <meta 
-          name="description" 
-          content={product ? `Buy ${product.name} directly from factory. ISO certified ${product.category || 'Fastener'} manufacturer in Rajkot, Gujarat. Check specifications and bulk pricing.` : 'Product details'} 
-        />
-
-        {/* 2. PRODUCT SCHEMA (SEO & AEO) */}
-        <script type="application/ld+json">
-          {`
-            {
-              "@context": "https://schema.org/",
-              "@type": "Product",
-              "name": "${product.name}",
-              "image": "${displayImages[0] || 'https://durablefastener.com/default-product.jpg'}",
-              "description": "${(product.description || product.short_description || '').replace(/"/g, '\\"')}",
-              "brand": {
-                "@type": "Brand",
-                "name": "Durable Fastener"
-              },
-              "sku": "${product.id}",
-              "mpn": "${product.slug}",
-              "category": "${product.category || 'Industrial Fasteners'}",
-              "manufacturer": {
-                "@type": "Organization",
-                "name": "Durable Fastener Pvt Ltd",
-                "url": "https://durablefastener.com",
-                "logo": "https://durablefastener.com/durablefastener.png",
-                "contactPoint": {
-                  "@type": "ContactPoint",
-                  "telephone": "+91 87587 00709",
-                  "contactType": "sales"
-                },
-                "address": {
-                   "@type": "PostalAddress",
-                   "addressLocality": "Rajkot",
-                   "addressRegion": "Gujarat",
-                   "addressCountry": "IN"
-                }
-              },
-              "offers": {
-                "@type": "Offer",
-                "url": "https://durablefastener.com/product/${product.slug}",
-                "priceCurrency": "INR",
-                "availability": "https://schema.org/InStock",
-                "itemCondition": "https://schema.org/NewCondition",
-                "price": "0", 
-                "priceValidUntil": "2026-12-31",
-                "seller": {
-                  "@type": "Organization",
-                  "name": "Durable Fastener Pvt Ltd"
-                }
-              }
-            }
-          `}
-        </script>
-
-        {/* 3. BREADCRUMB SCHEMA */}
-        <script type="application/ld+json">
-          {`
-            {
-              "@context": "https://schema.org",
-              "@type": "BreadcrumbList",
-              "itemListElement": [
-                {
-                  "@type": "ListItem",
-                  "position": 1,
-                  "name": "Home",
-                  "item": "https://durablefastener.com"
-                },
-                {
-                  "@type": "ListItem",
-                  "position": 2,
-                  "name": "Products",
-                  "item": "https://durablefastener.com/products"
-                },
-                {
-                  "@type": "ListItem",
-                  "position": 3,
-                  "name": "${product.name}"
-                }
-              ]
-            }
-          `}
-        </script>
+        <meta name="description" content={product ? `Buy ${product.name} directly from factory. ISO certified ${product.category || 'Fastener'} manufacturer in Rajkot, Gujarat. Check specifications and bulk pricing.` : 'Product details'} />
       </Helmet>
-      {/* ✅ FIX 1: DARK THEME BREADCRUMB */}
-      {/* Color change (bg-neutral-900) ensures visual separation from Navbar */}
+      
     <div className="fixed top-[80px] md:top-[140px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md transition-all duration-300">
-  <div className="max-w-7xl mx-auto px-5 py-10"> {/* Reduced py-3 to py-2.5 for sleek look */}
+  <div className="max-w-7xl mx-auto px-5 py-2.5"> 
     <nav className="flex items-center gap-2 text-[13px] md:text-[14px] font-medium tracking-wide">
-      {/* Home Link */}
-      <Link to="/" className="text-neutral-400 hover:text-white transition-colors flex items-center gap-1">
-        Home
-      </Link>
-      
+      <Link to="/" className="text-neutral-400 hover:text-white transition-colors flex items-center gap-1">Home</Link>
       <ChevronRight size={12} className="text-neutral-600" />
-      
-      {/* Products Link */}
-      <Link to="/products" className="text-neutral-400 hover:text-white transition-colors">
-        Products
-      </Link>
-      
+      <Link to="/products" className="text-neutral-400 hover:text-white transition-colors">Products</Link>
       <ChevronRight size={12} className="text-neutral-600" />
-      
-      {/* Active Page Name */}
-      <span className="text-yellow-500 font-bold uppercase tracking-wider text-xs md:text-sm truncate max-w-[180px] md:max-w-none">
-        {product.name}
-      </span>
+      <span className="text-yellow-500 font-bold uppercase tracking-wider text-xs md:text-sm truncate max-w-[180px] md:max-w-none">{product.name}</span>
     </nav>
   </div>
   </div>
@@ -361,32 +350,25 @@ const ProductDetail: React.FC = () => {
                   </div>
 
                   {/* Main Viewer */}
-                 <div className="flex-1 relative flex items-center justify-center h-[400px] md:h-full overflow-visible group">
-  <AnimatePresence mode='wait'>
-    <motion.div 
-        key={currentImage} 
-        initial={{ opacity: 0, scale: 0.9 }} 
-        animate={{ opacity: 1, scale: 1 }} 
-        className="w-full h-full flex items-center justify-center relative z-10 p-8"
-    >
-        <MagicZoomClone 
-            src={currentImage} 
-            zoomSrc={currentImage} 
-            alt={product.name} 
-            zoomLevel={2.5} 
-            glassSize={isMobile ? 120 : 200} 
-            /* IMAGE RENDERING FIX: 
-               - 'drop-shadow' screw ki shape par shadow dega
-               - 'image-render-auto' quality maintain rakhega
-            */
-           
-           className="max-h-full max-w-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] contrast-[1.05] brightness-[1.02] product-image-sharp" 
-
-           
-        />
-    </motion.div>
-  </AnimatePresence>
-</div>
+                  <div className="flex-1 relative flex items-center justify-center h-[400px] md:h-full overflow-visible group">
+                  <AnimatePresence mode='wait'>
+                    <motion.div 
+                        key={currentImage} 
+                        initial={{ opacity: 0, scale: 0.9 }} 
+                        animate={{ opacity: 1, scale: 1 }} 
+                        className="w-full h-full flex items-center justify-center relative z-10 p-8"
+                    >
+                        <MagicZoomClone 
+                            src={currentImage} 
+                            zoomSrc={currentImage} 
+                            alt={product.name} 
+                            zoomLevel={2.5} 
+                            glassSize={isMobile ? 120 : 200} 
+                           className="max-h-full max-w-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] contrast-[1.05] brightness-[1.02] product-image-sharp" 
+                        />
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
               </motion.div>
           </div>
           {/* --- RIGHT COLUMN: Configurator --- */}
@@ -425,74 +407,76 @@ const ProductDetail: React.FC = () => {
                     {/* LENGTH SELECTION */}
                     <div className="mb-8">
                       <div className="flex justify-between items-end mb-4 border-b border-neutral-100 pb-2">
-                        <SectionHeader icon={Maximize2} title="Select Length (mm)" />
+                        {/* UPDATE: Added Unit to Title (e.g., SELECT LENGTH (MM)) */}
+                        <SectionHeader icon={Maximize2} title={`Select Length (${selectedUnit})`} />
                         <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
-                            {selectedLen ? selectedLen : '--'}<span className="text-sm text-neutral-400 ml-1 font-sans font-medium">mm</span>
+                            {selectedLen ? selectedLen : '--'}<span className="text-sm text-neutral-400 ml-1 font-sans font-medium">{selectedUnit}</span>
                         </span>
                       </div>
                       
                       {/* RULER VISUALIZATION */}
                       <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-5 relative overflow-hidden">
-                        
-                        {/* Faint Background Grid */}
-                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
+                          <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
                            backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)',
                            backgroundSize: '12px 12px'
-                         }}></div>
+                          }}></div>
 
-                         <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
-                             {availableLengths.length > 0 ? availableLengths.map((len: any) => {
-                                 const isSelected = selectedLen === len;
-                                 
-                                 return (
+                          <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
+                             {availableLengthOptions.length > 0 ? availableLengthOptions.map((opt: any, idx: number) => {
+                                  // Determine selection based on BOTH value and unit
+                                  const isSelected = selectedLen === opt.value && selectedUnit === opt.unit;
+                                  return (
                                      <button 
-                                       key={len} 
-                                       onClick={() => setSelectedLen(len)} 
-                                       className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
+                                        key={idx} 
+                                        onClick={() => {
+                                            setSelectedLen(opt.value);
+                                            setSelectedUnit(opt.unit);
+                                        }} 
+                                        className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
                                      >
-                                         {/* Number Label */}
-                                         <span className={`
-                                           font-mono transition-all duration-200 whitespace-nowrap block
-                                           ${isSelected 
-                                               ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110' 
-                                               : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900 group-hover:font-bold'}
-                                         `}>
-                                             {parseInt(len)}
-                                         </span>
-                                         
-                                         {/* The Ruler Bar */}
-                                         <div className={`
-                                           w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ease-out relative
-                                           ${isSelected 
-                                               ? 'h-full bg-yellow-500 shadow-md' 
-                                               : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'}
-                                         `}>
-                                         </div>
-                                         
-                                         {/* Bottom baseline marker */}
-                                         <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10"></div>
+                                            <span className={`
+                                              font-mono transition-all duration-200 whitespace-nowrap block
+                                              ${isSelected 
+                                                  ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110' 
+                                                  : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900 group-hover:font-bold'}
+                                            `}>
+                                                {/* FIX: Changed parseInt to parseFloat to allow decimals like 2.5 */}
+                                                {parseFloat(opt.value)}
+                                                
+                                                {/* Optionally show unit on hover or small text */}
+                                                {opt.unit !== 'mm' && <span className="text-[9px] block text-center">{opt.unit}</span>}
+                                            </span>
+                                            <div className={`
+                                              w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ease-out relative
+                                              ${isSelected 
+                                                  ? 'h-full bg-yellow-500 shadow-md' 
+                                                  : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'}
+                                            `}>
+                                            </div>
+                                            <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10"></div>
                                      </button>
-                                 )
+                                  )
                              }) : (
                                 <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm italic">
                                     Select Diameter to view lengths
                                 </div>
                              )}
-                         </div>
+                          </div>
                       </div>
                     </div>
 
                     {/* FINISH SELECTION */}
-                    <div>
+                    <div className="mb-8">
                       <SectionHeader icon={Layers} title="Surface Finish" />
-                      <div className="flex flex-wrap gap-2">
+                      {availableFinishes.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
                           {availableFinishes.map((finish: any) => (
                              <button 
                                 key={finish} 
                                 onClick={() => handleFinishClick(finish)} 
                                 className={`
                                   px-5 py-2.5 text-[14px] font-medium uppercase tracking-wide border rounded-md transition-all
-                                  ${activeImageOverride === product.finish_images?.[finish] 
+                                  ${activeImageOverride === (product.finish_images?.[finish]) || (product.variants?.find((v:any) => v.finish===finish && v.image===activeImageOverride))
                                     ? 'border-yellow-500 text-neutral-900 bg-yellow-400 shadow-sm font-bold' 
                                     : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-400 hover:text-neutral-900 hover:bg-white'}
                                 `}
@@ -501,8 +485,36 @@ const ProductDetail: React.FC = () => {
                                   {finish}
                              </button>
                           ))}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-neutral-400 italic">Select Diameter & Length to see finishes</div>
+                      )}
                     </div>
+
+                    {/* --- PRODUCT TYPE SELECTION --- */}
+                    {availableTypes.length > 0 && (
+                      <div>
+                        <SectionHeader icon={Tag} title="Product Type" />
+                        <div className="flex flex-wrap gap-2">
+                            {availableTypes.map((type: any) => (
+                               <button 
+                                  key={type} 
+                                  onClick={() => handleTypeClick(type)} 
+                                  className={`
+                                    px-5 py-2.5 text-[14px] font-medium uppercase tracking-wide border rounded-md transition-all
+                                    ${selectedType === type 
+                                      ? 'border-yellow-500 text-neutral-900 bg-yellow-400 shadow-sm font-bold' 
+                                      : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-400 hover:text-neutral-900 hover:bg-white'}
+                                  `}
+                                  style={fontHeading}
+                               >
+                                    {type}
+                               </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
                 </motion.div>
                 </motion.div>
 
@@ -515,26 +527,49 @@ const ProductDetail: React.FC = () => {
 
                   <div className="p-6 flex flex-col gap-0 divide-y divide-neutral-100">
                     
+                    {/* --- NEW MATERIAL CARD LAYOUT (MATCHING IMAGE) --- */}
                     {displayMaterial && (
-                      <div className="flex flex-row justify-between py-4 first:pt-0">
-                        <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[100px] pt-1">Material</span>
-                        <div className="flex flex-col text-right gap-1">
-                          {displayMaterial.split(/\|/g).map((mat: string, idx: number) => (
-                            <div key={idx} className="flex flex-col sm:flex-row sm:justify-end sm:items-center gap-2">
-                                <span className={`text-base font-bold text-neutral-900`}>{mat.split('(')[0].trim()}</span>
-                                {mat.includes('(') && (
-                                  <span className="text-[11px] text-neutral-700 font-bold font-mono bg-neutral-100 px-2 py-1 rounded border border-neutral-200">
-                                    {mat.split('(')[1].replace(')', '')}
-                                  </span>
-                                )}
-                            </div>
-                          ))}
-                        </div>
+                      <div className="pb-8 mb-2">
+                         <h4 className="text-center text-sm font-bold uppercase tracking-widest text-neutral-800 mb-5" style={fontHeading}>Material Specifications</h4>
+                         
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {displayMaterial.split(/\|/g).map((mat: string, idx: number) => {
+                                // Parsing logic: "Mild Steel (Grade C1022)" -> Name: Mild Steel, Grade: Grade C1022
+                                const parts = mat.split('(');
+                                const name = parts[0].trim();
+                                let grade = parts.length > 1 ? parts[1].replace(')', '').trim() : '';
+                                // Clean up "Grade" word repetition if exists
+                                if(grade.toLowerCase().startsWith('grade')) {
+                                   grade = "Grade " + grade.substring(5).trim();
+                                } else if (grade) {
+                                   grade = "Grade " + grade;
+                                }
+
+                                // Icon Selection Logic
+                                let Icon = Component;
+                                if (name.toLowerCase().includes('mild') || name.toLowerCase().includes('steel')) Icon = Settings; // Gear icon for Mild Steel
+                                if (name.toLowerCase().includes('stainless') || name.toLowerCase().includes('ss')) Icon = Layers; // Layers/Beam for SS
+
+                                return (
+                                  <div key={idx} className="bg-white border border-neutral-200 rounded-xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow flex flex-col">
+                                      <div className="flex items-center gap-3 mb-3 pb-3 border-b border-neutral-100">
+                                          <Icon className="text-neutral-400" size={20} />
+                                          <span className="text-base font-bold text-neutral-900" style={fontBody}>{name}</span>
+                                      </div>
+                                      <div className="mt-auto">
+                                         <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Grades:</span>
+                                         <span className="text-sm font-medium text-neutral-800 font-mono">{grade || 'Standard'}</span>
+                                      </div>
+                                  </div>
+                                );
+                            })}
+                         </div>
                       </div>
                     )}
+                    {/* --- END MATERIAL CARD LAYOUT --- */}
 
                     {displayHeadType && (
-                      <div className="flex flex-row justify-between py-4">
+                      <div className="flex flex-row justify-between py-4 border-t border-neutral-100">
                         <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[100px] pt-1">Head Type</span>
                         <span className={`text-base font-semibold text-neutral-900 text-right`}>{displayHeadType}</span>
                       </div>
@@ -544,6 +579,13 @@ const ProductDetail: React.FC = () => {
                       <div className="flex flex-row justify-between py-4">
                         <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[100px] pt-1">Drive</span>
                         <span className={`text-base font-semibold text-neutral-900 text-right`}>{product.drive_type}</span>
+                      </div>
+                    )}
+
+                    {selectedType && (
+                      <div className="flex flex-row justify-between py-4">
+                        <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[100px] pt-1">Type</span>
+                        <span className={`text-base font-semibold text-neutral-900 text-right`}>{selectedType}</span>
                       </div>
                     )}
 
@@ -570,7 +612,6 @@ const ProductDetail: React.FC = () => {
       </div>
       
       {/* --- TECHNICAL VAULT --- */}
-     {/* --- TECHNICAL VAULT --- */}
 <div className="bg-[#aaaaab] border-t border-neutral-300 relative z-20 overflow-hidden text-neutral-900">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
     {showDimensions && (
@@ -592,7 +633,7 @@ const ProductDetail: React.FC = () => {
             </h3>
           </div>
 
-          {/* Right: ISO Badge (Designed per image) */}
+          {/* Right: ISO Badge */}
          <div className="flex flex-wrap gap-4 mt-6">
   {product.certifications && product.certifications.length > 0 ? (
     product.certifications.map((cert: any, idx: number) => (
@@ -611,7 +652,6 @@ const ProductDetail: React.FC = () => {
       </div>
     ))
   ) : (
-    /* Fallback if nothing added */
     <div className="hidden"></div> 
   )}
 </div>
@@ -700,13 +740,13 @@ const ProductDetail: React.FC = () => {
                             <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>Symbol</th>
                             {uniqueDiameters.map((dia: any) => (
                                 <th key={dia} className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'}`} style={fontHeading}>
-                                     {dia}
+                                      {dia}
                                 </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100 text-sm font-mono">
-                         {product.dimensional_specifications?.map((dim: any, idx: number) => (
+                          {product.dimensional_specifications?.map((dim: any, idx: number) => (
                             <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
                                     <td className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 transition-colors border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]" style={fontHeading}>
                                       {dim.label}
@@ -725,7 +765,7 @@ const ProductDetail: React.FC = () => {
                                         )
                                     })}
                             </tr>
-                         ))}
+                          ))}
                     </tbody>
                 </table>
             </div>
@@ -735,8 +775,7 @@ const ProductDetail: React.FC = () => {
   </div>
 </div>
       {/* --- APPLICATIONS --- */}
-      {/* --- UNIQUE INDUSTRIAL STAGE: APPLICATIONS --- */}
-{product.applications && product.applications.length > 0 && (
+      {product.applications && product.applications.length > 0 && (
   <section className={`py-32 ${THEME.bg} overflow-hidden border-t border-neutral-300`}>
     <div className="max-w-7xl mx-auto px-4">
       
@@ -762,7 +801,7 @@ const ProductDetail: React.FC = () => {
             return (
               <motion.div
                 key={idx}
-                onMouseEnter={() => setSelectedImageIndex(idx)} // Using your existing index state to drive the stage
+                onMouseEnter={() => setSelectedImageIndex(idx)} 
                 className={`group flex items-center gap-6 p-6 rounded-xl border transition-all duration-500 cursor-pointer 
                   ${selectedImageIndex === idx 
                     ? 'bg-neutral-900 border-neutral-900 shadow-2xl translate-x-4' 
@@ -827,30 +866,13 @@ const ProductDetail: React.FC = () => {
                       }}
                     />
 
-                    {/* DYNAMIC MEASUREMENT TAGS (Hotspots) */}
-                    <div className="absolute top-[20%] left-[30%] z-20">
-                       <div className="w-3 h-3 bg-yellow-500 rounded-full animate-ping absolute"></div>
-                       <div className="w-3 h-3 bg-yellow-500 rounded-full relative"></div>
-                       <div className="absolute left-6 top-0 bg-black/80 backdrop-blur px-3 py-1 border border-yellow-500/50 rounded whitespace-nowrap">
-                          
-                       </div>
-                    </div>
-
-                    <div className="absolute bottom-[40%] right-[25%] z-20">
-                       <div className="w-3 h-3 bg-yellow-500 rounded-full animate-ping absolute"></div>
-                       <div className="w-3 h-3 bg-yellow-500 rounded-full relative"></div>
-                       <div className="absolute left-6 top-0 bg-black/80 backdrop-blur px-3 py-1 border border-yellow-500/50 rounded whitespace-nowrap">
-                         
-                       </div>
-                    </div>
-
                     {/* Gradient & Labels */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                     
                     <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end">
                       <div className="space-y-1">
-                         <p className="text-yellow-500 font-mono text-xs uppercase tracking-widest font-bold">Standard Optimized</p>
-                         <h5 className="text-3xl font-bold text-white uppercase tracking-tight" style={fontHeading}>{typeof app === 'string' ? app : app.name}</h5>
+                          <p className="text-yellow-500 font-mono text-xs uppercase tracking-widest font-bold">Standard Optimized</p>
+                          <h5 className="text-3xl font-bold text-white uppercase tracking-tight" style={fontHeading}>{typeof app === 'string' ? app : app.name}</h5>
                       </div>
                       <Link 
                         to={`/applications/${(typeof app === 'string' ? app : app.name).toLowerCase().replace(/\s+/g, '-')}`}

@@ -6,7 +6,7 @@ import {
   X, Check, Ruler, Image as ImageIcon,
   LayoutGrid, Settings, Hammer, Plus, Info,
   Search, ListPlus, Activity, ShieldCheck,
-  Palette, Box, Tag, Layers
+  Palette, Box, Tag, Layers, Type as TypeIcon
 } from 'lucide-react';
 
 // --- TYPES ---
@@ -35,10 +35,11 @@ type SizeImageItem = {
   loading: boolean;
 };
 
-// --- NEW VARIANT TYPES ---
+// --- VARIANT TYPES (FITTING STYLE) ---
 type VariantFinish = {
     id: string; 
     name: string;
+    type: string;
     image: string;
     loading: boolean;
 };
@@ -48,6 +49,15 @@ type VariantGroup = {
     sizeLabel: string; 
     finishes: VariantFinish[];
 };
+
+// --- VARIANT TYPES (FASTENER STYLE) ---
+type FastenerSize = { 
+  diameter: string; 
+  length: string; 
+  unit: 'mm' | 'inch'; // Unit Selection
+};
+type FastenerFinish = { name: string; image: string; loading: boolean };
+type FastenerType = { name: string; image: string; loading: boolean }; 
 
 // --- CONSTANTS ---
 const HEAD_TYPES = ["Bugle Head", "Countersunk (CSK)", "Pan Head", "Wafer Head"];
@@ -74,13 +84,17 @@ const AddProduct: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState<CategoryStructure[]>([]);
-
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([{ name: '', grades: '' }]);
 
-  // --- NEW VARIANT STATE (Connected Size & Finish) ---
+  // --- STATE: FITTING VARIANT ---
   const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
 
-  // --- SIZE IMAGES STATE (Buttons) ---
+  // --- STATE: FASTENER VARIANT ---
+  const [fastenerSizes, setFastenerSizes] = useState<FastenerSize[]>([{ diameter: '', length: '', unit: 'mm' }]);
+  const [fastenerFinishes, setFastenerFinishes] = useState<FastenerFinish[]>([{ name: '', image: '', loading: false }]);
+  const [fastenerTypes, setFastenerTypes] = useState<FastenerType[]>([{ name: '', image: '', loading: false }]); 
+
+  // --- SIZE IMAGES STATE ---
   const [sizeImages, setSizeImages] = useState<SizeImageItem[]>([
     { labels: 'M1,M2,M3', name: 'WHITE', image: '', loading: false }
   ]);
@@ -123,6 +137,7 @@ const AddProduct: React.FC = () => {
   const [isAddingPerf, setIsAddingPerf] = useState(false);
   const [newPerfName, setNewPerfName] = useState('');
 
+  // --- CATEGORY DETECTION ---
   const isFittingCategory = useMemo(() => {
     const cat = formData.category?.toLowerCase() || '';
     const sub = formData.sub_category?.toLowerCase() || '';
@@ -132,6 +147,8 @@ const AddProduct: React.FC = () => {
         sub.includes('fitting') || sub.includes('channel')
     );
   }, [formData.category, formData.sub_category]);
+
+  const isFastenerCategory = !isFittingCategory;
 
   // --- 1. INITIAL FETCH ---
   useEffect(() => {
@@ -156,7 +173,6 @@ const AddProduct: React.FC = () => {
         if (error) { console.error(error); return; }
 
         if (product) {
-          // Parse Apps
           let loadedApps: AppItem[] = [];
           if (Array.isArray(product.applications)) {
              loadedApps = product.applications.map((app: any) => {
@@ -165,7 +181,6 @@ const AddProduct: React.FC = () => {
              });
           }
 
-          // Parse Material
           let parsedRows: MaterialRow[] = [{ name: '', grades: '' }];
           if (product.material) {
              const smartSplitRegex = /\s*\|\s*(?![^()]*\))/g;
@@ -179,7 +194,6 @@ const AddProduct: React.FC = () => {
           }
           setMaterialRows(parsedRows.length > 0 ? parsedRows : [{ name: '', grades: '' }]);
 
-          // Load Size Images (Buttons)
           if (product.size_images && Array.isArray(product.size_images)) {
               const formattedSizeImages = product.size_images.map((si: any) => ({
                   labels: si.labels || '',
@@ -191,9 +205,7 @@ const AddProduct: React.FC = () => {
           }
 
           const specs = Array.isArray(product.specifications) ? product.specifications : [];
-          
           setExpertData({ seo_keywords: specs.find((s:any) => s.key === 'seo_keywords')?.value || '' });
-          
           setFittingExtras({
             colors: specs.find((s:any) => s.key === 'Available Colors')?.value || '',
             general_names: specs.find((s:any) => s.key === 'General Names')?.value || '',
@@ -271,45 +283,90 @@ const AddProduct: React.FC = () => {
             certifications: parsedCerts
           });
 
-          // --- RECONSTRUCT CONNECTED VARIANTS ---
+          // --- RECONSTRUCT VARIANTS ---
           const { data: variantData } = await supabase.from('product_variants').select('*').eq('product_id', id);
-          const finishImagesMap = product.finish_images || {};
+          
+          const catName = product.category?.toLowerCase() || '';
+          const isFitting = catName.includes('fitting') || catName.includes('handle') || catName.includes('hardware');
 
           if (variantData && variantData.length > 0) {
-             const grouped: Record<string, VariantFinish[]> = {};
-             
-             variantData.forEach((v: any) => {
-                 const sizeKey = v.diameter || v.length || "Standard"; 
-                 if (!grouped[sizeKey]) grouped[sizeKey] = [];
-                 
-                 if (v.finish) {
-                     // Check v.image first (new way), then map (legacy way)
-                     const savedImage = v.image ? v.image : (finishImagesMap[v.finish] || '');
-                     grouped[sizeKey].push({
-                         id: Math.random().toString(36).substr(2, 9),
-                         name: v.finish,
-                         image: savedImage, 
-                         loading: false
-                     });
-                 }
-             });
+            if (isFitting) {
+                // LOAD FITTING STYLE (Grouped)
+                const finishImagesMap = product.finish_images || {};
+                const grouped: Record<string, VariantFinish[]> = {};
+                variantData.forEach((v: any) => {
+                    const sizeKey = v.diameter || v.length || "Standard"; 
+                    if (!grouped[sizeKey]) grouped[sizeKey] = [];
+                    const savedImage = v.image ? v.image : (finishImagesMap[v.finish] || '');
+                    grouped[sizeKey].push({
+                        id: Math.random().toString(36).substr(2, 9),
+                        name: v.finish,
+                        type: v.type || '',
+                        image: savedImage, 
+                        loading: false
+                    });
+                });
+                const reconstructedGroups: VariantGroup[] = Object.keys(grouped).map(sizeLabel => ({
+                    id: Math.random().toString(36).substr(2, 9),
+                    sizeLabel: sizeLabel,
+                    finishes: grouped[sizeLabel]
+                }));
+                setVariantGroups(reconstructedGroups);
+            } else {
+                // LOAD FASTENER STYLE (Split)
+                // 1. Sizes
+                const uniqueSizesMap = new Map();
+                variantData.forEach((v: any) => {
+                    const key = `${v.diameter}|${v.length}`;
+                    if(!uniqueSizesMap.has(key) && (v.diameter || v.length)) {
+                        uniqueSizesMap.set(key, { 
+                            diameter: v.diameter, 
+                            length: v.length,
+                            unit: v.unit || 'mm' // Load unit from DB
+                        });
+                    }
+                });
+                setFastenerSizes(Array.from(uniqueSizesMap.values()));
 
-             const reconstructedGroups: VariantGroup[] = Object.keys(grouped).map(sizeLabel => ({
-                 id: Math.random().toString(36).substr(2, 9),
-                 sizeLabel: sizeLabel,
-                 finishes: grouped[sizeLabel]
-             }));
-             
-             setVariantGroups(reconstructedGroups);
+                // 2. Finishes
+                const uniqueFinishesMap = new Map();
+                variantData.forEach((v: any) => {
+                    if(v.finish && !uniqueFinishesMap.has(v.finish)) {
+                        uniqueFinishesMap.set(v.finish, { name: v.finish, image: v.image || '', loading: false });
+                    }
+                });
+                setFastenerFinishes(Array.from(uniqueFinishesMap.values()));
+
+                // 3. Types
+                const typeImagesMap = product.type_images || {};
+                const uniqueTypes = new Set<string>();
+                variantData.forEach((v: any) => { if(v.type) uniqueTypes.add(v.type); });
+                Object.keys(typeImagesMap).forEach(typeKey => { if(typeKey) uniqueTypes.add(typeKey); });
+
+                if(uniqueTypes.size > 0) {
+                   setFastenerTypes(Array.from(uniqueTypes).map(t => ({ 
+                       name: t,
+                       image: typeImagesMap[t] || '', 
+                       loading: false
+                   })));
+                } else {
+                   setFastenerTypes([{ name: '', image: '', loading: false }]);
+                }
+            }
           } else {
-             setVariantGroups([{ id: 'init', sizeLabel: '', finishes: [{id: 'f1', name: '', image: '', loading: false}] }]);
+             setVariantGroups([{ id: 'init', sizeLabel: '', finishes: [{id: 'f1', name: '', type: '', image: '', loading: false}] }]);
+             setFastenerSizes([{ diameter: '', length: '', unit: 'mm' }]);
+             setFastenerFinishes([{ name: '', image: '', loading: false }]);
+             setFastenerTypes([{ name: '', image: '', loading: false }]);
           }
         }
       };
       fetchProduct();
     } else {
-        // Init empty variant group for new product
-        setVariantGroups([{ id: 'init', sizeLabel: '', finishes: [{id: 'f1', name: '', image: '', loading: false}] }]);
+        setVariantGroups([{ id: 'init', sizeLabel: '', finishes: [{id: 'f1', name: '', type: '', image: '', loading: false}] }]);
+        setFastenerSizes([{ diameter: '', length: '', unit: 'mm' }]);
+        setFastenerFinishes([{ name: '', image: '', loading: false }]);
+        setFastenerTypes([{ name: '', image: '', loading: false }]);
     }
   }, [id, isEditMode]);
 
@@ -326,7 +383,7 @@ const AddProduct: React.FC = () => {
     setFormData(prev => ({ ...prev, material: combinedMaterials }));
   }, [materialRows]);
 
-  // --- HANDLERS (Generic) ---
+  // --- HANDLERS ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -338,108 +395,78 @@ const AddProduct: React.FC = () => {
   
   const handleFittingChange = (e: any) => setFittingExtras(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // --- VARIANT LOGIC (IMMUTABLE STATE HANDLERS) ---
+  // --- FITTING VARIANT LOGIC ---
   const addVariantGroup = () => {
-    setVariantGroups(prev => [
-      ...prev, 
-      { 
-        id: Math.random().toString(36).substr(2, 9), 
-        sizeLabel: '', 
-        finishes: [{ id: Math.random().toString(36).substr(2, 9), name: '', image: '', loading: false }] 
-      }
-    ]);
+    setVariantGroups(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), sizeLabel: '', finishes: [{ id: Math.random().toString(36).substr(2, 9), name: '', type: '', image: '', loading: false }] }]);
   };
-
-  const removeVariantGroup = (idx: number) => {
-    setVariantGroups(prev => prev.filter((_, i) => i !== idx));
-  };
-
+  const removeVariantGroup = (idx: number) => setVariantGroups(prev => prev.filter((_, i) => i !== idx));
   const updateGroupSize = (idx: number, val: string) => {
-    setVariantGroups(prev => {
-        const newGroups = [...prev];
-        newGroups[idx] = { ...newGroups[idx], sizeLabel: val };
-        return newGroups;
-    });
+    setVariantGroups(prev => { const n = [...prev]; n[idx] = { ...n[idx], sizeLabel: val }; return n; });
   };
-
   const addFinishToGroup = (groupIdx: number) => {
-    setVariantGroups(prev => {
-        const newGroups = [...prev];
-        newGroups[groupIdx] = {
-            ...newGroups[groupIdx],
-            finishes: [
-                ...newGroups[groupIdx].finishes,
-                { id: Math.random().toString(36).substr(2, 9), name: '', image: '', loading: false }
-            ]
-        };
-        return newGroups;
-    });
+    setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes.push({ id: Math.random().toString(36).substr(2, 9), name: '', type: '', image: '', loading: false }); return n; });
   };
-
   const removeFinishFromGroup = (groupIdx: number, finishIdx: number) => {
-    setVariantGroups(prev => {
-        const newGroups = [...prev];
-        newGroups[groupIdx] = {
-            ...newGroups[groupIdx],
-            finishes: newGroups[groupIdx].finishes.filter((_, i) => i !== finishIdx)
-        };
-        return newGroups;
-    });
+    setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes = n[groupIdx].finishes.filter((_, i) => i !== finishIdx); return n; });
   };
-
   const updateFinishName = (groupIdx: number, finishIdx: number, val: string) => {
-    setVariantGroups(prev => {
-        const newGroups = [...prev];
-        newGroups[groupIdx] = {
-            ...newGroups[groupIdx],
-            finishes: newGroups[groupIdx].finishes.map((f, i) => 
-                i === finishIdx ? { ...f, name: val } : f
-            )
-        };
-        return newGroups;
-    });
+    setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes[finishIdx].name = val; return n; });
   };
-
+  const updateFinishType = (groupIdx: number, finishIdx: number, val: string) => {
+    setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes[finishIdx].type = val; return n; });
+  };
   const handleFinishImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, groupIdx: number, finishIdx: number) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
-
-    setVariantGroups(prev => {
-      const newGroups = [...prev];
-      newGroups[groupIdx] = {
-        ...newGroups[groupIdx],
-        finishes: newGroups[groupIdx].finishes.map((f, i) => 
-          i === finishIdx ? { ...f, loading: true } : f
-        )
-      };
-      return newGroups;
-    });
-
+    setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes[finishIdx].loading = true; return n; });
     try {
       const url = await uploadFile(file, 'finishes');
-      setVariantGroups(prev => {
-        const newGroups = [...prev];
-        newGroups[groupIdx] = {
-          ...newGroups[groupIdx],
-          finishes: newGroups[groupIdx].finishes.map((f, i) => 
-            i === finishIdx ? { ...f, image: url, loading: false } : f
-          )
-        };
-        return newGroups;
-      });
-    } catch(err) { 
-      alert('Upload failed'); 
-      setVariantGroups(prev => {
-        const newGroups = [...prev];
-        newGroups[groupIdx] = {
-          ...newGroups[groupIdx],
-          finishes: newGroups[groupIdx].finishes.map((f, i) => 
-            i === finishIdx ? { ...f, loading: false } : f
-          )
-        };
-        return newGroups;
-      });
-    }
+      setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes[finishIdx].image = url; n[groupIdx].finishes[finishIdx].loading = false; return n; });
+    } catch(err) { alert('Upload failed'); }
+  };
+
+  // --- FASTENER VARIANT LOGIC ---
+  const addFastenerSize = () => setFastenerSizes([...fastenerSizes, { diameter: '', length: '', unit: 'mm' }]);
+  const removeFastenerSize = (idx: number) => setFastenerSizes(fastenerSizes.filter((_, i) => i !== idx));
+  const updateFastenerSize = (idx: number, field: keyof FastenerSize, val: string) => {
+    const newSizes = [...fastenerSizes];
+    // @ts-ignore
+    newSizes[idx] = { ...newSizes[idx], [field]: val };
+    setFastenerSizes(newSizes);
+  };
+
+  const addFastenerFinish = () => setFastenerFinishes([...fastenerFinishes, { name: '', image: '', loading: false }]);
+  const removeFastenerFinish = (idx: number) => setFastenerFinishes(fastenerFinishes.filter((_, i) => i !== idx));
+  const updateFastenerFinishName = (idx: number, val: string) => {
+      const newFinishes = [...fastenerFinishes]; newFinishes[idx].name = val; setFastenerFinishes(newFinishes);
+  };
+  const handleFastenerFinishUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+      if (!e.target.files?.[0]) return;
+      const newFinishes = [...fastenerFinishes]; newFinishes[idx].loading = true; setFastenerFinishes(newFinishes);
+      try {
+          const url = await uploadFile(e.target.files[0], 'finishes');
+          newFinishes[idx].image = url;
+      } catch(err) { alert('Upload failed'); }
+      newFinishes[idx].loading = false; setFastenerFinishes(newFinishes);
+  };
+
+  // --- FASTENER TYPES LOGIC ---
+  const addFastenerType = () => setFastenerTypes([...fastenerTypes, { name: '', image: '', loading: false }]);
+  
+  // *** ADDED REMOVE HANDLER HERE ***
+  const removeFastenerType = (idx: number) => setFastenerTypes(fastenerTypes.filter((_, i) => i !== idx));
+  
+  const updateFastenerType = (idx: number, val: string) => {
+      const newTypes = [...fastenerTypes]; newTypes[idx].name = val; setFastenerTypes(newTypes);
+  };
+  const handleFastenerTypeUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    if (!e.target.files?.[0]) return;
+    const newTypes = [...fastenerTypes]; newTypes[idx].loading = true; setFastenerTypes(newTypes);
+    try {
+        const url = await uploadFile(e.target.files[0], 'types');
+        newTypes[idx].image = url;
+    } catch(err) { alert('Upload failed'); }
+    newTypes[idx].loading = false; setFastenerTypes(newTypes);
   };
 
   // --- OTHER HANDLERS ---
@@ -539,10 +566,17 @@ const AddProduct: React.FC = () => {
   const updateAppName = (idx: number, val: string) => { const newApps = [...formData.applications]; newApps[idx].name = val; setFormData(p => ({ ...p, applications: newApps })); };
   const removeApp = (idx: number) => setFormData(p => ({ ...p, applications: p.applications.filter((_, i) => i !== idx) }));
 
-  // Helper for blueprint columns
-  const uniqueDiameters = Array.from(new Set<string>(
-    variantGroups.map(g => g.sizeLabel.trim()).filter(d => d !== '')
-  )).sort((a: string, b: string) => parseFloat(a) - parseFloat(b));
+  // --- HELPER FOR BLUEPRINT COLUMNS ---
+  const uniqueDiameters = useMemo(() => {
+    let rawList: string[] = [];
+    if (isFittingCategory) {
+        rawList = variantGroups.map(g => g.sizeLabel.trim());
+    } else {
+        rawList = fastenerSizes.map(s => s.diameter.trim());
+    }
+    return Array.from(new Set(rawList.filter(d => d !== ''))).sort((a, b) => parseFloat(a) - parseFloat(b));
+  }, [isFittingCategory, variantGroups, fastenerSizes]);
+
 
   // --- SUBMIT FUNCTION ---
   const handleSubmit = async (e: React.FormEvent) => {
@@ -551,22 +585,38 @@ const AddProduct: React.FC = () => {
 
     const finalSlug = formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     
-    // Build Finish Image Map (Backward compatibility)
+    // Build Finish Image Map
     const finishImageMap: Record<string, string> = {};
-    variantGroups.forEach(group => {
-        group.finishes.forEach(finish => {
-            if(finish.name.trim() !== '' && finish.image !== '') {
-                finishImageMap[finish.name.trim()] = finish.image; 
-            }
+    if (isFittingCategory) {
+        variantGroups.forEach(group => {
+            group.finishes.forEach(finish => {
+                if(finish.name.trim() !== '' && finish.image !== '') finishImageMap[finish.name.trim()] = finish.image; 
+            });
         });
-    });
+    } else {
+        fastenerFinishes.forEach(f => {
+            if(f.name.trim() !== '' && f.image !== '') finishImageMap[f.name.trim()] = f.image;
+        });
+    }
 
-    const cleanedSizeImages = sizeImages
-      .filter(si => si.labels.trim() !== '' || si.image !== '')
-      .map(({ loading, ...rest }) => rest);
+    // Build Type Image Map
+    const typeImageMap: Record<string, string> = {};
+    if (!isFittingCategory) {
+        fastenerTypes.forEach(t => {
+            if(t.name.trim() !== '' && t.image !== '') typeImageMap[t.name.trim()] = t.image;
+        });
+    }
+
+    const cleanedSizeImages = sizeImages.filter(si => si.labels.trim() !== '' || si.image !== '').map(({ loading, ...rest }) => rest);
+
+    const performanceSpecsPayload = selectedPerformance.map(key => ({
+        key: key,
+        value: 'Standard'
+    }));
 
     const mergedSpecs = [
         ...formData.specifications.filter(s => s.key && s.value),
+        ...performanceSpecsPayload, 
         { key: 'Available Colors', value: fittingExtras.colors },
         { key: 'General Names', value: fittingExtras.general_names },
         { key: 'Standard Packing', value: fittingExtras.packing },
@@ -576,7 +626,8 @@ const AddProduct: React.FC = () => {
     const payload = {
       ...formData,
       slug: finalSlug,
-      finish_images: finishImageMap, 
+      finish_images: finishImageMap,
+      type_images: typeImageMap,
       size_images: cleanedSizeImages, 
       specifications: mergedSpecs,
       applications: formData.applications.filter(a => a.name.trim() !== '').map(({loading, ...rest}) => rest),
@@ -597,26 +648,70 @@ const AddProduct: React.FC = () => {
         await supabase.from('product_variants').delete().eq('product_id', productId);
         
         const variantsToInsert: any[] = [];
-        variantGroups.forEach(group => {
-            const size = group.sizeLabel.trim();
-            if(size) {
-                if(group.finishes.length > 0 && group.finishes.some(f => f.name.trim())) {
-                    group.finishes.forEach(f => {
-                        if(f.name.trim()) {
-                            variantsToInsert.push({ 
+
+        if (isFittingCategory) {
+            // FITTING LOGIC
+            variantGroups.forEach(group => {
+                const size = group.sizeLabel.trim();
+                if(size) {
+                    if(group.finishes.length > 0 && group.finishes.some(f => f.name.trim())) {
+                        group.finishes.forEach(f => {
+                            if(f.name.trim()) variantsToInsert.push({ 
                                 product_id: productId, 
                                 diameter: size, 
                                 length: '', 
                                 finish: f.name.trim(),
+                                type: f.type || '',
                                 image: f.image 
+                            });
+                        });
+                    } else {
+                        variantsToInsert.push({ product_id: productId, diameter: size, length: '', finish: '', type: '' });
+                    }
+                }
+            });
+        } else {
+            // FASTENER LOGIC
+            fastenerSizes.forEach(s => {
+                const dia = s.diameter.trim();
+                const len = s.length.trim();
+                if(dia || len) {
+                    // Loop Types
+                    const typesToLoop = (fastenerTypes.length > 0 && fastenerTypes.some(t => t.name.trim())) 
+                                                ? fastenerTypes.filter(t => t.name.trim()) 
+                                                : [{ name: '', image: '' }]; 
+                    
+                    typesToLoop.forEach(typeObj => {
+                        // Loop Finishes
+                        if (fastenerFinishes.length > 0 && fastenerFinishes.some(f => f.name.trim())) {
+                            fastenerFinishes.forEach(f => {
+                                if(f.name.trim()) {
+                                    variantsToInsert.push({
+                                        product_id: productId,
+                                        diameter: dia,
+                                        length: len,
+                                        unit: s.unit || 'mm', // SAVE THE UNIT
+                                        type: typeObj.name,
+                                        finish: f.name.trim(),
+                                        image: f.image 
+                                    });
+                                }
+                            });
+                        } else {
+                            // No finishes, just size + type
+                            variantsToInsert.push({ 
+                                product_id: productId, 
+                                diameter: dia, 
+                                length: len,
+                                unit: s.unit || 'mm', // SAVE THE UNIT
+                                finish: '', 
+                                type: typeObj.name 
                             });
                         }
                     });
-                } else {
-                    variantsToInsert.push({ product_id: productId, diameter: size, length: '', finish: '' });
                 }
-            }
-        });
+            });
+        }
 
         if (variantsToInsert.length > 0) {
           const { error: variantError } = await supabase.from('product_variants').insert(variantsToInsert);
@@ -741,7 +836,7 @@ const AddProduct: React.FC = () => {
               )}
         </div>
 
-        {/* 4. PERFORMANCE DATA */}
+        {/* 4. PERFORMANCE DATA (Only for Fasteners) */}
         {!isFittingCategory && (
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                   <div className="flex justify-between items-center mb-4 border-b pb-2 flex-wrap gap-2">
@@ -774,7 +869,7 @@ const AddProduct: React.FC = () => {
             </div>
         )}
 
-        {/* 5. Blueprint Data */}
+        {/* 5. BLUEPRINT DATA (Auto Columns) */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="font-bold text-gray-900 flex items-center gap-2"><Ruler size={18} /> Blueprint Data</h3><button type="button" onClick={addDim} className="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded hover:bg-amber-200">+ Add Feature</button></div>
               <div className="mb-8 p-4 bg-slate-50 rounded-lg border border-dashed border-slate-300 flex items-center gap-6">
@@ -793,67 +888,162 @@ const AddProduct: React.FC = () => {
               </div>
         </div>
 
-        {/* 6. NEW VARIANT CONFIGURATION (REPLACES OLD DIMENSIONS/FINISHES SPLIT) */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-200">
-             <div className="flex justify-between items-center mb-6 border-b pb-4">
-                <div>
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2"><Layers size={18} className="text-orange-600"/> Variants Configuration</h3>
-                    <p className="text-xs text-gray-500 mt-1">Connect Sizes directly to Finishes & Images</p>
-                </div>
-                <button type="button" onClick={addVariantGroup} className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-700 flex items-center gap-2"><Plus size={16}/> Add Size Group</button>
-             </div>
-
-             <div className="space-y-6">
-                {variantGroups.map((group, groupIdx) => (
-                    <div key={group.id} className="border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
-                        {/* Size Header */}
-                        <div className="p-4 bg-gray-100 border-b flex items-center gap-4">
-                            <div className="flex-1">
-                                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Size / Dimension Label</label>
-                                <input 
-                                    value={group.sizeLabel} 
-                                    onChange={(e) => updateGroupSize(groupIdx, e.target.value)} 
-                                    placeholder="e.g. M4, 3.5 x 25mm, 4 inch" 
-                                    className="w-full px-3 py-2 border rounded font-bold text-gray-900" 
-                                />
-                            </div>
-                            <button type="button" onClick={() => removeVariantGroup(groupIdx)} className="text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
-                        </div>
-
-                        {/* Finishes List */}
-                        <div className="p-4 bg-white">
-                            <div className="mb-2 flex justify-between items-end">
-                                <label className="text-xs font-bold text-gray-400 uppercase">Available Finishes for this Size</label>
-                                <button type="button" onClick={() => addFinishToGroup(groupIdx)} className="text-xs text-blue-600 font-bold hover:underline">+ Add Finish</button>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {group.finishes.map((finish, finishIdx) => (
-                                    <div key={finish.id} className="flex items-center gap-3 border p-2 rounded-lg hover:border-blue-300 transition-colors">
-                                        <div className="w-12 h-12 bg-gray-100 rounded border relative flex-shrink-0 flex items-center justify-center overflow-hidden group">
-                                            {finish.image ? <img src={finish.image} className="w-full h-full object-cover"/> : <ImageIcon size={16} className="text-gray-300"/>}
-                                            {finish.loading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={12} className="animate-spin"/></div>}
-                                            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFinishImageUpload(e, groupIdx, finishIdx)} title="Upload Finish Image" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <input 
-                                                value={finish.name} 
-                                                onChange={(e) => updateFinishName(groupIdx, finishIdx, e.target.value)} 
-                                                placeholder="Finish Name (e.g. Gold)" 
-                                                className="w-full text-sm border-none border-b border-gray-200 focus:ring-0 focus:border-blue-500 px-0 py-1" 
-                                            />
-                                        </div>
-                                        <button type="button" onClick={() => removeFinishFromGroup(groupIdx, finishIdx)} className="text-gray-400 hover:text-red-500"><X size={16}/></button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+        {/* 6. VARIANTS CONFIGURATION - SWITCHABLE LAYOUT */}
+        {isFastenerCategory ? (
+            // --- A. FASTENER STYLE (SPLIT VIEW) ---
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Dimensions Column */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2"><Ruler size={18}/> Dimensions</h3>
+                        <button type="button" onClick={addFastenerSize} className="text-blue-600 text-sm font-bold hover:bg-blue-50 px-2 py-1 rounded">+ Add</button>
                     </div>
-                ))}
-             </div>
-        </div>
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                        {fastenerSizes.map((s, idx) => (
+                            <div key={idx} className="flex gap-2 items-center bg-gray-50 p-2 rounded-lg border">
+                                <input 
+                                    value={s.diameter} 
+                                    onChange={(e) => updateFastenerSize(idx, 'diameter', e.target.value)} 
+                                    placeholder="Dia" 
+                                    className="w-16 px-2 py-2 border rounded text-sm font-bold" 
+                                />
+                                <input 
+                                    value={s.length} 
+                                    onChange={(e) => updateFastenerSize(idx, 'length', e.target.value)} 
+                                    placeholder="Length" 
+                                    className="flex-1 px-2 py-2 border rounded text-sm" 
+                                />
+                                <select 
+                                    value={s.unit || 'mm'} 
+                                    onChange={(e) => updateFastenerSize(idx, 'unit', e.target.value as 'mm' | 'inch')}
+                                    className="w-20 px-1 py-2 border rounded text-xs font-bold bg-white"
+                                >
+                                    <option value="mm">mm</option>
+                                    <option value="inch">inch</option>
+                                </select>
+                                <button type="button" onClick={() => removeFastenerSize(idx)} className="text-red-400 p-1">
+                                    <Trash2 size={16}/>
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
-        {/* 7. Size Images (Buttons - Kept from Original for Frontend UI) */}
+                {/* --- Types Column --- */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2"><TypeIcon size={18}/> Types (Opt.)</h3>
+                        <button type="button" onClick={addFastenerType} className="text-green-600 text-sm font-bold hover:bg-green-50 px-2 py-1 rounded">+ Add</button>
+                    </div>
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                        {fastenerTypes.map((t, idx) => (
+                            <div key={idx} className="flex items-center gap-3 border p-2 rounded-lg bg-gray-50">
+                                {/* Type Image Upload */}
+                                <div className="w-10 h-10 bg-white rounded border flex-shrink-0 relative overflow-hidden group">
+                                    {t.image ? <img src={t.image} className="w-full h-full object-cover"/> : <ImageIcon size={16} className="text-gray-300 m-auto mt-2"/>}
+                                    {t.loading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={12} className="animate-spin"/></div>}
+                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFastenerTypeUpload(e, idx)} title="Upload Type Image" />
+                                </div>
+
+                                <input value={t.name} onChange={(e) => updateFastenerType(idx, e.target.value)} placeholder="e.g. Full Thread" className="flex-1 px-3 py-2 border rounded-lg text-sm" />
+                                {/* --- ADDED REMOVE BUTTON FOR TYPES --- */}
+                                <button type="button" onClick={() => removeFastenerType(idx)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>
+                            </div>
+                        ))}
+                        {fastenerTypes.length === 0 && <p className="text-xs text-gray-400 italic">No specific types (Generic)</p>}
+                    </div>
+                </div>
+
+                {/* Finishes Column */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2"><Palette size={18}/> Finishes</h3>
+                        <button type="button" onClick={addFastenerFinish} className="text-purple-600 text-sm font-bold hover:bg-purple-50 px-2 py-1 rounded">+ Add</button>
+                    </div>
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                        {fastenerFinishes.map((f, idx) => (
+                            <div key={idx} className="flex items-center gap-3 border p-2 rounded-lg bg-gray-50">
+                                <div className="w-10 h-10 bg-white rounded border flex-shrink-0 relative overflow-hidden group">
+                                    {f.image ? <img src={f.image} className="w-full h-full object-cover"/> : <ImageIcon size={16} className="text-gray-300 m-auto mt-2"/>}
+                                    {f.loading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={12} className="animate-spin"/></div>}
+                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFastenerFinishUpload(e, idx)} title="Upload Finish Image" />
+                                </div>
+                                <input value={f.name} onChange={(e) => updateFastenerFinishName(idx, e.target.value)} placeholder="Finish Name" className="flex-1 px-3 py-2 border rounded-lg text-sm" />
+                                <button type="button" onClick={() => removeFastenerFinish(idx)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        ) : (
+            // --- B. FITTING STYLE (GROUPED VIEW) ---
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-200">
+                  <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <div>
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2"><Layers size={18} className="text-orange-600"/> Variants Configuration</h3>
+                        <p className="text-xs text-gray-500 mt-1">Connect Sizes directly to Finishes & Types</p>
+                    </div>
+                    <button type="button" onClick={addVariantGroup} className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-700 flex items-center gap-2"><Plus size={16}/> Add Size Group</button>
+                  </div>
+
+                  <div className="space-y-6">
+                    {variantGroups.map((group, groupIdx) => (
+                        <div key={group.id} className="border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
+                            {/* Size Header */}
+                            <div className="p-4 bg-gray-100 border-b flex items-center gap-4">
+                                <div className="flex-1">
+                                    <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Size / Dimension Label</label>
+                                    <input 
+                                        value={group.sizeLabel} 
+                                        onChange={(e) => updateGroupSize(groupIdx, e.target.value)} 
+                                        placeholder="e.g. M4, 3.5 x 25mm, 4 inch" 
+                                        className="w-full px-3 py-2 border rounded font-bold text-gray-900" 
+                                    />
+                                </div>
+                                <button type="button" onClick={() => removeVariantGroup(groupIdx)} className="text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
+                            </div>
+
+                            {/* Finishes List */}
+                            <div className="p-4 bg-white">
+                                <div className="mb-2 flex justify-between items-end">
+                                    <label className="text-xs font-bold text-gray-400 uppercase">Available Finishes & Types</label>
+                                    <button type="button" onClick={() => addFinishToGroup(groupIdx)} className="text-xs text-blue-600 font-bold hover:underline">+ Add Variant</button>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
+                                    {group.finishes.map((finish, finishIdx) => (
+                                        <div key={finish.id} className="flex items-center gap-3 border p-2 rounded-lg hover:border-blue-300 transition-colors">
+                                            <div className="w-12 h-12 bg-gray-100 rounded border relative flex-shrink-0 flex items-center justify-center overflow-hidden group">
+                                                {finish.image ? <img src={finish.image} className="w-full h-full object-cover"/> : <ImageIcon size={16} className="text-gray-300"/>}
+                                                {finish.loading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={12} className="animate-spin"/></div>}
+                                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFinishImageUpload(e, groupIdx, finishIdx)} title="Upload Finish Image" />
+                                            </div>
+                                            <div className="flex-1 min-w-0 grid grid-cols-2 gap-2">
+                                                <input 
+                                                    value={finish.name} 
+                                                    onChange={(e) => updateFinishName(groupIdx, finishIdx, e.target.value)} 
+                                                    placeholder="Finish (e.g. Gold)" 
+                                                    className="w-full text-sm border-none border-b border-gray-200 focus:ring-0 focus:border-blue-500 px-0 py-1" 
+                                                />
+                                                <input 
+                                                    value={finish.type} 
+                                                    onChange={(e) => updateFinishType(groupIdx, finishIdx, e.target.value)} 
+                                                    placeholder="Type (e.g. Left)" 
+                                                    className="w-full text-sm border-none border-b border-gray-200 focus:ring-0 focus:border-blue-500 px-0 py-1 text-gray-600" 
+                                                />
+                                            </div>
+                                            <button type="button" onClick={() => removeFinishFromGroup(groupIdx, finishIdx)} className="text-gray-400 hover:text-red-500"><X size={16}/></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                  </div>
+            </div>
+        )}
+
+        {/* 7. Size Images */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
           <h3 className="font-bold mb-6 flex items-center gap-2 text-blue-600">
               <ImageIcon size={18} /> Image Configurator (Frontend Buttons)
