@@ -501,7 +501,7 @@ const OEMPlatform: React.FC = () => {
             <div className="md:col-span-5 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
                <div className="flex justify-between items-start mb-6">
                  <div>
-                    <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Raw Material</span>
+                    <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest mb-1 block">Raw Material</span>
                     <h4 className="text-3xl text-white font-bold font-mono">{specs.material || "Steel & SS"}</h4>
                  </div>
                  <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
@@ -541,7 +541,7 @@ const OEMPlatform: React.FC = () => {
             {/* DIAMETER */}
             <div className="md:col-span-3 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all relative overflow-hidden">
                <div>
-                  <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Cross Section</span>
+                  <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest mb-1 block">Cross Section</span>
                   <h4 className="text-3xl text-white font-bold font-mono">{specs.diameter || "M2 - M8"}</h4>
                </div>
                <div className="relative h-32 w-full flex items-center justify-center mt-4">
@@ -563,7 +563,7 @@ const OEMPlatform: React.FC = () => {
             <div className="md:col-span-4 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all">
                <div className="flex justify-between items-start">
                   <div>
-                     <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Linear Scale</span>
+                     <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest mb-1 block">Linear Scale</span>
                      <h4 className="text-3xl text-white font-bold font-mono">{specs.length || "4mm - 125mm"}</h4>
                   </div>
                   <Ruler className="text-slate-600 group-hover:text-blue-500 transition-colors" />
@@ -588,7 +588,7 @@ const OEMPlatform: React.FC = () => {
             {/* THREADS */}
             <div className="md:col-span-5 bg-[#0A0A0C] p-6 group hover:bg-[#0F1115] transition-colors border-t md:border-t-0 border-white/10 relative overflow-hidden">
                <div className="flex items-start justify-between mb-6 relative z-10">
-                 <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Threading Spec</span>
+                 <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest">Threading Spec</span>
                  <Settings className="text-blue-500/50 group-hover:rotate-90 transition-transform duration-700" size={20} />
                </div>
                
@@ -625,10 +625,10 @@ const OEMPlatform: React.FC = () => {
                
                <div className="flex flex-col h-full justify-between relative z-10">
                  <div className="flex items-center justify-between mb-6">
-                   <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Surface Engineering</span>
+                   <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest">Surface Engineering</span>
                    <div className="text-right">
                      <span className="text-[10px] text-slate-500 font-mono block">SST LIFE (SALT SPRAY)</span>
-                     <span className="text-emerald-400 font-bold font-mono text-lg text-shadow-glow">72 - 1000 HRS</span>
+                     <span className="text-emerald-400 font-bold font-mono text-lg text-shadow-glow">48-120 HRS</span>
                    </div>
                  </div>
 
@@ -705,7 +705,7 @@ const OEMPlatform: React.FC = () => {
                   <h4 className="text-xl font-bold text-white tracking-widest uppercase">Head Styles</h4>
                 </div>
               </ScrollReveal>
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-3 gap-8">
                 {liveHeadStyles.map((item: any, i: number) => {
                   const { name, img } = getCleanData(item);
                   const info = getStandard(name, 'head');
@@ -744,7 +744,7 @@ const OEMPlatform: React.FC = () => {
                   <h4 className="text-xl font-bold text-white tracking-widest uppercase">Drive Systems</h4>
                 </div>
               </ScrollReveal>
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-3 gap-8">
                 {liveDriveSystems.map((item: any, i: number) => {
                   const { name, img } = getCleanData(item);
                   const info = getStandard(name, 'drive');

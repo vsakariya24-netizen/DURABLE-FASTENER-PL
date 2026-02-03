@@ -337,7 +337,7 @@ const FittingDetail = ({ product }: { product: any }) => {
                            <tr className="bg-neutral-50">
                                <th className="px-8 py-5 text-[11px] font-black text-neutral-400 uppercase tracking-widest">Size</th>
                                <th className="px-8 py-5 text-[11px] font-black text-neutral-400 uppercase tracking-widest">Finish</th>
-                               <th className="px-8 py-5 text-[11px] font-black text-neutral-400 uppercase tracking-widest text-right">Status</th>
+                               
                            </tr>
                        </thead>
                        <tbody className="divide-y divide-neutral-50">
@@ -345,7 +345,7 @@ const FittingDetail = ({ product }: { product: any }) => {
                                <tr key={i} className={selectedSizeLabel === (v.length || v.diameter) ? "bg-yellow-50" : ""}>
                                    <td className="px-8 py-4 font-bold text-neutral-700">{v.length || v.diameter}</td>
                                    <td className="px-8 py-4 text-neutral-600">{v.finish || "Standard"}</td>
-                                   <td className="px-8 py-4 text-right"><span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold uppercase">In Stock</span></td>
+                                  
                                </tr>
                            ))}
                        </tbody>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Package, MessageSquare, TrendingUp, FileText, Layers, Settings } from 'lucide-react'; // Added Layers icon
+import { Package, MessageSquare, TrendingUp, FileText, Layers, Settings, Factory } from 'lucide-react'; 
 import { Link } from 'react-router-dom';
 
 const DashboardHome: React.FC = () => {
@@ -25,7 +25,7 @@ const DashboardHome: React.FC = () => {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-500">Welcome back to your control panel.</p>
+        <p className="text-gray-500">Welcome back, Managing the **Durable Fastener** ecosystem.</p>
       </div>
 
       {/* Stats Grid */}
@@ -73,26 +73,27 @@ const DashboardHome: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-         <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+         <h2 className="text-xl font-bold text-gray-900 mb-6">Content Management</h2>
          <div className="flex flex-wrap gap-4">
             <Link to="/admin/products/new" className="px-6 py-3 bg-zinc-900 text-white rounded-lg font-bold hover:bg-black transition-colors">
               + Add New Product
             </Link>
             
             <Link to="/admin/add-blog" className="px-6 py-3 bg-yellow-500 text-black rounded-lg font-bold hover:bg-yellow-400 transition-colors flex items-center gap-2">
-              <FileText size={18} /> Write New Article
+              <FileText size={18} /> Write Article
             </Link>
 
-            {/* NEW BUTTON: Manage Categories */}
-            <Link to="/admin/categories" className="px-6 py-3 bg-blue-50 text-blue-600 rounded-lg font-bold hover:bg-blue-100 transition-colors flex items-center gap-2 border border-blue-200">
-              <Layers size={18} /> Manage Categories
+            {/* MANUFACTURING PAGE LINK */}
+            <Link to="/admin/manufacturing" className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg shadow-blue-200">
+              <Factory size={18} /> Edit Factory Page
             </Link>
 
-            <Link to="/admin/products" className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-colors">
-              Manage Catalogue
+            <Link to="/admin/categories" className="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-colors flex items-center gap-2">
+              <Layers size={18} /> Categories
             </Link>
-            <Link to="/admin/manage-oem" className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg shadow-blue-200">
-              <Settings size={18} /> Edit OEM Page
+
+            <Link to="/admin/manage-oem" className="px-6 py-3 bg-zinc-100 text-zinc-700 rounded-lg font-bold hover:bg-zinc-200 transition-colors flex items-center gap-2">
+              <Settings size={18} /> OEM Settings
             </Link>
          </div>
       </div>

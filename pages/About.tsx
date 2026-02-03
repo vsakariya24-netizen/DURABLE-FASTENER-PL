@@ -193,7 +193,7 @@ const About: React.FC = () => {
 
           <div className="relative">
             {/* Timeline Center Line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-[2px] bg-slate-100 hidden md:block"></div>
+          <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-[1px] bg-slate-800/50 hidden md:block"></div>
 
             {/* Timeline Item 1 */}
             <div className="relative flex flex-col md:flex-row items-center justify-between mb-32 group">
@@ -238,7 +238,7 @@ const About: React.FC = () => {
 
       {/* 4. BRAND ASPIRATION (Luxury Highlight) - UPDATED WITH IMAGE */}
       <section className="py-32 bg-[#0a0f1a] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
+        <div className="absol0ute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
         
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-20">
@@ -267,21 +267,23 @@ const About: React.FC = () => {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-32 bg-amber-500/10 blur-[100px] -z-10"></div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-12 mt-32">
-            {[
-              { icon: Crown, title: "No.1 Aspiration", text: "Striving to be the gold standard in premium architectural fastening." },
-              { icon: Users, title: "Customer First", text: "Every thread and head we manufacture is centered around user safety." },
-              { icon: Heart, title: "Legacy Built", text: "Creating a workspace that attracts the finest engineering talent in India." }
-            ].map((item, i) => (
-              <div key={i} className="text-center p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
-                <item.icon className="mx-auto text-amber-500 mb-6 group-hover:scale-110 transition-transform" size={40} />
-                <h4 className="text-white font-black mb-3">{item.title}</h4>
-                <p className="text-slate-400 text-lg font-light leading-relaxed max-w-sm">
-  Decades of expertise inside our <b>fastener manufacturing factory</b> producing international grade hardware.
-</p>
-              </div>
-            ))}
-          </div>
+        <div className="grid md:grid-cols-3 gap-12 mt-32">
+  {[
+    { icon: Crown, title: "No.1 Aspiration", text: "Leading the industry forward with cutting-edge technology and unparalleled quality, aiming for global excellence in every fastener produced." },
+    { icon: Users, title: "Customer First", text: "Dedicated to exceeding customer expectations by providing tailored solutions, reliable support, and products that meet the highest standards of satisfaction." },
+    { icon: Heart, title: "Legacy Built", text: "Decades of expertise within our fastener manufacturing facility, producing international-grade hardware." }
+  ].map((item, i) => (
+    <div key={i} className="text-center p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+      <item.icon className="mx-auto text-amber-500 mb-6 group-hover:scale-110 transition-transform" size={40} />
+      <h4 className="text-white font-black mb-3">{item.title}</h4>
+      
+      {/* Change this part below */}
+      <p className="text-slate-400 text-lg font-light leading-relaxed max-w-sm">
+        {item.text}
+      </p>
+    </div>
+  ))}
+</div>
         </div>
       </section>
 
@@ -316,20 +318,20 @@ const About: React.FC = () => {
 
             <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl hover:shadow-2xl transition-all group">
               <CheckCircle2 size={40} className="text-green-500 mb-6" />
-              <h4 className="text-2xl font-black text-slate-900 mb-3 tracking-tighter uppercase">Quality 1st</h4>
+              <h4 className="text-2xl font-black text-slate-900 mb-3 tracking-tighter ">Quality 1ˢᵗ</h4>
               <p className="text-slate-500 text-sm leading-relaxed">Multi-stage testing ensuring zero-defect delivery for critical OEM lines.</p>
             </div>
 
             <div className="bg-amber-500 p-10 rounded-[3rem] shadow-xl hover:scale-[1.02] transition-all group">
               <Target size={40} className="text-black mb-6" />
-              <h4 className="text-2xl font-black text-black mb-3 tracking-tighter uppercase">Factory Direct</h4>
+              <h4 className="text-2xl font-black text-black mb-3 tracking-tighter ">Factory Direct</h4>
               <p className="text-black/70 text-sm leading-relaxed font-bold italic">Unbeatable pricing by eliminating every middleman from the supply chain.</p>
             </div>
 
             {/* Bottom Row */}
             <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl hover:shadow-2xl transition-all">
               <Users size={32} className="text-blue-500 mb-6" />
-              <h4 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tighter">Expert Team</h4>
+              <h4 className="text-xl font-black text-slate-900 mb-2  tracking-tighter">Expert Team</h4>
               <p className="text-slate-500 text-xs leading-relaxed">Skilled engineers managing high-precision threading and heading.</p>
             </div>
 
@@ -338,7 +340,7 @@ const About: React.FC = () => {
                 <MapPin size={40} className="text-white" />
               </div>
               <div>
-                <h4 className="text-2xl font-black mb-2 uppercase tracking-tighter italic">Pan-India Mission</h4>
+                <h4 className="text-2xl font-black mb-2  tracking-tighter italic">Pan-India Mission</h4>
                 <p className="text-white/80 text-sm font-light leading-relaxed">Our goal is to be present in every district of India through our vast dealer network by 2030.</p>
               </div>
             </div>

@@ -46,7 +46,7 @@ const PERFORMANCE_KEYS_DISPLAY = [
 
 const HIDDEN_SPECS = [
     'hardness', 'sst', 'torque', 'salt', 'box_qty', 'carton_qty', 
-    'standard', 'seo_keywords', 'tds_url', 'mtc_url',
+    'standard', 'seo_keywords', 'tds_url', 'mtc_url','head type', 'head_type', 'drive', 'drive type', 'drive_type', 'type',
     ...PERFORMANCE_KEYS_DISPLAY.map(s => s.toLowerCase())
 ];
 
@@ -79,7 +79,7 @@ const ProductDetail: React.FC = () => {
   // States
   const [selectedDia, setSelectedDia] = useState<string>('');
   const [selectedLen, setSelectedLen] = useState<string>('');
-  const [selectedUnit, setSelectedUnit] = useState<string>('mm'); // New State for Unit
+  const [selectedUnit, setSelectedUnit] = useState<string>('mm'); 
   const [selectedType, setSelectedType] = useState<string>(''); 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeImageOverride, setActiveImageOverride] = useState<string | null>(null);
@@ -133,23 +133,35 @@ const ProductDetail: React.FC = () => {
   // --- DERIVED DATA ---
 
   const uniqueDiameters = useMemo(() => {
-      if (!product?.variants) return [];
-      const dias = new Set(product.variants.map((v: any) => v.diameter).filter(Boolean));
-      return Array.from(dias).sort((a:any,b:any) => parseFloat(a)-parseFloat(b)); 
-  }, [product]);
+    if (!product?.variants) return [];
+    
+    const dias = product.variants.map((v: any) => {
+        const val = v.diameter?.toString().trim();
+        if (!val) return null;
+        
+        // Agar unit 'mm' hai toh 'mm' lagayein, gauge ke liye waisa hi rehne dein
+        // Taaki header aur database key match hone ke chances badh jayein
+        return v.diameter_unit === 'gauge' ? val : (val.includes('mm') ? val : `${val}mm`);
+    }).filter(Boolean);
+    
+    return Array.from(new Set(dias)).sort((a: any, b: any) => parseFloat(a) - parseFloat(b));
+}, [product]);
 
-  // Updated to include Unit logic
+  // NEW: Dynamic Title Logic for Diameter vs Gauge
+  const diameterTitle = useMemo(() => {
+    if (!product?.variants || !selectedDia) return "Select Diameter";
+    const variant = product.variants.find((v: any) => v.diameter === selectedDia);
+    return variant?.diameter_unit === 'gauge' ? "Select Gauge" : "Select Diameter";
+  }, [product, selectedDia]);
+
   const availableLengthOptions = useMemo(() => {
       if (!product?.variants || !selectedDia) return [];
-      // Filter by selected Diameter
       const filteredVariants = product.variants.filter((v: any) => v.diameter === selectedDia);
-      
       const lengthMap = new Map();
 
       filteredVariants.forEach((v: any) => {
           if (v.length) {
-              const u = v.unit || 'mm'; // Default to mm if not present
-              // Split if CSV (legacy support), though normally it's one row per variant
+              const u = v.unit || 'mm'; 
               if (v.length.includes(',')) {
                  v.length.split(',').map((l: string) => l.trim()).forEach((l: string) => {
                      const key = `${l}_${u}`;
@@ -161,20 +173,15 @@ const ProductDetail: React.FC = () => {
               }
           }
       });
-      
-      // Sort logic (numeric sort based on value)
       return Array.from(lengthMap.values()).sort((a, b) => parseFloat(a.value) - parseFloat(b.value));
   }, [product, selectedDia]);
 
-  // Set default length AND unit when available lengths change
   useEffect(() => {
       if (availableLengthOptions.length > 0) {
-          // Check if current selection is still valid
           const currentIsValid = availableLengthOptions.some(opt => opt.value === selectedLen && opt.unit === selectedUnit);
-          
           if (!currentIsValid) {
-             setSelectedLen(availableLengthOptions[0].value);
-             setSelectedUnit(availableLengthOptions[0].unit);
+              setSelectedLen(availableLengthOptions[0].value);
+              setSelectedUnit(availableLengthOptions[0].unit);
           }
       } else {
           setSelectedLen('');
@@ -187,37 +194,30 @@ const ProductDetail: React.FC = () => {
       const relevantVariants = product.variants.filter((v: any) => 
          v.diameter === selectedDia && 
          (v.length === selectedLen || (v.length && v.length.includes(selectedLen))) &&
-         (v.unit || 'mm') === selectedUnit // Ensure unit matches
+         (v.unit || 'mm') === selectedUnit 
       );
       return Array.from(new Set(relevantVariants.map((v: any) => v.finish).filter(Boolean)));
   }, [product, selectedDia, selectedLen, selectedUnit]);
 
   const availableTypes = useMemo(() => {
       if (!product?.variants) return [];
-      // Filter based on currently selected Diameter, Length AND Unit
       const relevantVariants = product.variants.filter((v: any) => 
         v.diameter === selectedDia && 
         (v.length === selectedLen || (v.length && v.length.includes(selectedLen))) &&
         (v.unit || 'mm') === selectedUnit
       );
-      // Extract unique types
       return Array.from(new Set(relevantVariants.map((v: any) => v.type).filter(Boolean)));
   }, [product, selectedDia, selectedLen, selectedUnit]);
 
   const handleFinishClick = (finish: string) => {
       let imageToUse = null;
-
-      // 1. Check Parent Map
       if (product.finish_images && product.finish_images[finish]) {
           imageToUse = product.finish_images[finish];
       } 
-      
-      // 2. Fallback: Check Variant Data
       if (!imageToUse && product.variants) {
           const variantMatch = product.variants.find((v: any) => v.finish === finish && v.image);
           if (variantMatch) imageToUse = variantMatch.image;
       }
-
       if (imageToUse) { 
         setActiveImageOverride(imageToUse); 
         setSelectedImageIndex(0); 
@@ -229,29 +229,20 @@ const ProductDetail: React.FC = () => {
   const handleTypeClick = (type: string) => {
       setSelectedType(type);
       let imageToUse = null;
-
-      // 1. Try to fetch Type Image from DB map
       if (product.type_images && product.type_images[type]) { 
         imageToUse = product.type_images[type];
       } 
-      
-      // 2. Fallback: Try to fetch from specific Variant
       if (!imageToUse && product.variants) {
          const matchingVariant = product.variants.find((v: any) => 
              v.type === type && 
              v.diameter === selectedDia && 
              (v.image && v.image !== "")
          );
-         
          const genericTypeMatch = !matchingVariant 
-           ? product.variants.find((v: any) => v.type === type && v.image)
-           : matchingVariant;
-
-         if (genericTypeMatch) {
-             imageToUse = genericTypeMatch.image;
-         }
+            ? product.variants.find((v: any) => v.type === type && v.image)
+            : matchingVariant;
+         if (genericTypeMatch) imageToUse = genericTypeMatch.image;
       }
-
       if (imageToUse) {
         setActiveImageOverride(imageToUse);
         setSelectedImageIndex(0);
@@ -276,23 +267,23 @@ const ProductDetail: React.FC = () => {
   const displayHeadType = product.head_type ? product.head_type.replace(/Buggel/gi, 'Bugle') : '';
 
   return (
-    <div className={`${THEME.bg} min-h-screen pb-24 pt-[140px] md:pt-[200px] selection:bg-yellow-500/30 selection:text-black`} style={fontBody}>
+    <div className={`${THEME.bg} min-h-screen pb-24 pt-[170px] md:pt-[200px] selection:bg-yellow-500/30 selection:text-black`} style={fontBody}>
       <Helmet>
         <title>{product ? `${product.name} Manufacturer | Durable Fastener Rajkot` : 'Product Details'}</title>
         <meta name="description" content={product ? `Buy ${product.name} directly from factory. ISO certified ${product.category || 'Fastener'} manufacturer in Rajkot, Gujarat. Check specifications and bulk pricing.` : 'Product details'} />
       </Helmet>
       
-    <div className="fixed top-[80px] md:top-[140px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md transition-all duration-300">
-  <div className="max-w-7xl mx-auto px-5 py-2.5"> 
-    <nav className="flex items-center gap-2 text-[13px] md:text-[14px] font-medium tracking-wide">
-      <Link to="/" className="text-neutral-400 hover:text-white transition-colors flex items-center gap-1">Home</Link>
-      <ChevronRight size={12} className="text-neutral-600" />
-      <Link to="/products" className="text-neutral-400 hover:text-white transition-colors">Products</Link>
-      <ChevronRight size={12} className="text-neutral-600" />
-      <span className="text-yellow-500 font-bold uppercase tracking-wider text-xs md:text-sm truncate max-w-[180px] md:max-w-none">{product.name}</span>
-    </nav>
-  </div>
-  </div>
+    <div className="fixed top-[80px] md:top-[170px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-5 py-2.5"> 
+        <nav className="flex items-center gap-2 text-[13px] md:text-[14px] font-medium tracking-wide">
+          <Link to="/" className="text-neutral-400 hover:text-white transition-colors flex items-center gap-1">Home</Link>
+          <ChevronRight size={12} className="text-neutral-600" />
+          <Link to="/products" className="text-neutral-400 hover:text-white transition-colors">Products</Link>
+          <ChevronRight size={12} className="text-neutral-600" />
+          <span className="text-yellow-500 font-bold uppercase tracking-wider text-xs md:text-sm truncate max-w-[180px] md:max-w-none">{product.name}</span>
+        </nav>
+      </div>
+    </div>
 
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
         
@@ -379,12 +370,17 @@ const ProductDetail: React.FC = () => {
                 {/* 1. CONFIG PANEL */}
                 <motion.div variants={itemVar} className={`bg-white border border-neutral-200 p-8 rounded-2xl shadow-lg relative overflow-hidden`}>
                     
-                    {/* DIAMETER SELECTION */}
+                    {/* DIAMETER / GAUGE SELECTION */}
                     <div className="mb-8">
-                      <SectionHeader icon={Ruler} title="Select Diameter" />
+                      {/* UPDATED: Dynamic Title based on selection */}
+                      <SectionHeader icon={Ruler} title={diameterTitle} /> 
                       <div className="flex flex-wrap gap-3">
                         {uniqueDiameters.map((dia: any) => {
                             const isSelected = selectedDia === dia;
+                            // Check if this diameter is a Gauge to add '#' prefix
+                            const v = product.variants.find((v:any) => v.diameter === dia);
+                            const label = v?.diameter_unit === 'gauge' ? `${dia}` : dia;
+
                             return (
                               <button 
                                   key={dia} 
@@ -397,7 +393,7 @@ const ProductDetail: React.FC = () => {
                                   `}
                                   style={fontMono}
                               >
-                                  {dia}
+                                  {label}
                               </button>
                             );
                         })}
@@ -407,7 +403,6 @@ const ProductDetail: React.FC = () => {
                     {/* LENGTH SELECTION */}
                     <div className="mb-8">
                       <div className="flex justify-between items-end mb-4 border-b border-neutral-100 pb-2">
-                        {/* UPDATE: Added Unit to Title (e.g., SELECT LENGTH (MM)) */}
                         <SectionHeader icon={Maximize2} title={`Select Length (${selectedUnit})`} />
                         <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
                             {selectedLen ? selectedLen : '--'}<span className="text-sm text-neutral-400 ml-1 font-sans font-medium">{selectedUnit}</span>
@@ -423,7 +418,6 @@ const ProductDetail: React.FC = () => {
 
                           <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
                              {availableLengthOptions.length > 0 ? availableLengthOptions.map((opt: any, idx: number) => {
-                                  // Determine selection based on BOTH value and unit
                                   const isSelected = selectedLen === opt.value && selectedUnit === opt.unit;
                                   return (
                                      <button 
@@ -440,10 +434,7 @@ const ProductDetail: React.FC = () => {
                                                   ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110' 
                                                   : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900 group-hover:font-bold'}
                                             `}>
-                                                {/* FIX: Changed parseInt to parseFloat to allow decimals like 2.5 */}
                                                 {parseFloat(opt.value)}
-                                                
-                                                {/* Optionally show unit on hover or small text */}
                                                 {opt.unit !== 'mm' && <span className="text-[9px] block text-center">{opt.unit}</span>}
                                             </span>
                                             <div className={`
@@ -519,86 +510,65 @@ const ProductDetail: React.FC = () => {
                 </motion.div>
 
                 {/* --- ATTRIBUTES SUMMARY --- */}
-                <motion.div variants={itemVar} className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-md">
-                  <div className="bg-neutral-100 px-6 py-4 border-b border-neutral-200 flex items-center gap-2">
-                    <FileCheck size={18} className="text-yellow-600" />
-                    <span className="text-sm font-bold uppercase tracking-widest text-neutral-800" style={fontHeading}>Specification Details</span>
+              <motion.div variants={itemVar} className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-md">
+  <div className="bg-neutral-100 px-6 py-4 border-b border-neutral-200 flex items-center gap-2">
+    <FileCheck size={18} className="text-yellow-600" />
+    <span className="text-sm font-bold uppercase tracking-widest text-neutral-800" style={fontHeading}>Specification Details</span>
+  </div>
+
+  <div className="p-6 flex flex-col gap-0 divide-y divide-neutral-100">
+    
+    {/* MATERIAL SECTION */}
+    {displayMaterial && (
+      <div className="pb-8 mb-2">
+         <h4 className="text-center text-sm font-bold uppercase tracking-widest text-neutral-800 mb-5" style={fontHeading}>Material Specifications</h4>
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {displayMaterial.split(/\|/g).map((mat, idx) => {
+                const parts = mat.split('(');
+                const name = parts[0].trim();
+                let grade = parts.length > 1 ? parts[1].replace(')', '').trim() : '';
+                grade = grade ? (grade.toLowerCase().startsWith('grade') ? "Grade " + grade.substring(5).trim() : "Grade " + grade) : 'Standard';
+
+                return (
+                  <div key={idx} className="bg-white border border-neutral-200 rounded-xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow flex flex-col">
+                      <div className="flex items-center gap-3 mb-3 pb-3 border-b border-neutral-100">
+                          <Settings className="text-neutral-400" size={20} />
+                          <span className="text-base font-bold text-neutral-900">{name}</span>
+                      </div>
+                      <div className="mt-auto">
+                          <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Grade:</span>
+                          <span className="text-sm font-semibold text-neutral-800">{grade}</span>
+                      </div>
                   </div>
+                );
+            })}
+         </div>
+      </div>
+    )}
 
-                  <div className="p-6 flex flex-col gap-0 divide-y divide-neutral-100">
-                    
-                    {/* --- NEW MATERIAL CARD LAYOUT (MATCHING IMAGE) --- */}
-                    {displayMaterial && (
-                      <div className="pb-8 mb-2">
-                         <h4 className="text-center text-sm font-bold uppercase tracking-widest text-neutral-800 mb-5" style={fontHeading}>Material Specifications</h4>
-                         
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {displayMaterial.split(/\|/g).map((mat: string, idx: number) => {
-                                // Parsing logic: "Mild Steel (Grade C1022)" -> Name: Mild Steel, Grade: Grade C1022
-                                const parts = mat.split('(');
-                                const name = parts[0].trim();
-                                let grade = parts.length > 1 ? parts[1].replace(')', '').trim() : '';
-                                // Clean up "Grade" word repetition if exists
-                                if(grade.toLowerCase().startsWith('grade')) {
-                                   grade = "Grade " + grade.substring(5).trim();
-                                } else if (grade) {
-                                   grade = "Grade " + grade;
-                                }
+    {/* ROW HELPER FUNCTION: To keep everything identical */}
+    {[
+      { label: 'Head Type', value: displayHeadType },
+      { label: 'Drive', value: product.drive_type },
+      { label: 'Type', value: selectedType },
+      // Merge other specs from the database, filtering out what we've already shown
+      ...product.specifications
+        .filter(s => !HIDDEN_SPECS.includes(s.key.toLowerCase()))
+        .map(s => ({ label: s.key, value: s.value }))
+    ].map((item, idx) => item.value && (
+      <div key={idx} className="flex flex-row justify-between py-5 items-center">
+        <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[120px]">
+          {item.label}
+        </span>
+        <span className="text-[15px] font-bold text-neutral-900 text-right">
+          {item.value}
+        </span>
+      </div>
+    ))}
 
-                                // Icon Selection Logic
-                                let Icon = Component;
-                                if (name.toLowerCase().includes('mild') || name.toLowerCase().includes('steel')) Icon = Settings; // Gear icon for Mild Steel
-                                if (name.toLowerCase().includes('stainless') || name.toLowerCase().includes('ss')) Icon = Layers; // Layers/Beam for SS
+  </div>
+</motion.div>
 
-                                return (
-                                  <div key={idx} className="bg-white border border-neutral-200 rounded-xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow flex flex-col">
-                                      <div className="flex items-center gap-3 mb-3 pb-3 border-b border-neutral-100">
-                                          <Icon className="text-neutral-400" size={20} />
-                                          <span className="text-base font-bold text-neutral-900" style={fontBody}>{name}</span>
-                                      </div>
-                                      <div className="mt-auto">
-                                         <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Grades:</span>
-                                         <span className="text-sm font-medium text-neutral-800 font-mono">{grade || 'Standard'}</span>
-                                      </div>
-                                  </div>
-                                );
-                            })}
-                         </div>
-                      </div>
-                    )}
-                    {/* --- END MATERIAL CARD LAYOUT --- */}
-
-                    {displayHeadType && (
-                      <div className="flex flex-row justify-between py-4 border-t border-neutral-100">
-                        <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[100px] pt-1">Head Type</span>
-                        <span className={`text-base font-semibold text-neutral-900 text-right`}>{displayHeadType}</span>
-                      </div>
-                    )}
-
-                    {product.drive_type && (
-                      <div className="flex flex-row justify-between py-4">
-                        <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[100px] pt-1">Drive</span>
-                        <span className={`text-base font-semibold text-neutral-900 text-right`}>{product.drive_type}</span>
-                      </div>
-                    )}
-
-                    {selectedType && (
-                      <div className="flex flex-row justify-between py-4">
-                        <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[100px] pt-1">Type</span>
-                        <span className={`text-base font-semibold text-neutral-900 text-right`}>{selectedType}</span>
-                      </div>
-                    )}
-
-                    {product.specifications?.filter((s:any) => !HIDDEN_SPECS.includes(s.key.toLowerCase())).map((spec: any, idx: number) => (
-                      <div key={idx} className="flex flex-row justify-between py-4 last:pb-0">
-                        <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[100px] pt-1">{spec.key}</span>
-                        <span className="text-base font-medium text-neutral-900 font-mono text-right">{spec.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-
-              {/* ACTION BUTTONS */}
                   <div className="grid grid-cols-2 gap-4 pt-4">
                       <button className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:translate-y-[-2px]" style={fontHeading}>
                           <ShoppingCart size={20} /> Bulk Quote
@@ -621,11 +591,7 @@ const ProductDetail: React.FC = () => {
         viewport={{ once: true }} 
         variants={containerVar}
       >
-        
-        {/* HEADER WITH ISO BADGE */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          
-          {/* Left: Title */}
           <div className="flex items-center gap-3">
             <Activity className="text-yellow-600" size={32} />
             <h3 className="text-3xl md:text-4xl font-bold text-neutral-900 uppercase tracking-wider" style={fontHeading}>
@@ -633,7 +599,6 @@ const ProductDetail: React.FC = () => {
             </h3>
           </div>
 
-          {/* Right: ISO Badge */}
          <div className="flex flex-wrap gap-4 mt-6">
   {product.certifications && product.certifications.length > 0 ? (
     product.certifications.map((cert: any, idx: number) => (
@@ -651,15 +616,11 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
     ))
-  ) : (
-    <div className="hidden"></div> 
-  )}
+  ) : null}
 </div>
 </div>
 
         <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden flex flex-col lg:flex-row shadow-xl">
-            
-            {/* LEFT: Blueprint Viewer */}
             <div className="lg:w-2/3 relative p-12 bg-white flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-neutral-200 group">
                 <div className="absolute inset-0 opacity-100" style={blueprintGridStyleLight}></div>
                 <motion.div 
@@ -684,10 +645,9 @@ const ProductDetail: React.FC = () => {
                 ) : <div className="text-neutral-500 font-mono text-sm tracking-wide border border-neutral-200 px-6 py-3 rounded bg-neutral-50">[ DRAWING DATA UNAVAILABLE ]</div>}
             </div>
 
-            {/* RIGHT: Performance Data */}
             <div className="lg:w-1/3 bg-neutral-50 p-8 flex flex-col border-l border-neutral-200 relative">
                   <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none text-neutral-900">
-                     <Activity size={140} />
+                      <Activity size={140} />
                   </div>
 
                   <div className="mb-6 pb-4 border-b border-neutral-200 flex items-center justify-between relative z-10">
@@ -752,18 +712,43 @@ const ProductDetail: React.FC = () => {
                                       {dim.label}
                                     </td>
                                     <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">{dim.symbol || '-'}</td>
-                                    {uniqueDiameters.map((dia: any) => {
-                                        let val = '-';
-                                        if (dim.values && typeof dim.values === 'object') val = dim.values[dia] || '-';
-                                        else if (dia === selectedDia) val = dim.value || '-';
-                                        
-                                        const isActive = selectedDia === dia;
-                                        return (
-                                            <td key={dia} className={`py-5 text-center transition-colors font-medium ${isActive ? 'bg-yellow-50 text-neutral-900 font-bold text-base shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]' : 'text-neutral-500'}`}>
-                                                {val}
-                                            </td>
-                                        )
-                                    })}
+                                  {uniqueDiameters.map((dia: any) => {
+    let val: string = '-'; // Explicitly define val as string
+    
+    if (dim.values && typeof dim.values === 'object') {
+        // 1. Exact Match (e.g. "3.5mm") - Type cast as any or string
+        const directValue = (dim.values as any)[dia];
+        if (directValue) val = String(directValue);
+
+        // 2. Agar nahi mila toh unit hata kar check karein
+        if (val === '-') {
+            const rawKey = dia.toString().replace('mm', '').replace('#', '').trim();
+            const rawValue = (dim.values as any)[rawKey];
+            if (rawValue) val = String(rawValue);
+        }
+
+        // 3. Object.entries logic with explicit casting
+        if (val === '-') {
+            const entry = Object.entries(dim.values as Record<string, any>).find(([k]) => 
+                k.replace('mm', '').trim() === dia.toString().replace('mm', '').trim()
+            );
+            if (entry) val = String(entry[1]);
+        }
+    } else if (dia === selectedDia) {
+        val = String(dim.value || '-');
+    }
+
+    const isActive = selectedDia === dia;
+    
+    return (
+        <td key={dia} className={`py-5 text-center transition-all duration-300 font-medium 
+            ${isActive 
+                ? 'bg-yellow-50 text-neutral-900 font-bold text-base shadow-[inset_0_0_20px_rgba(234,179,8,0.15)] border-x border-yellow-200' 
+                : 'text-neutral-500 border-x border-transparent'}`}>
+            {val}
+        </td>
+    );
+})}
                             </tr>
                           ))}
                     </tbody>
@@ -779,7 +764,6 @@ const ProductDetail: React.FC = () => {
   <section className={`py-32 ${THEME.bg} overflow-hidden border-t border-neutral-300`}>
     <div className="max-w-7xl mx-auto px-4">
       
-      {/* SECTION HEADER */}
       <div className="mb-20">
         <div className="flex items-center gap-4 mb-4">
           <div className="h-px w-12 bg-yellow-500"></div>
@@ -791,10 +775,7 @@ const ProductDetail: React.FC = () => {
         </h3>
       </div>
 
-      {/* THE INTERACTIVE STAGE */}
       <div className="relative flex flex-col lg:flex-row gap-12 items-start">
-        
-        {/* LEFT: VERTICAL NAVIGATOR (Sticky) */}
         <div className="w-full lg:w-1/3 space-y-4 sticky top-[250px] z-20">
           {product.applications.map((app: any, idx: number) => {
             const appName = typeof app === 'string' ? app : app.name;
@@ -831,7 +812,6 @@ const ProductDetail: React.FC = () => {
           })}
         </div>
 
-        {/* RIGHT: THE TECHNICAL SHOWCASE (The Stage) */}
         <div className="w-full lg:w-2/3 aspect-[4/3] lg:aspect-square relative group perspective-1000">
           <AnimatePresence mode="wait">
             {product.applications.map((app: any, idx: number) => {
@@ -847,7 +827,6 @@ const ProductDetail: React.FC = () => {
                   transition={{ duration: 0.6, ease: "circOut" }}
                   className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] bg-neutral-800"
                 >
-                  {/* The X-Ray Image Effect */}
                   <div className="relative w-full h-full overflow-hidden group">
                     <img 
                       src={appImage || 'https://via.placeholder.com/800'} 
@@ -855,7 +834,6 @@ const ProductDetail: React.FC = () => {
                       alt="Application"
                     />
                     
-                    {/* BLUEPRINT OVERLAY (The Unique Feature) */}
                     <div 
                       className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-700 pointer-events-none mix-blend-screen"
                       style={{
@@ -866,7 +844,6 @@ const ProductDetail: React.FC = () => {
                       }}
                     />
 
-                    {/* Gradient & Labels */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                     
                     <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end">

@@ -26,6 +26,7 @@ import Careers from './pages/Careers';
 import BlogDetail from './pages/BlogDetail';
 import AdminLifeGallery from './pages/Admin/AdminLifeGallery';
 import ManageOEM from './pages/Admin/ManageOEM'; // Import the new file
+
 // Admin Components
 import AdminLogin from './pages/Admin/Login';
 import AdminLayout from './components/AdminLayout';
@@ -138,7 +139,7 @@ const App: React.FC = () => {
                   <Route path="jobs" element={<JobsList />} />
                   <Route path="jobs/new" element={<AddJob />} /> 
                   <Route path="jobs/edit/:id" element={<AddJob />} />
-                  
+                 
                   {/* Blog Admin Routes */}
                   <Route path="edit-blog/:id" element={<AddBlog />} />
                   <Route path="add-blog" element={<AddBlog />} />

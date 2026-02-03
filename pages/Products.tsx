@@ -48,6 +48,7 @@ const Products: React.FC = () => {
     }
   }, [searchParams, urlCategory, navigate]);
 
+
   // -------------------------------------------
   // STEP 1: LOAD CATEGORIES
   // -------------------------------------------
@@ -124,11 +125,17 @@ const Products: React.FC = () => {
   // -------------------------------------------
   // STEP 3: FETCH PRODUCTS
   // -------------------------------------------
-  useEffect(() => {
+ useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-    let query = supabase.from('products').select('*').order('created_at', { ascending: true });
+        // Yahan 'created_at' ki jagah 'position' use kiya hai taaki 
+        // Admin panel wala drag-drop order yahan bhi dikhe.
+        let query = supabase
+          .from('products')
+          .select('*')
+          .order('position', { ascending: true }); // <--- Yeh change kiya hai
+
         if (activeFilter.type === 'CATEGORY') {
           query = query.ilike('category', activeFilter.value); 
         } else if (activeFilter.type === 'SUB_CATEGORY') {
@@ -147,14 +154,12 @@ const Products: React.FC = () => {
       }
     };
 
-    // Debounce
     const timeoutId = setTimeout(() => {
       fetchProducts();
     }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [activeFilter, searchTerm]);
-
 
   // -------------------------------------------
   // UI HANDLERS

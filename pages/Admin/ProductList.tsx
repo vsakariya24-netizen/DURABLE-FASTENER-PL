@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Product } from '../../types';
-import { Plus, Search, Edit, Trash2, Loader2, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Loader2, Eye, GripVertical } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // 1. Check if user is searching
+  const isSearching = searchTerm.trim().length > 0;
 
   useEffect(() => {
     fetchProducts();
@@ -15,20 +19,52 @@ const ProductList: React.FC = () => {
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (data) setProducts(data);
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .order('position', { ascending: true });
+    
+    if (data) setProducts(data as Product[]);
     setLoading(false);
   };
 
+  const onDragEnd = async (result: DropResult) => {
+  if (!result.destination || isSearching) return;
+
+  const items: Product[] = Array.from(products);
+  const [reorderedItem] = items.splice(result.source.index, 1);
+  items.splice(result.destination.index, 0, reorderedItem);
+
+  // UI update karein
+  setProducts(items);
+
+  // Sirf wahi fields bhejein jo update karni hain (ID aur Position)
+  const updates = items.map((product, index) => ({
+    id: product.id,
+    position: index,
+    // Note: Agar baki fields (name, slug) missing honge toh upsert 
+    // unhe null kar sakta hai agar schema strict hai. 
+    // Isliye hum yahan product ka poora data bhej rahe hain:
+    ...product, 
+    position: index 
+  }));
+
+  const { error } = await supabase
+    .from('products')
+    .upsert(updates, { onConflict: 'id' }); // Conflict hone par ID ke basis par update karein
+
+  if (error) {
+    console.error('Full Error Object:', error);
+    // Asal error message alert mein dikhayein
+    alert(`Error: ${error.message} (Code: ${error.code})`);
+    fetchProducts(); // Rollback to original order
+  }
+};
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure? This cannot be undone.')) return;
-    
+    if (!window.confirm('Are you sure?')) return;
     const { error } = await supabase.from('products').delete().eq('id', id);
-    if (!error) {
-      setProducts(products.filter(p => p.id !== id));
-    } else {
-      alert('Error deleting: ' + error.message);
-    }
+    if (!error) setProducts(products.filter(p => p.id !== id));
   };
 
   const filtered = products.filter(p => 
@@ -41,9 +77,11 @@ const ProductList: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-          <p className="text-sm text-gray-500">Manage your catalogue inventory</p>
+          <p className="text-sm text-gray-500">
+            {isSearching ? 'Clear search to reorder' : 'Drag handle to reorder inventory'}
+          </p>
         </div>
-        <Link to="/admin/products/new" className="bg-brand-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-black transition-colors">
+        <Link to="/admin/products/new" className="bg-brand-dark text-white px-4 py-2 rounded-lg flex items-center gap-2">
           <Plus size={18} /> Add Product
         </Link>
       </div>
@@ -53,8 +91,8 @@ const ProductList: React.FC = () => {
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input 
             type="text" 
-            placeholder="Search by name or category..." 
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
+            placeholder="Search..." 
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -65,39 +103,72 @@ const ProductList: React.FC = () => {
         <div className="flex justify-center py-10"><Loader2 className="animate-spin text-brand-blue" /></div>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase">
-              <tr>
-                <th className="px-6 py-4">Image</th>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Category</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map(p => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3">
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                      {p.images && p.images[0] ? (
-                        <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
-                      ) : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Img</div>}
-                    </div>
-                  </td>
-                  <td className="px-6 py-3 font-medium text-gray-900">{p.name}</td>
-                  <td className="px-6 py-3 text-sm text-gray-500">{p.category}</td>
-                  <td className="px-6 py-3 text-right flex justify-end gap-2">
-                    <Link to={`/product/${p.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"><Eye size={18} /></Link>
-                    <Link to={`/admin/products/edit/${p.id}`} className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded"><Edit size={18} /></Link>
-                    <button onClick={() => handleDelete(p.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 size={18} /></button>
-                  </td>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase">
+                <tr>
+                  <th className="px-6 py-4 w-10"></th>
+                  <th className="px-6 py-4">Image</th>
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={4} className="text-center py-8 text-gray-500">No products found.</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              
+              <Droppable droppableId="products-table-body" isDropDisabled={isSearching}>
+                {(provided) => (
+                  <tbody 
+                    {...provided.droppableProps} 
+                    ref={provided.innerRef} 
+                    className="divide-y divide-gray-100"
+                  >
+                    {filtered.map((p, index) => (
+                      <Draggable 
+                        key={p.id} 
+                        draggableId={String(p.id)} 
+                        index={index}
+                        isDragDisabled={isSearching} // Disable drag when searching
+                      >
+                        {(provided, snapshot) => (
+                          <tr 
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`${snapshot.isDragging ? 'bg-blue-50 shadow-lg z-50 relative' : 'hover:bg-gray-50'}`}
+                          >
+                            <td className="px-6 py-3">
+                              {/* Drag handle only works if NOT searching */}
+                              {!isSearching ? (
+                                <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-blue-500">
+                                  <GripVertical size={20} />
+                                </div>
+                              ) : (
+                                <div className="text-gray-200"><GripVertical size={20} /></div>
+                              )}
+                            </td>
+                            <td className="px-6 py-3">
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden border">
+                                {p.images?.[0] ? (
+                                  <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                                ) : <div className="text-xs text-gray-400 text-center pt-4">No Img</div>}
+                              </div>
+                            </td>
+                            <td className="px-6 py-3 font-medium text-gray-900">{p.name}</td>
+                            <td className="px-6 py-3 text-right">
+                              <div className="flex justify-end gap-2">
+                                <Link to={`/product/${p.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-blue-600"><Eye size={18} /></Link>
+                                <Link to={`/admin/products/edit/${p.id}`} className="p-2 text-gray-400 hover:text-orange-600"><Edit size={18} /></Link>
+                                <button onClick={() => handleDelete(p.id)} className="p-2 text-gray-400 hover:text-red-600"><Trash2 size={18} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </tbody>
+                )}
+              </Droppable>
+            </table>
+          </DragDropContext>
         </div>
       )}
     </div>
