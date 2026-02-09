@@ -95,6 +95,14 @@ const DashboardHome: React.FC = () => {
             <Link to="/admin/manage-oem" className="px-6 py-3 bg-zinc-100 text-zinc-700 rounded-lg font-bold hover:bg-zinc-200 transition-colors flex items-center gap-2">
               <Settings size={18} /> OEM Settings
             </Link>
+            <Link 
+  to="/admin/manufacturing" 
+  className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 hover:-translate-y-1"
+>
+<Factory size={18} /> 
+  <span>Edit Factory Page</span>
+  <div className="ml-2 px-1.5 py-0.5 bg-indigo-400 rounded text-[10px] uppercase">Live</div>
+</Link>
          </div>
       </div>
     </div>

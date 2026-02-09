@@ -131,23 +131,16 @@ const ProductDetail: React.FC = () => {
   }, [slug]);
 
   // --- DERIVED DATA ---
-
   const uniqueDiameters = useMemo(() => {
     if (!product?.variants) return [];
     
-    const dias = product.variants.map((v: any) => {
-        const val = v.diameter?.toString().trim();
-        if (!val) return null;
-        
-        // Agar unit 'mm' hai toh 'mm' lagayein, gauge ke liye waisa hi rehne dein
-        // Taaki header aur database key match hone ke chances badh jayein
-        return v.diameter_unit === 'gauge' ? val : (val.includes('mm') ? val : `${val}mm`);
-    }).filter(Boolean);
+    // We store the values as they are in DB to ensure matching, 
+    // but the display logic in JSX will handle stripping "mm"
+    const dias = product.variants.map((v: any) => v.diameter?.toString().trim()).filter(Boolean);
     
     return Array.from(new Set(dias)).sort((a: any, b: any) => parseFloat(a) - parseFloat(b));
-}, [product]);
+  }, [product]);
 
-  // NEW: Dynamic Title Logic for Diameter vs Gauge
   const diameterTitle = useMemo(() => {
     if (!product?.variants || !selectedDia) return "Select Diameter";
     const variant = product.variants.find((v: any) => v.diameter === selectedDia);
@@ -372,28 +365,26 @@ const ProductDetail: React.FC = () => {
                     
                     {/* DIAMETER / GAUGE SELECTION */}
                     <div className="mb-8">
-                      {/* UPDATED: Dynamic Title based on selection */}
                       <SectionHeader icon={Ruler} title={diameterTitle} /> 
                       <div className="flex flex-wrap gap-3">
                         {uniqueDiameters.map((dia: any) => {
                             const isSelected = selectedDia === dia;
-                            // Check if this diameter is a Gauge to add '#' prefix
-                            const v = product.variants.find((v:any) => v.diameter === dia);
-                            const label = v?.diameter_unit === 'gauge' ? `${dia}` : dia;
+                            // UPDATED: Show clean label without "mm" suffix inside the box
+                            const displayLabel = dia.toString().replace('mm', '').trim();
 
                             return (
                               <button 
                                   key={dia} 
                                   onClick={() => setSelectedDia(dia)} 
                                   className={`
-                                    relative w-14 h-12 rounded-lg flex items-center justify-center text-lg transition-all duration-200 border-2
+                                    relative px-3 h-12 min-w-[3.5rem] rounded-lg flex items-center justify-center text-lg transition-all duration-200 border-2
                                     ${isSelected 
                                       ? 'bg-yellow-500 text-neutral-900 border-yellow-500 shadow-md font-bold' 
                                       : 'bg-neutral-50 text-neutral-600 border-neutral-100 hover:border-neutral-300 hover:text-neutral-900 hover:bg-white font-medium'}
                                   `}
                                   style={fontMono}
                               >
-                                  {label}
+                                  {displayLabel}
                               </button>
                             );
                         })}
@@ -409,7 +400,6 @@ const ProductDetail: React.FC = () => {
                         </span>
                       </div>
                       
-                      {/* RULER VISUALIZATION */}
                       <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-5 relative overflow-hidden">
                           <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
                            backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)',
@@ -482,7 +472,6 @@ const ProductDetail: React.FC = () => {
                       )}
                     </div>
 
-                    {/* --- PRODUCT TYPE SELECTION --- */}
                     {availableTypes.length > 0 && (
                       <div>
                         <SectionHeader icon={Tag} title="Product Type" />
@@ -509,7 +498,6 @@ const ProductDetail: React.FC = () => {
                 </motion.div>
                 </motion.div>
 
-                {/* --- ATTRIBUTES SUMMARY --- */}
               <motion.div variants={itemVar} className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-md">
   <div className="bg-neutral-100 px-6 py-4 border-b border-neutral-200 flex items-center gap-2">
     <FileCheck size={18} className="text-yellow-600" />
@@ -518,7 +506,6 @@ const ProductDetail: React.FC = () => {
 
   <div className="p-6 flex flex-col gap-0 divide-y divide-neutral-100">
     
-    {/* MATERIAL SECTION */}
     {displayMaterial && (
       <div className="pb-8 mb-2">
          <h4 className="text-center text-sm font-bold uppercase tracking-widest text-neutral-800 mb-5" style={fontHeading}>Material Specifications</h4>
@@ -546,12 +533,10 @@ const ProductDetail: React.FC = () => {
       </div>
     )}
 
-    {/* ROW HELPER FUNCTION: To keep everything identical */}
     {[
       { label: 'Head Type', value: displayHeadType },
       { label: 'Drive', value: product.drive_type },
       { label: 'Type', value: selectedType },
-      // Merge other specs from the database, filtering out what we've already shown
       ...product.specifications
         .filter(s => !HIDDEN_SPECS.includes(s.key.toLowerCase()))
         .map(s => ({ label: s.key, value: s.value }))
@@ -651,13 +636,13 @@ const ProductDetail: React.FC = () => {
                   </div>
 
                   <div className="mb-6 pb-4 border-b border-neutral-200 flex items-center justify-between relative z-10">
-                     <h4 className="text-lg font-bold uppercase tracking-widest text-neutral-900 flex items-center gap-2" style={fontHeading}>
-                          <Layers size={18} className="text-yellow-600" /> Performance Data
-                     </h4>
-                     <div className="flex gap-2 items-center bg-white px-3 py-1 rounded border border-neutral-200 shadow-sm">
+                      <h4 className="text-lg font-bold uppercase tracking-widest text-neutral-900 flex items-center gap-2" style={fontHeading}>
+                           <Layers size={18} className="text-yellow-600" /> Performance Data
+                      </h4>
+                      <div className="flex gap-2 items-center bg-white px-3 py-1 rounded border border-neutral-200 shadow-sm">
                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                         <span className="text-[15px] text-green-700 font-mono uppercase font-bold">Verified</span>
-                     </div>
+                      </div>
                   </div>
 
                   <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2">
@@ -685,12 +670,12 @@ const ProductDetail: React.FC = () => {
                   </div>
 
                   <button className="w-full mt-6 flex items-center justify-center gap-2 bg-neutral-900 text-white py-3.5 rounded text-sm font-bold uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all relative z-10 border border-neutral-900 hover:border-yellow-500 shadow-md" style={fontHeading}>
-                     <Lock size={14} /> Unlock Engineering Report
+                      <Lock size={14} /> Unlock Engineering Report
                   </button>
             </div>
         </div>
 
-        {/* DIMENSIONS TABLE */}
+        {/* DIMENSIONS TABLE: Headers still show "mm" for clarity, buttons are clean */}
         <div className="w-full bg-white border border-t-0 border-neutral-200 mt-0 rounded-b-2xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse min-w-[600px]">
@@ -700,7 +685,8 @@ const ProductDetail: React.FC = () => {
                             <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>Symbol</th>
                             {uniqueDiameters.map((dia: any) => (
                                 <th key={dia} className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'}`} style={fontHeading}>
-                                      {dia}
+                                      {/* Table header keeps unit if Metric */}
+                                      {dia.includes('.') && !dia.includes('mm') && !dia.includes('#') ? `${dia}mm` : dia}
                                 </th>
                             ))}
                         </tr>
@@ -713,21 +699,18 @@ const ProductDetail: React.FC = () => {
                                     </td>
                                     <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">{dim.symbol || '-'}</td>
                                   {uniqueDiameters.map((dia: any) => {
-    let val: string = '-'; // Explicitly define val as string
+    let val: string = '-'; 
     
     if (dim.values && typeof dim.values === 'object') {
-        // 1. Exact Match (e.g. "3.5mm") - Type cast as any or string
         const directValue = (dim.values as any)[dia];
         if (directValue) val = String(directValue);
 
-        // 2. Agar nahi mila toh unit hata kar check karein
         if (val === '-') {
             const rawKey = dia.toString().replace('mm', '').replace('#', '').trim();
             const rawValue = (dim.values as any)[rawKey];
             if (rawValue) val = String(rawValue);
         }
 
-        // 3. Object.entries logic with explicit casting
         if (val === '-') {
             const entry = Object.entries(dim.values as Record<string, any>).find(([k]) => 
                 k.replace('mm', '').trim() === dia.toString().replace('mm', '').trim()
