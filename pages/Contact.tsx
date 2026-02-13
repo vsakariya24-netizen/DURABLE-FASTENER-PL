@@ -185,6 +185,7 @@ const Contact: React.FC = () => {
                     title="Call Us"
                     content={
                         <div className="flex flex-col gap-1">
+                           <a href="tel:+918758700704" className="hover:text-emerald-400 transition-colors">+91 87587 00704</a>
                             <a href="tel:+918758700709" className="hover:text-emerald-400 transition-colors">+91 87587 00709</a>
                         </div>
                     }
