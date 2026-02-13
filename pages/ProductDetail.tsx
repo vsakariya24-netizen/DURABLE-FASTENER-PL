@@ -566,7 +566,7 @@ const ProductDetail: React.FC = () => {
 
     {/* SPEC SHEET BUTTON */}
     <a 
-    href="/your-catalogue.pdf" 
+    href="/public/Durable Fastener Pvt. Ltd. Catalogue.pdf"
     target="_blank" 
     rel="noopener noreferrer"
     className="col-span-1 bg-neutral-900 text-white h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-sm hover:translate-y-[-2px]" 

@@ -128,7 +128,7 @@ const Manufacturing: React.FC = () => {
                   <Link to="/Products" className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20 hover:-translate-y-1">
                     View Production Standards <ArrowRight size={22} />
                   </Link>
-                  <a href="/assets/Durable-Fastener-Capability-Profile.pdf" download className="bg-white/10 hover:bg-white/20 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all border border-white/20 flex items-center justify-center gap-3 hover:-translate-y-1 backdrop-blur-sm">
+                  <a href="/public/Durable Fastener Pvt. Ltd. Catalogue.pdf" download className="bg-white/10 hover:bg-white/20 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all border border-white/20 flex items-center justify-center gap-3 hover:-translate-y-1 backdrop-blur-sm">
                     Download Capability Profile
                   </a>
                 </div>
