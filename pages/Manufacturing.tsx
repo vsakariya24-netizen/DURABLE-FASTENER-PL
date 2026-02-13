@@ -274,7 +274,7 @@ const Manufacturing: React.FC = () => {
       {/* ================= 6. RAW MATERIAL ================= */}
       <section className="py-24 px-6 bg-slate-50">
          <RevealOnScroll>
-             <div className="max-w-7xl mx-auto bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800">
+             <div className="max-w-7xl mx-auto bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-800">
                 <div className="grid md:grid-cols-2">
                    <div className="p-12 md:p-16">
                       <h2 className="text-4xl font-black text-white mb-6">Raw Material Integrity</h2>
@@ -290,7 +290,7 @@ const Manufacturing: React.FC = () => {
                       </ul>
                    </div>
                    <div className="relative h-80 md:h-auto min-h-[400px]">
-                       <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1968&auto=format&fit=crop" alt="Raw material wire" className="absolute inset-0 w-full h-full object-cover opacity-60"/>
+                       <img src="/public/factoryimage.jpg" alt="Raw material wire" className="absolute inset-0 w-full h-full object-cover opacity-60"/>
                        <div className="absolute inset-0 bg-slate-900/40 mix-blend-multiply"></div>
                    </div>
                 </div>

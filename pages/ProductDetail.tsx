@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { 
   Hammer, Grid, Armchair, Wrench, ArrowUpRight,
   ChevronRight, ShoppingCart, Loader2, Share2, Printer, 
-  Ruler, Maximize2, Info, X,
+  Ruler, Maximize2, Info, X,FileText,
   ArrowRight, Lock, Activity, FileCheck, Layers, Hash,
   ShieldCheck, Box, Tag, Settings, Component
 } from 'lucide-react';
@@ -554,14 +554,27 @@ const ProductDetail: React.FC = () => {
   </div>
 </motion.div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-4">
-                      <button className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:translate-y-[-2px]" style={fontHeading}>
-                          <ShoppingCart size={20} /> Bulk Quote
-                      </button>
-                      <button className="col-span-1 bg-neutral-900 border border-neutral-900 text-white hover:bg-black h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-sm hover:translate-y-[-2px] shadow-lg" style={fontHeading}>
-                          <FileCheck size={20} /> Spec Sheet
-                      </button>
-                  </div>
+                 <div className="grid grid-cols-2 gap-4 pt-4">
+    {/* BULK QUOTE BUTTON */}
+    <a 
+        href="/Contact" // <-- CHANGE THIS TO YOUR PAGE URL
+        className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:translate-y-[-2px]" 
+        style={fontHeading}
+    >
+        <ShoppingCart size={20} /> Bulk Quote
+    </a>
+
+    {/* SPEC SHEET BUTTON */}
+    <a 
+    href="/your-catalogue.pdf" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="col-span-1 bg-neutral-900 text-white h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-sm hover:translate-y-[-2px]" 
+    style={fontHeading}
+>
+    <FileText size={20} /> VIEW CATALOGUE
+</a>
+</div>
           </div>
         </div>
       </div>
