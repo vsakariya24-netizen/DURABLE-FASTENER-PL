@@ -3,11 +3,16 @@ import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mail, Phone, MapPin, Send, Loader2, 
-  Globe, Clock, Briefcase, Building2, CheckCircle2, X 
+  Globe, CheckCircle2, X, Paperclip, 
+  Image as ImageIcon, UploadCloud
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxKBWWA_2TJuzAtccTqPYF9Wbm3sp084dCoD6bNH1shMYyCCH3gGsj2SjjG8ZojNsI/exec';
+// REPLACE THIS with your new Web App URL from the script above
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwGzMDWPIm0BVVM3CL2zRvFy7fOx5B---eAHdlvgTOJJfKtfy_NeczA8bVprMBBXA/exec';
+
+// YOUR SPECIFIC PROJECT URL
+const SUPABASE_PROJECT_URL = 'https://wterhjmgsgyqgbwviomo.supabase.co'; 
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -19,10 +24,20 @@ const Contact: React.FC = () => {
     message: ''
   });
 
+  const [attachments, setAttachments] = useState<{
+    document: File | null;
+    image: File | null;
+  }>({
+    document: null,
+    image: null
+  });
+
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [generatedId, setGeneratedId] = useState('');
   const [error, setError] = useState('');
+
+  // --- HELPERS ---
 
   const generateEnquiryId = () => {
     const date = new Date();
@@ -36,6 +51,34 @@ const Contact: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      setAttachments(prev => ({ ...prev, [name]: files[0] }));
+    }
+  };
+
+  // --- THE MAGIC FUNCTION ---
+  // Uploads to Supabase and returns the "Public URL" string
+  const uploadToSupabaseAndGetUrl = async (file: File, folder: string, enquiryId: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${enquiryId}-${Date.now()}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
+
+    // 1. Upload
+    const { error: uploadError, data } = await supabase.storage
+      .from('enquiry-attachments') // Ensure this bucket exists in Supabase
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    // 2. Create the exact URL format you wanted
+    const fullUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/public/enquiry-attachments/${data.path}`;
+    
+    // Return both path (for admin) and fullUrl (for Google Sheet)
+    return { path: data.path, fullUrl: fullUrl };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -44,40 +87,60 @@ const Contact: React.FC = () => {
     const newId = generateEnquiryId();
     setGeneratedId(newId);
 
-    const payload = {
-      ...formData,
-      enquiry_id: newId,
-      timestamp: new Date().toLocaleString(),
-      source: 'Website Contact Form'
-    };
-
     try {
+      let docData = { path: null as string | null, fullUrl: '' };
+      let imgData = { path: null as string | null, fullUrl: '' };
+
+      // 1. Upload Files to Supabase & Generate Links
+      if (attachments.document) {
+        docData = await uploadToSupabaseAndGetUrl(attachments.document, 'docs', newId);
+      }
+      if (attachments.image) {
+        imgData = await uploadToSupabaseAndGetUrl(attachments.image, 'images', newId);
+      }
+
+      // 2. Insert into Supabase DB (For Admin Panel)
+      // We store just the 'path' here to keep the DB clean
       const { error: supabaseError } = await supabase
         .from('enquiries')
         .insert([{
-            enquiry_id: newId,
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            email: formData.email,
-            phone: formData.phone,
-            subject: formData.subject,
-            message: formData.message
+          enquiry_id: newId,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject,
+          message: formData.message,
+          document_path: docData.path,
+          image_path: imgData.path,
+          status: 'new'
         }]);
 
       if (supabaseError) throw new Error("Database insert failed");
 
-      fetch(GOOGLE_SHEET_URL, {
+      // 3. Send to Google Sheets (We send the FULL CLICKABLE URL)
+      const googlePayload = {
+        ...formData,
+        enquiry_id: newId,
+        timestamp: new Date().toLocaleString(),
+        document_url: docData.fullUrl, 
+        image_url: imgData.fullUrl     
+      };
+
+      await fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(err => console.error("Google Sheets Sync Error:", err));
+        body: JSON.stringify(googlePayload)
+      });
 
+      // 4. Success UI
       setShowPopup(true);
       setFormData({
         first_name: '', last_name: '', email: '',
         phone: '', subject: 'General Inquiry', message: ''
       });
+      setAttachments({ document: null, image: null });
 
     } catch (err: any) {
       console.error("Submission Error:", err);
@@ -168,34 +231,33 @@ const Contact: React.FC = () => {
                 <InfoItem icon={<Phone size={22} />} colorClass="bg-emerald-500/10 text-emerald-400" title="Call Us" content={<a href="tel:+918758700709" className="hover:text-emerald-400 transition-colors">+91 87587 00709</a>} subContent="Mon-Sat, 9:00 AM - 7:00 PM" />
                 
                 <InfoItem 
-    icon={<Send size={22} />} 
-    colorClass="bg-[#25D366]/10 text-[#25D366]"
-    title="WhatsApp Support"
-    content={
-        <div className="flex flex-col gap-2 mt-2">
-            {[
-                { label: "Sales Representative 1", num: "918758700704" },
-                { label: "Sales Representative 2", num: "918758700709" }
-            ].map((contact, idx) => (
-                <a 
-                    key={idx}
-                    href={`https://wa.me/${contact.num}?text=Hi%20Durable%20Fastener...`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between gap-4 px-4 py-2.5 bg-slate-700/40 border border-slate-600/50 rounded-xl hover:bg-[#25D366]/20 hover:border-[#25D366]/40 transition-all group"
-                >
-                    <span className="text-sm font-medium text-slate-200 group-hover:text-white">
-                        {contact.label}
-                    </span>
-                    <span className="text-[10px] bg-slate-600/50 px-2 py-0.5 rounded text-slate-400 group-hover:text-[#25D366]">
-                        {contact.num.slice(-4)} {/* Last 4 digits show karega */}
-                    </span>
-                </a>
-            ))}
-        </div>
-    }
-/>
-
+                    icon={<Send size={22} />} 
+                    colorClass="bg-[#25D366]/10 text-[#25D366]"
+                    title="WhatsApp Support"
+                    content={
+                        <div className="flex flex-col gap-2 mt-2">
+                            {[
+                                { label: "Sales Representative 1", num: "918758700704" },
+                                { label: "Sales Representative 2", num: "918758700709" }
+                            ].map((contact, idx) => (
+                                <a 
+                                    key={idx}
+                                    href={`https://wa.me/${contact.num}?text=Hi%20Durable%20Fastener...`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-between gap-4 px-4 py-2.5 bg-slate-700/40 border border-slate-600/50 rounded-xl hover:bg-[#25D366]/20 hover:border-[#25D366]/40 transition-all group"
+                                >
+                                    <span className="text-sm font-medium text-slate-200 group-hover:text-white">
+                                        {contact.label}
+                                    </span>
+                                    <span className="text-[10px] bg-slate-600/50 px-2 py-0.5 rounded text-slate-400 group-hover:text-[#25D366]">
+                                        {contact.num.slice(-4)}
+                                    </span>
+                                </a>
+                            ))}
+                        </div>
+                    }
+                />
                 <InfoItem icon={<Mail size={22} />} colorClass="bg-amber-500/10 text-amber-400" title="Email Us" content="durablefastener@outlook.com" />
               </div>
             </div>
@@ -207,7 +269,7 @@ const Contact: React.FC = () => {
 
           {/* RIGHT SIDE: The Form */}
           <div className="lg:w-3/5 p-10 md:p-14 bg-white">
-            <h2 className="text-3xl font-bold text-slate-900 mb-8">Send an Inquiry</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-8">Send an Enquiry</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm border border-red-100">{error}</div>}
               
@@ -221,13 +283,42 @@ const Contact: React.FC = () => {
                 <InputGroup label="Contact Number" type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+91 00000 00000" />
               </div>
 
+              {/* --- File Upload Row --- */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                    <Paperclip size={14} /> Drawing / PDF
+                  </label>
+                  <input type="file" name="document" onChange={handleFileChange} accept=".pdf,.doc,.docx" className="hidden" id="doc-upload" />
+                  <label htmlFor="doc-upload" className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all text-sm font-medium text-slate-600">
+                    {attachments.document ? attachments.document.name.slice(0, 15) + '...' : 'Choose Doc'}
+                  </label>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                    <ImageIcon size={14} /> Product Image
+                  </label>
+                  <input type="file" name="image" onChange={handleFileChange} accept="image/*" className="hidden" id="img-upload" />
+                  <label htmlFor="img-upload" className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-all text-sm font-medium text-slate-600">
+                    {attachments.image ? attachments.image.name.slice(0, 15) + '...' : 'Choose Image'}
+                  </label>
+                </div>
+              </div>
+
               <div className="group">
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Subject</label>
                 <select name="subject" value={formData.subject} onChange={handleChange} className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-medium">
-                  <option>General Inquiry</option>
-                  <option>Request for Quote (Bulk)</option>
-                  <option>Distributorship Application</option>
-                  <option>Technical Support</option>
+                  <option>Export Inquiry</option>
+                  <option>Custom Fastener / OEM Requirement</option>
+                  <option>Product Inquiry – Standard Items</option>
+                  <option>Bulk Purchase / Dealership Inquiry</option>
+                   <option>Existing Order / Customer Support</option>
+                    <option>Direct Complaint / Feedback to Management</option>
+                     <option>Vendor / Raw Material / Service Proposal</option>
+                      <option>Career / Job Application</option>
+                       <option>Marketing / Business Collaboration</option>
+                       <option>General Inquiry</option>
                 </select>
               </div>
 
@@ -237,61 +328,52 @@ const Contact: React.FC = () => {
               </div>
 
               <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70">
-                {loading ? <Loader2 className="animate-spin" /> : <>Send Message <Briefcase size={20} /></>}
+                {loading ? <Loader2 className="animate-spin" /> : <>Send Message <UploadCloud size={20} /></>}
               </button>
               <p className="text-center text-slate-400 text-xs mt-4 italic">Data synced to ERP and Sales Dashboard.</p>
             </form>
           </div>
         </motion.div>
 
-        {/* --- MAP SECTION: Display Location Map --- */}
-     {/* --- MAP SECTION: Display Location Map with Red Icon --- */}
-<motion.div 
-  initial={{ opacity: 0, y: 20 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true }}
-  className="mt-12 mb-20 bg-white p-4 rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden"
->
-  <div className="flex flex-col md:flex-row items-center justify-between p-6 gap-4">
-    <div>
-      <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-        {/* Yahan icon ko red-600 class di hai */}
-        <MapPin className="text-red-600" fill="currentColor" fillOpacity={0.2} size={24} /> 
-        Visit Our Factory
-      </h3>
-      <p className="text-slate-500 text-sm font-medium">Plot No.16, Surbhi Industrial Zone-D, Ravki, Rajkot</p>
-    </div>
-    <a 
-      href="https://www.google.com/maps/dir/?api=1&destination=22.203102,70.750531" 
-      target="_blank" 
-      rel="noreferrer"
-      className="px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-100 flex items-center gap-2"
-    >
-      <Send size={16} /> Get Directions
-    </a>
-  </div>
-  
-  <div className="h-[450px] w-full rounded-2xl overflow-hidden shadow-inner border border-slate-100 relative">
-    {/* Red Marker wala Iframe */}
-    <iframe 
-      src="https://maps.google.com/maps?q=Durable%20Fastener%20Private%20Limited%20Ravki%20Rajkot&t=&z=15&ie=UTF8&iwloc=&output=embed" 
-      width="100%" 
-      height="100%" 
-      style={{ border: 0 }} 
-      allowFullScreen={true} 
-      loading="lazy" 
-      referrerPolicy="no-referrer-when-downgrade"
-      title="Durable Fastener Factory Location"
-      className="relative z-10"
-    ></iframe>
-    
-    {/* Overlay tag for branding */}
-    <div className="absolute bottom-4 left-4 z-20 bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg border border-slate-200 shadow-sm pointer-events-none">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Factory Location</p>
-        <p className="text-sm font-bold text-slate-800">Durable Fastener Pvt. Ltd.</p>
-    </div>
-  </div>
-</motion.div>
+        {/* --- MAP SECTION --- */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-12 mb-20 bg-white p-4 rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden"
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between p-6 gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <MapPin className="text-red-600" fill="currentColor" fillOpacity={0.2} size={24} /> 
+                Visit Our Factory
+              </h3>
+              <p className="text-slate-500 text-sm font-medium">Plot No.16, Surbhi Industrial Zone-D, Ravki, Rajkot</p>
+            </div>
+            <a 
+              href="https://www.google.com/maps/dir/?api=1&destination=22.203102,70.750531" 
+              target="_blank" 
+              rel="noreferrer"
+              className="px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-100 flex items-center gap-2"
+            >
+              <Send size={16} /> Get Directions
+            </a>
+          </div>
+          
+          <div className="h-[450px] w-full rounded-2xl overflow-hidden shadow-inner border border-slate-100 relative">
+            <iframe 
+              src="https://maps.google.com/maps?q=Durable%20Fastener%20Private%20Limited%20Ravki%20Rajkot&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+              width="100%" 
+              height="100%" 
+              style={{ border: 0 }} 
+              allowFullScreen={true} 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Durable Fastener Factory Location"
+              className="relative z-10"
+            ></iframe>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

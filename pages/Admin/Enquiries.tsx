@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { 
   Mail, Calendar, Trash2, CheckCircle, Loader2, 
-  MessageSquare, Phone, Eye 
+  MessageSquare, Phone, Eye, FileText, Image as ImageIcon, ExternalLink 
 } from 'lucide-react';
 
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxKBWWA_2TJuzAtccTqPYF9Wbm3sp084dCoD6bNH1shMYyCCH3gGsj2SjjG8ZojNsI/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwGzMDWPIm0BVVM3CL2zRvFy7fOx5B---eAHdlvgTOJJfKtfy_NeczA8bVprMBBXA/exec';
 
+// --- INTERFACE ---
 interface Enquiry {
   id: string;
-  enquiry_id: string; // Ticket ID add kiya
+  enquiry_id: string;
   created_at: string;
   first_name: string;
   last_name: string;
@@ -18,13 +19,25 @@ interface Enquiry {
   subject: string;
   message: string;
   status: 'new' | 'read' | 'contacted';
+  document_path?: string;
+  image_path?: string;
 }
 
 const Enquiries: React.FC = () => {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncingId, setSyncingId] = useState<string | null>(null);
-  const [updatingId, setUpdatingId] = useState<string | null>(null); // Status update loader
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  // --- NEW: State for deleting ---
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Helper to get public URL from Supabase Storage
+  const getPublicUrl = (path: string) => {
+    const { data } = supabase.storage
+      .from('enquiry-attachments')
+      .getPublicUrl(path);
+    return data.publicUrl;
+  };
 
   const fetchEnquiries = async () => {
     setLoading(true);
@@ -42,31 +55,52 @@ const Enquiries: React.FC = () => {
     fetchEnquiries();
   }, []);
 
-  // --- NEW: Handle Status Update (Mark as Read) ---
- const handleStatusUpdate = async (id: string, newStatus: 'read' | 'contacted') => {
-  setUpdatingId(id);
-  
-  // Debugging ke liye console log
-  console.log("Updating ID:", id, "to status:", newStatus);
+  const handleStatusUpdate = async (id: string, newStatus: 'read' | 'contacted') => {
+    setUpdatingId(id);
+    const { error } = await supabase
+      .from('enquiries')
+      .update({ status: newStatus })
+      .eq('id', id);
 
-  const { data, error } = await supabase
-    .from('enquiries')
-    .update({ status: newStatus }) // Yahan status column update ho raha hai
-    .eq('id', id) // 'id' primary key honi chahiye
-    .select(); // Update ke baad data wapas mangwayein verify karne ke liye
+    if (error) {
+      alert("Error: " + error.message);
+    } else {
+      setEnquiries(prev => 
+        prev.map(enq => enq.id === id ? { ...enq, status: newStatus } : enq)
+      );
+    }
+    setUpdatingId(null);
+  };
 
-  if (error) {
-    console.error("Supabase Update Error:", error.message);
-    alert("Error: " + error.message);
-  } else {
-    console.log("Updated Data:", data);
-    // Local state update
-    setEnquiries(prev => 
-      prev.map(enq => enq.id === id ? { ...enq, status: newStatus } : enq)
-    );
-  }
-  setUpdatingId(null);
-};
+  // --- NEW: Handle Delete Function ---
+ const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this enquiry? This cannot be undone.")) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      // We ask Supabase to delete and tell us how many rows were affected
+      const { error, count } = await supabase
+        .from('enquiries')
+        .delete({ count: 'exact' }) 
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // If count is 0, it means the database ignored us (RLS issue)
+      // Note: count might be null in some configurations, but this helps debug
+      
+      setEnquiries(prev => prev.filter(enq => enq.id !== id));
+      
+    } catch (err: any) {
+      alert("Failed to delete: " + err.message);
+      // If it failed, refresh the list to show the item again
+      fetchEnquiries();
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const syncToSheet = async (enquiry: Enquiry) => {
     setSyncingId(enquiry.id);
@@ -74,14 +108,13 @@ const Enquiries: React.FC = () => {
       await fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...enquiry,
-          timestamp: new Date(enquiry.created_at).toLocaleString()
+          timestamp: new Date(enquiry.created_at).toLocaleString(),
         })
       });
-      alert('Success: Synced to Google Sheets!');
-      // Sync ke baad auto-read mark kar sakte hain
+
+      alert('Synced text details to Google Sheet!');
       handleStatusUpdate(enquiry.id, 'read');
     } catch (err) {
       alert('Sync failed.');
@@ -132,7 +165,6 @@ const Enquiries: React.FC = () => {
                       )}
                     </div>
                     
-                    {/* Unique Ticket ID Display */}
                     <p className="text-xs font-mono text-blue-600 font-semibold mb-2">ID: {enquiry.enquiry_id || 'N/A'}</p>
 
                     <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
@@ -145,32 +177,35 @@ const Enquiries: React.FC = () => {
                   </div>
                 </div>
 
-                {/* --- Action Buttons --- */}
                 <div className="flex flex-wrap gap-2 items-center">
-                  {/* Mark as Read Button */}
                   {enquiry.status === 'new' && (
                     <button 
                       onClick={() => handleStatusUpdate(enquiry.id, 'read')}
                       disabled={updatingId === enquiry.id}
-                      className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-semibold disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-semibold"
                     >
                       {updatingId === enquiry.id ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} />}
                       Mark Read
                     </button>
                   )}
 
-                  {/* Sync Button */}
                   <button 
                     onClick={() => syncToSheet(enquiry)}
                     disabled={syncingId === enquiry.id}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-sm font-semibold disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-sm font-semibold"
                   >
                     {syncingId === enquiry.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                     Sync to Sheet
                   </button>
 
-                  <button className="p-2 text-slate-400 hover:text-red-600 transition-colors">
-                    <Trash2 size={20} />
+                  {/* --- NEW: Delete Button --- */}
+                  <button 
+                    onClick={() => handleDelete(enquiry.id)}
+                    disabled={deletingId === enquiry.id}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-sm font-semibold"
+                  >
+                    {deletingId === enquiry.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                    Delete
                   </button>
                 </div>
               </div>
@@ -178,6 +213,36 @@ const Enquiries: React.FC = () => {
               <div className="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <h4 className="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Subject: {enquiry.subject}</h4>
                 <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{enquiry.message}</p>
+                
+                {/* --- ATTACHMENTS SECTION --- */}
+                {(enquiry.document_path || enquiry.image_path) && (
+                  <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap gap-4">
+                    {enquiry.document_path && (
+                      <a 
+                        href={getPublicUrl(enquiry.document_path)} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-blue-600 hover:shadow-md transition-all"
+                      >
+                        <FileText size={16} /> View Document <ExternalLink size={12} />
+                      </a>
+                    )}
+                    {enquiry.image_path && (
+                      <div className="relative group">
+                        <a href={getPublicUrl(enquiry.image_path)} target="_blank" rel="noreferrer">
+                          <img 
+                            src={getPublicUrl(enquiry.image_path)} 
+                            alt="Inquiry" 
+                            className="w-20 h-20 object-cover rounded-lg border-2 border-white shadow-sm hover:scale-105 transition-transform" 
+                          />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg">
+                            <ImageIcon size={16} className="text-white" />
+                          </div>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
