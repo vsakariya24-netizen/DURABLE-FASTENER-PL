@@ -170,9 +170,9 @@ const Manufacturing: React.FC = () => {
             </RevealOnScroll>
             <div className="grid md:grid-cols-3 gap-8">
                 {[
-                  { title: data?.video1_title || "Cold Heading Line", sub: data?.video1_sub || "180 PPM Speed", label: "CAM 01: HEADING", img: data?.video1_img || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop" },
-                  { title: data?.video2_title || "Thread Rolling", sub: data?.video2_sub || "Precision Dies", label: "CAM 02: ROLLING", img: data?.video2_img || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=2070&auto=format&fit=crop" },
-                  { title: data?.video3_title || "Optical Sorting", sub: data?.video3_sub || "Zero Defect Check", label: "CAM 03: QC LAB", img: data?.video3_img || "https://plus.unsplash.com/premium_photo-1661962692059-55d5a4319814?q=80&w=2070&auto=format&fit=crop" }
+                  { title: data?.video1_title || "Cold Heading Line", sub: data?.video1_sub || "180 PPM Speed", img: data?.video1_img || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop" },
+                  { title: data?.video2_title || "Thread Rolling", sub: data?.video2_sub || "Precision Dies",  img: data?.video2_img || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=2070&auto=format&fit=crop" },
+                  { title: data?.video3_title || "Optical Sorting", sub: data?.video3_sub || "Zero Defect Check",  img: data?.video3_img || "https://plus.unsplash.com/premium_photo-1661962692059-55d5a4319814?q=80&w=2070&auto=format&fit=crop" }
                 ].map((item, index) => (
                   <RevealOnScroll key={index} delay={index * 150} className="h-full">
                       <div className="group relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-xl cursor-pointer h-full border-4 border-white">
@@ -183,7 +183,7 @@ const Manufacturing: React.FC = () => {
                                 <Play fill="currentColor" className="text-blue-600 group-hover:text-white" size={28} />
                              </div>
                           </div>
-                          <div className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] text-white font-mono border border-white/10">{item.label}</div>
+                         
                           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent p-6 pt-12">
                              <p className="text-white font-bold text-xl">{item.title}</p>
                              <p className="text-sm text-blue-300 font-medium">{item.sub}</p>

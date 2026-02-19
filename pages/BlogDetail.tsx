@@ -1,144 +1,155 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Calendar, User, ArrowLeft, Loader, Share2 } from 'lucide-react';
+import { ArrowLeft, Loader, Share2, Bookmark, Clock } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+
 const BlogDetail: React.FC = () => {
-  const { id } = useParams(); // Get the ID from the URL
+  const { id } = useParams();
   const [post, setPost] = useState<any>(null);
+  const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollTop;
+      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      setScrollProgress((totalScroll / windowHeight) * 100);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchPost = async () => {
       if (!id) return;
-      
-      const { data, error } = await supabase
-        .from('blogs')
-        .select('*')
-        .eq('id', id)
-        .single(); // Fetch only ONE record
-
-      if (data) setPost(data);
-      if (error) console.error("Error fetching post:", error);
+      const { data } = await supabase.from('blogs').select('*').eq('id', id).single(); 
+      if (data) {
+        setPost(data);
+        try { 
+          setSections(JSON.parse(data.content)); 
+        } catch { 
+          setSections([{ heading: '', body: data.content }]); 
+        }
+      }
       setLoading(false);
     };
     fetchPost();
   }, [id]);
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-        <Loader className="animate-spin text-zinc-400" size={40} />
+    <div className="min-h-screen flex items-center justify-center bg-[#FDFCF7]">
+      <Loader className="animate-spin text-yellow-500" size={40} />
     </div>
   );
 
-  if (!post) return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
-        <h2 className="text-2xl font-bold text-gray-900">Article not found</h2>
-        <Link to="/blog" className="mt-4 text-blue-600 hover:underline">Back to Blog</Link>
-    </div>
-  );
-const cleanDescription = post.excerpt || post.content.substring(0, 150).replace(/"/g, "") + "...";
   return (
-    <div className="bg-white font-sans min-h-screen pt-32 pb-20">
+    <div className="bg-[#FDFCF7] min-h-screen font-sans selection:bg-yellow-100">
       <Helmet>
-        {/* 1. Dynamic Article SEO */}
-        <title>{post.title} | Durable Fastener Blog</title>
-        <meta name="description" content={cleanDescription} />
-        
-        {/* 2. Open Graph (For Social Media Sharing) */}
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={cleanDescription} />
-        <meta property="og:image" content={post.image_url || 'https://durablefastener.com/default-blog.jpg'} />
-        <meta property="og:url" content={`https://durablefastener.com/blog/${id}`} />
-        
-        {/* 3. Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={cleanDescription} />
-        <meta name="twitter:image" content={post.image_url} />
-
-        {/* 4. Article Schema (Structured Data) */}
-        <script type="application/ld+json">
-          {`
-            {
-              "@context": "https://schema.org",
-              "@type": "Article",
-              "headline": "${post.title.replace(/"/g, '\\"')}",
-              "image": "${post.image_url || ''}",
-              "datePublished": "${post.created_at}",
-              "dateModified": "${post.created_at}",
-              "author": {
-                "@type": "Person",
-                "name": "${post.author || 'Durable Fastener Team'}"
-              },
-              "publisher": {
-                "@type": "Organization",
-                "name": "Durable Fastener Pvt Ltd",
-                "logo": {
-                  "@type": "ImageObject",
-                  "url": "https://durablefastener.com/durablefastener.png"
-                }
-              },
-              "description": "${cleanDescription.replace(/"/g, '\\"')}"
-            }
-          `}
-        </script>
+        <title>{post?.title} | Durable Fastener Insights</title>
       </Helmet>
-      {/* Progress Bar (Visual Touch) */}
-      <div className="fixed top-0 left-0 h-1 bg-yellow-500 z-50 w-full animate-pulse"></div>
 
-      <article className="max-w-4xl mx-auto px-6">
-        
-        {/* Back Button */}
-        <Link to="/blog" className="inline-flex items-center gap-2 text-gray-500 hover:text-black mb-8 transition-colors font-medium">
-            <ArrowLeft size={20} /> Back to Insights
-        </Link>
-        
-        {/* Header Info */}
-        <div className="mb-8">
-            <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-6 border border-blue-100">
-                {post.category}
-            </span>
-            <h1 className="text-3xl md:text-5xl font-black text-zinc-900 mb-6 leading-tight">
-                {post.title}
-            </h1>
+      {/* FIXED PROGRESS BAR */}
+      <div className="fixed top-0 left-0 w-full h-1 z-[150] bg-zinc-100">
+        <div 
+          className="h-full bg-yellow-500 transition-all duration-150 ease-out" 
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
 
-            <div className="flex flex-wrap items-center gap-6 text-gray-500 text-sm border-b border-gray-100 pb-8">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold">
-                        {post.author ? post.author.charAt(0) : 'A'}
-                    </div>
-                    <span className="font-medium text-zinc-900">{post.author || 'Admin'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Calendar size={16} />
-                    <span>{new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                </div>
+      {/* STICKY NAVIGATION BAR (Updated based on image_2e631e.png) */}
+   
+          
+          <div className="flex items-center gap-2">
+            <button className="p-2 text-zinc-400 hover:text-black hover:bg-zinc-100 rounded-full transition-all">
+              <Share2 size={18}/>
+            </button>
+            <button className="p-2 text-zinc-400 hover:text-black hover:bg-zinc-100 rounded-full transition-all">
+              <Bookmark size={18}/>
+            </button>
+          </div>
+        
+
+      {/* ARTICLE CONTAINER with pt-16 (4rem) and pb-32 (8rem) */}
+      <article className="pt-24 pb-32">
+        <header className="max-w-4xl mx-auto px-6 mb-20 text-center md:text-left">
+          <div className="inline-block px-3 py-1 rounded-md bg-zinc-900 text-yellow-500 text-[10px] font-black uppercase tracking-widest mb-6">
+            {post?.category || 'TECHNICAL GUIDE'}
+          </div>
+          <h1 className="text-4xl md:text-7xl font-black text-[#5A5245] leading-[1.05] tracking-tighter mb-10">
+            {post?.title}
+          </h1>
+          
+          {/* UPDATED AUTHOR SECTION (Matches image_2e7567.png) */}
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 py-8 border-y border-zinc-200/60">
+            <div className="flex items-center gap-4">
+              {/* BRAND LOGO CIRCLE */}
+              {/* BRAND LOGO CIRCLE */}
+<div className="w-14 h-14 rounded-2xl bg-[#F4F4F4] flex items-center justify-center border border-zinc-200 shadow-sm overflow-hidden">
+  <img 
+    src="/durablefastener.png" // Replace with your actual logo path (e.g., /logo.png or a URL)
+    alt="Durable Fastener Logo" 
+    className="w-10 h-10 object-contain"
+    onError={(e) => {
+      // Fallback if image fails to load
+      e.currentTarget.style.display = 'none';
+      e.currentTarget.parentElement!.innerHTML = '<span class="text-xl font-black text-zinc-400">D</span>';
+    }}
+  />
+</div>
+              
+              <div className="text-left">
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Published By</p>
+                <p className="font-extrabold text-zinc-900 text-lg leading-tight">Durable Fastener Private Limited</p>
+              </div>
             </div>
+
+            <div className="h-10 w-[1px] bg-zinc-200 hidden md:block"></div>
+
+            <div className="flex items-center gap-6 text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
+              <span>{new Date(post?.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+              <span className="flex items-center gap-2"><Clock size={14} className="text-zinc-300"/> 5 MIN READ</span>
+            </div>
+          </div>
+        </header>
+
+        {/* CONTENT SECTIONS */}
+        <div className="max-w-4xl mx-auto px-6 space-y-24">
+          {sections.map((section, idx) => (
+            <section key={idx} className="group">
+              {section.heading && (
+                <h2 className="text-3xl md:text-5xl font-black text-[#6B6254] mb-8 leading-tight tracking-tight border-l-8 border-yellow-500 pl-8">
+                  {section.heading}
+                </h2>
+              )}
+              <div className="prose prose-zinc prose-xl max-w-none text-[#5A5A5A] leading-[1.8] font-serif space-y-8">
+                {section.body.split('\n').map((para: string, pIdx: number) => (
+                  para.trim() && <p key={pIdx} className="mb-6">{para}</p>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
 
-        {/* Featured Image */}
-        <div className="w-full aspect-video rounded-3xl overflow-hidden mb-12 shadow-2xl bg-gray-100">
-             <img 
-                src={post.image_url} 
-                className="w-full h-full object-cover" 
-                alt={post.title} 
-                onError={(e: any) => e.target.src = 'https://placehold.co/800x400?text=No+Image'}
-             />
+        {/* FOOTER CTA */}
+        <div className="max-w-5xl mx-auto px-6 mt-40">
+          <div className="bg-zinc-900 rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+            <div className="relative z-10">
+              <h2 className="text-3xl md:text-6xl font-black text-white mb-6 tracking-tighter leading-none">
+                Engineered for <span className="text-yellow-500">Durability</span>
+              </h2>
+              <p className="text-zinc-400 text-lg mb-12 max-w-lg mx-auto italic">
+                Durable Fastener Private Limited — Your trusted manufacturing partner based in Rajkot, Gujarat.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <a href="tel:+918758700704" className="bg-yellow-500 text-black font-black px-12 py-5 rounded-2xl shadow-xl hover:scale-105 transition-all text-[10px] uppercase tracking-widest">Direct Contact</a>
+                <Link to="/contact" className="bg-white/10 text-white backdrop-blur-md border border-white/20 px-12 py-5 rounded-2xl hover:bg-white/20 transition-all text-[10px] font-black uppercase tracking-widest">Bulk Inquiries</Link>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Content Body */}
-        <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed space-y-6">
-            {post.content.split('\n').map((paragraph: string, idx: number) => (
-                paragraph.trim() !== "" && (
-                    <p key={idx} className="mb-6">
-                        {paragraph}
-                    </p>
-                )
-            ))}
-        </div>
-
       </article>
     </div>
   );
