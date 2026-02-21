@@ -16,6 +16,8 @@ type CategoryStructure = {
   sub_categories: { id: string; name: string }[];
 };
 
+
+type FaqItem = { question: string; answer: string };
 type SpecItem = { key: string; value: string };
 
 type DimItem = {
@@ -126,9 +128,16 @@ const AddProduct: React.FC = () => {
     specifications: [] as SpecItem[],
     dimensional_specifications: [] as DimItem[],
     applications: [] as AppItem[],
-    certifications: [] as CertItem[]
+    certifications: [] as CertItem[],
+    faqs: [] as FaqItem[]
   });
-
+const addFaq = () => setFormData(p => ({ ...p, faqs: [...p.faqs, { question: '', answer: '' }] }));
+const removeFaq = (idx: number) => setFormData(p => ({ ...p, faqs: p.faqs.filter((_, i) => i !== idx) }));
+const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
+  const newFaqs = [...formData.faqs];
+  newFaqs[idx][field] = val;
+  setFormData(p => ({ ...p, faqs: newFaqs }));
+};
   const [dynamicCoreSpecs, setDynamicCoreSpecs] = useState<SpecItem[]>([
     { key: 'Head Type', value: '' },
     { key: 'Drive Type', value: '' },
@@ -286,7 +295,8 @@ const AddProduct: React.FC = () => {
             specifications: loadedOtherSpecs,
             dimensional_specifications: parsedDims,
             applications: loadedApps,
-            certifications: product.certifications || []
+            certifications: product.certifications || [],
+            faqs: product.faqs || []
           });
 
           // --- RECONSTRUCT VARIANTS ---
@@ -608,6 +618,7 @@ const AddProduct: React.FC = () => {
       size_images: cleanedSizeImages, 
       specifications: mergedSpecs,
       applications: formData.applications.filter(a => a.name.trim() !== '').map(({loading, ...rest}) => rest),
+      faqs: formData.faqs.filter(f => f.question.trim() !== ''),
     };
 
     try {
@@ -995,6 +1006,46 @@ const AddProduct: React.FC = () => {
                   </div>
             </div>
         )}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+    <div className="flex justify-between items-center mb-4 border-b pb-2">
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+            <Info size={18} className="text-blue-600" /> Product FAQs
+        </h3>
+        <button type="button" onClick={addFaq} className="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded hover:bg-blue-200 flex items-center gap-1">
+            <Plus size={14} /> Add FAQ
+        </button>
+    </div>
+    <div className="space-y-4">
+        {formData.faqs.map((faq, idx) => (
+            <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3 relative">
+                <button type="button" onClick={() => removeFaq(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-600">
+                    <X size={18} />
+                </button>
+                <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Question</label>
+                    <input 
+                        value={faq.question} 
+                        onChange={(e) => updateFaq(idx, 'question', e.target.value)} 
+                        className="w-full px-3 py-2 border rounded text-sm font-semibold" 
+                        placeholder="e.g. Is this screw suitable for coastal environments?"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Answer</label>
+                    <textarea 
+                        value={faq.answer} 
+                        onChange={(e) => updateFaq(idx, 'answer', e.target.value)} 
+                        className="w-full px-3 py-2 border rounded text-sm h-20" 
+                        placeholder="e.g. Yes, our SS304 grade provides excellent corrosion resistance..."
+                    />
+                </div>
+            </div>
+        ))}
+        {formData.faqs.length === 0 && (
+            <div className="text-center py-6 text-gray-400 text-sm italic">No FAQs added for this product yet.</div>
+        )}
+    </div>
+</div>
           {/* 7. Size Images */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
           <h3 className="font-bold mb-6 flex items-center gap-2 text-blue-600">

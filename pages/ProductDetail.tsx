@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase';
 import { 
   Hammer, Grid, Armchair, Wrench, ArrowUpRight,
   ChevronRight, ShoppingCart, Loader2, Share2, Printer, 
-  Ruler, Maximize2, Info, X,FileText,
+  Ruler, Maximize2, Info, X, FileText,
   ArrowRight, Lock, Activity, FileCheck, Layers, Hash,
-  ShieldCheck, Box, Tag, Settings, Component
+  ShieldCheck, Box, Tag, Settings, Component,
+  ChevronDown, HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MagicZoomClone from '../components/MagicZoomClone'; 
@@ -59,6 +60,77 @@ const containerVar = {
 const itemVar = {
   hidden: { opacity: 0, y: 15 },
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 60, damping: 20 } }
+};
+
+// --- FAQ COMPONENT ---
+interface FaqProps {
+  question: string;
+  answer: string;
+  index: number;
+}
+
+const FaqAccordion: React.FC<FaqProps> = ({ question, answer, index }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1 }}
+      className={`mb-4 border border-neutral-200 rounded-xl overflow-hidden transition-all duration-300 ${
+        isOpen ? 'ring-2 ring-yellow-500 shadow-lg bg-white' : 'bg-neutral-50 hover:bg-neutral-100'
+      }`}
+    >
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-6 flex items-center justify-between text-left group"
+      >
+        <div className="flex items-center gap-4">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+            isOpen ? 'bg-yellow-500 text-neutral-900' : 'bg-neutral-200 text-neutral-500 group-hover:bg-neutral-300'
+          }`}>
+            <HelpCircle size={20} strokeWidth={2.5} />
+          </div>
+          <span className="text-lg font-bold uppercase tracking-tight text-neutral-900" style={fontHeading}>
+            {question}
+          </span>
+        </div>
+        
+        <motion.div 
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          className={`${isOpen ? 'text-yellow-600' : 'text-neutral-400'}`}
+        >
+          <Settings size={24} className={isOpen ? 'animate-spin-slow' : ''} />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+          >
+            <div className="px-6 pb-8 flex gap-6 relative">
+              {/* Technical Sidebar Graphic */}
+              <div className="w-1 bg-yellow-500 rounded-full shrink-0" />
+
+              <div className="flex-1">
+                {/* WHITESPACE-PRE-WRAP IS THE KEY FIX HERE */}
+                <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-100 text-neutral-600 leading-relaxed font-medium whitespace-pre-wrap">
+                  {answer}
+                </div>
+                <div className="mt-4 flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-neutral-400">
+                  <Wrench size={12} /> Tech Verified Answer
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
 };
 
 // --- HEADER COMPONENT ---
@@ -116,7 +188,8 @@ const ProductDetail: React.FC = () => {
             applications: productData.applications || [], 
             variants: vData || [], 
             specifications: productData.specifications || [], 
-            dimensional_specifications: productData.dimensional_specifications || [] 
+            dimensional_specifications: productData.dimensional_specifications || [],
+            faqs: productData.faqs || []
         };
         
         setProduct(fullProduct);
@@ -133,11 +206,7 @@ const ProductDetail: React.FC = () => {
   // --- DERIVED DATA ---
   const uniqueDiameters = useMemo(() => {
     if (!product?.variants) return [];
-    
-    // We store the values as they are in DB to ensure matching, 
-    // but the display logic in JSX will handle stripping "mm"
     const dias = product.variants.map((v: any) => v.diameter?.toString().trim()).filter(Boolean);
-    
     return Array.from(new Set(dias)).sort((a: any, b: any) => parseFloat(a) - parseFloat(b));
   }, [product]);
 
@@ -151,7 +220,6 @@ const ProductDetail: React.FC = () => {
       if (!product?.variants || !selectedDia) return [];
       const filteredVariants = product.variants.filter((v: any) => v.diameter === selectedDia);
       const lengthMap = new Map();
-
       filteredVariants.forEach((v: any) => {
           if (v.length) {
               const u = v.unit || 'mm'; 
@@ -176,9 +244,6 @@ const ProductDetail: React.FC = () => {
               setSelectedLen(availableLengthOptions[0].value);
               setSelectedUnit(availableLengthOptions[0].unit);
           }
-      } else {
-          setSelectedLen('');
-          setSelectedUnit('mm');
       }
   }, [selectedDia, availableLengthOptions]);
 
@@ -369,7 +434,6 @@ const ProductDetail: React.FC = () => {
                       <div className="flex flex-wrap gap-3">
                         {uniqueDiameters.map((dia: any) => {
                             const isSelected = selectedDia === dia;
-                            // UPDATED: Show clean label without "mm" suffix inside the box
                             const displayLabel = dia.toString().replace('mm', '').trim();
 
                             return (
@@ -557,7 +621,7 @@ const ProductDetail: React.FC = () => {
                  <div className="grid grid-cols-2 gap-4 pt-4">
     {/* BULK QUOTE BUTTON */}
     <a 
-        href="/Contact" // <-- CHANGE THIS TO YOUR PAGE URL
+        href="/Contact"
         className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:translate-y-[-2px]" 
         style={fontHeading}
     >
@@ -688,7 +752,6 @@ const ProductDetail: React.FC = () => {
             </div>
         </div>
 
-        {/* DIMENSIONS TABLE: Headers still show "mm" for clarity, buttons are clean */}
         <div className="w-full bg-white border border-t-0 border-neutral-200 mt-0 rounded-b-2xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse min-w-[600px]">
@@ -698,7 +761,6 @@ const ProductDetail: React.FC = () => {
                             <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>Symbol</th>
                             {uniqueDiameters.map((dia: any) => (
                                 <th key={dia} className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'}`} style={fontHeading}>
-                                      {/* Table header keeps unit if Metric */}
                                       {dia.includes('.') && !dia.includes('mm') && !dia.includes('#') ? `${dia}mm` : dia}
                                 </th>
                             ))}
@@ -865,6 +927,64 @@ const ProductDetail: React.FC = () => {
     </div>
   </section>
 )}
+
+{/* --- ATTRACTIVE FAQ SECTION --- */}
+{product.faqs && product.faqs.length > 0 && (
+  <section className="py-24 bg-neutral-900 relative overflow-hidden">
+    {/* Background Graphic Decor */}
+    <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl -mr-48 -mt-48"></div>
+    <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl -ml-48 -mb-48"></div>
+
+    <div className="max-w-5xl mx-auto px-4 relative z-10">
+      <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-6">
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <Wrench className="text-yellow-500" size={24} />
+            <span className="font-mono text-xs font-bold tracking-[0.5em] uppercase text-yellow-500/60">Fastener Support</span>
+          </div>
+          <h3 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-white" style={fontHeading}>
+            Technical <span className="text-yellow-500">Knowledge</span> Base
+          </h3>
+        </div>
+        <div className="hidden md:block">
+           <Activity size={80} className="text-neutral-800" />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {product.faqs.map((faq: any, idx: number) => (
+          <FaqAccordion 
+            key={idx} 
+            index={idx}
+            question={faq.question} 
+            answer={faq.answer} 
+          />
+        ))}
+      </div>
+      
+      <motion.div 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        className="mt-16 p-8 bg-neutral-800/50 border border-neutral-700 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-8 backdrop-blur-sm"
+      >
+        <div className="flex items-center gap-6 text-left">
+          <div className="w-16 h-16 bg-neutral-700 rounded-2xl flex items-center justify-center text-yellow-500">
+            <Info size={32} />
+          </div>
+          <div>
+            <p className="text-white font-bold text-xl uppercase" style={fontHeading}>Need Custom Specifications?</p>
+            <p className="text-neutral-400 text-sm">Our engineering team can assist with specific bulk requirements.</p>
+          </div>
+        </div>
+        <Link to="/Contact" className="group bg-yellow-500 hover:bg-yellow-400 text-neutral-900 px-8 py-4 rounded-xl font-bold uppercase tracking-widest flex items-center gap-3 transition-all">
+          GET EXPERT ADVICE
+          <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
+        </Link>
+      </motion.div>
+    </div>
+  </section>
+)}
+
       <AnimatePresence>
         {fullScreenAppImage && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setFullScreenAppImage(null)}>

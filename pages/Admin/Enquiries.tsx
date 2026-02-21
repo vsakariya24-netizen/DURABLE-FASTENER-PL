@@ -5,7 +5,7 @@ import {
   MessageSquare, Phone, Eye, FileText, Image as ImageIcon, ExternalLink 
 } from 'lucide-react';
 
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwGzMDWPIm0BVVM3CL2zRvFy7fOx5B---eAHdlvgTOJJfKtfy_NeczA8bVprMBBXA/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzR2Tv85F-MNNePk32-FuWH4zE14LQtCt_O2Wxk5dKktqUmJpFq7kzWUqReYH2ih9xC/exec';
 
 // --- INTERFACE ---
 interface Enquiry {
@@ -103,25 +103,31 @@ const Enquiries: React.FC = () => {
   };
 
   const syncToSheet = async (enquiry: Enquiry) => {
-    setSyncingId(enquiry.id);
-    try {
-      await fetch(GOOGLE_SHEET_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({
-          ...enquiry,
-          timestamp: new Date(enquiry.created_at).toLocaleString(),
-        })
-      });
+  setSyncingId(enquiry.id);
+  try {
+    // Generate the public Supabase URLs so the Google Script can "see" them to download them
+    const docUrl = enquiry.document_path ? getPublicUrl(enquiry.document_path) : "No Document";
+    const imgUrl = enquiry.image_path ? getPublicUrl(enquiry.image_path) : "No Image";
 
-      alert('Synced text details to Google Sheet!');
-      handleStatusUpdate(enquiry.id, 'read');
-    } catch (err) {
-      alert('Sync failed.');
-    } finally {
-      setSyncingId(null);
-    }
-  };
+    await fetch(GOOGLE_SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({
+        ...enquiry,
+        timestamp: new Date(enquiry.created_at).toLocaleString(),
+        document_url: docUrl, // Added this
+        image_url: imgUrl,    // Added this
+      })
+    });
+
+    alert('Synced to Google Sheet! Files are now being backed up to Drive.');
+    handleStatusUpdate(enquiry.id, 'read');
+  } catch (err) {
+    alert('Sync failed.');
+  } finally {
+    setSyncingId(null);
+  }
+};
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">

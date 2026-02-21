@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Loader, Share2, Bookmark, Clock } from 'lucide-react';
+import { ArrowLeft, Loader, Share2, Bookmark, Clock, Layout, Table as TableIcon } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 const BlogDetail: React.FC = () => {
@@ -28,9 +28,11 @@ const BlogDetail: React.FC = () => {
       if (data) {
         setPost(data);
         try { 
+          // Parse JSON content which includes { type: 'text' | 'table' }
           setSections(JSON.parse(data.content)); 
         } catch { 
-          setSections([{ heading: '', body: data.content }]); 
+          // Fallback for older posts
+          setSections([{ type: 'text', heading: '', body: data.content }]); 
         }
       }
       setLoading(false);
@@ -58,21 +60,30 @@ const BlogDetail: React.FC = () => {
         />
       </div>
 
-      {/* STICKY NAVIGATION BAR (Updated based on image_2e631e.png) */}
-   
-          
-          <div className="flex items-center gap-2">
-            <button className="p-2 text-zinc-400 hover:text-black hover:bg-zinc-100 rounded-full transition-all">
-              <Share2 size={18}/>
-            </button>
-            <button className="p-2 text-zinc-400 hover:text-black hover:bg-zinc-100 rounded-full transition-all">
-              <Bookmark size={18}/>
-            </button>
-          </div>
-        
+      {/* STICKY NAVIGATION BAR (UPDATED WITH BACK BUTTON) */}
+      <div className="fixed top-6 left-6 md:left-10 z-[100]">
+        <Link 
+          to="/blog" 
+          className="flex items-center gap-3 px-5 py-3 bg-white/80 backdrop-blur-md border border-zinc-200 text-zinc-900 hover:text-yellow-600 rounded-full shadow-lg shadow-zinc-200/50 transition-all group"
+        >
+          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+          <span className="hidden md:block font-black text-[10px] uppercase tracking-[0.2em]">
+            Back to Journal
+          </span>
+        </Link>
+      </div>
 
-      {/* ARTICLE CONTAINER with pt-16 (4rem) and pb-32 (8rem) */}
-      <article className="pt-24 pb-32">
+      {/* ACTION BUTTONS (SHARE/BOOKMARK) */}
+      <div className="fixed top-6 right-6 md:right-10 z-[100] flex items-center gap-2">
+        <button className="p-3 bg-white/80 backdrop-blur-md border border-zinc-200 text-zinc-400 hover:text-black rounded-full shadow-sm transition-all hover:scale-110">
+          <Share2 size={18}/>
+        </button>
+        <button className="p-3 bg-white/80 backdrop-blur-md border border-zinc-200 text-zinc-400 hover:text-black rounded-full shadow-sm transition-all hover:scale-110">
+          <Bookmark size={18}/>
+        </button>
+      </div>
+
+      <article className="pt-32 pb-32">
         <header className="max-w-4xl mx-auto px-6 mb-20 text-center md:text-left">
           <div className="inline-block px-3 py-1 rounded-md bg-zinc-900 text-yellow-500 text-[10px] font-black uppercase tracking-widest mb-6">
             {post?.category || 'TECHNICAL GUIDE'}
@@ -81,24 +92,19 @@ const BlogDetail: React.FC = () => {
             {post?.title}
           </h1>
           
-          {/* UPDATED AUTHOR SECTION (Matches image_2e7567.png) */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 py-8 border-y border-zinc-200/60">
             <div className="flex items-center gap-4">
-              {/* BRAND LOGO CIRCLE */}
-              {/* BRAND LOGO CIRCLE */}
-<div className="w-14 h-14 rounded-2xl bg-[#F4F4F4] flex items-center justify-center border border-zinc-200 shadow-sm overflow-hidden">
-  <img 
-    src="/durablefastener.png" // Replace with your actual logo path (e.g., /logo.png or a URL)
-    alt="Durable Fastener Logo" 
-    className="w-10 h-10 object-contain"
-    onError={(e) => {
-      // Fallback if image fails to load
-      e.currentTarget.style.display = 'none';
-      e.currentTarget.parentElement!.innerHTML = '<span class="text-xl font-black text-zinc-400">D</span>';
-    }}
-  />
-</div>
-              
+              <div className="w-14 h-14 rounded-2xl bg-[#F4F4F4] flex items-center justify-center border border-zinc-200 shadow-sm overflow-hidden">
+                <img 
+                  src="/durablefastener.png" 
+                  alt="Durable Fastener Logo" 
+                  className="w-10 h-10 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.innerHTML = '<span class="text-xl font-black text-zinc-400">D</span>';
+                  }}
+                />
+              </div>
               <div className="text-left">
                 <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Published By</p>
                 <p className="font-extrabold text-zinc-900 text-lg leading-tight">Durable Fastener Private Limited</p>
@@ -118,16 +124,60 @@ const BlogDetail: React.FC = () => {
         <div className="max-w-4xl mx-auto px-6 space-y-24">
           {sections.map((section, idx) => (
             <section key={idx} className="group">
-              {section.heading && (
-                <h2 className="text-3xl md:text-5xl font-black text-[#6B6254] mb-8 leading-tight tracking-tight border-l-8 border-yellow-500 pl-8">
-                  {section.heading}
-                </h2>
+              {section.type === 'table' ? (
+                /* TABLE RENDERER */
+                <div className="my-12">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="bg-zinc-100 p-2 rounded-lg border border-zinc-200">
+                      <Layout size={18} className="text-zinc-600" />
+                    </div>
+                    <h3 className="text-2xl font-black text-[#5A5245] tracking-tight">
+                      {section.heading}
+                    </h3>
+                  </div>
+
+                  <div className="overflow-hidden border border-zinc-200/60 rounded-[2rem] bg-white shadow-xl shadow-zinc-200/20">
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-left">
+                        <thead>
+                          <tr className="border-b border-zinc-200/60">
+                            {section.headers?.map((header: string, i: number) => (
+                              <th key={i} className="px-8 py-5 text-[11px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50/50">
+                                {header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100">
+                          {section.rows?.map((row: string[], rowIndex: number) => (
+                            <tr key={rowIndex} className="hover:bg-zinc-50/50 transition-colors">
+                              {row.map((cell, cellIndex) => (
+                                <td key={cellIndex} className={`px-8 py-5 text-[16px] ${cellIndex === 0 ? 'font-bold text-zinc-900' : 'text-zinc-600 font-medium'}`}>
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* TEXT RENDERER */
+                <>
+                  {section.heading && (
+                    <h2 className="text-3xl md:text-5xl font-black text-[#6B6254] mb-8 leading-tight tracking-tight border-l-8 border-yellow-500 pl-8">
+                      {section.heading}
+                    </h2>
+                  )}
+                  <div className="prose prose-zinc prose-xl max-w-none text-[#5A5A5A] leading-[1.8] font-serif space-y-8">
+                    {section.body.split('\n').map((para: string, pIdx: number) => (
+                      para.trim() && <p key={pIdx} className="mb-6">{para}</p>
+                    ))}
+                  </div>
+                </>
               )}
-              <div className="prose prose-zinc prose-xl max-w-none text-[#5A5A5A] leading-[1.8] font-serif space-y-8">
-                {section.body.split('\n').map((para: string, pIdx: number) => (
-                  para.trim() && <p key={pIdx} className="mb-6">{para}</p>
-                ))}
-              </div>
             </section>
           ))}
         </div>

@@ -9,7 +9,7 @@ import {
 import { Helmet } from 'react-helmet-async';
 
 // REPLACE THIS with your new Web App URL from the script above
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwGzMDWPIm0BVVM3CL2zRvFy7fOx5B---eAHdlvgTOJJfKtfy_NeczA8bVprMBBXA/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzR2Tv85F-MNNePk32-FuWH4zE14LQtCt_O2Wxk5dKktqUmJpFq7kzWUqReYH2ih9xC/exec';
 
 // YOUR SPECIFIC PROJECT URL
 const SUPABASE_PROJECT_URL = 'https://wterhjmgsgyqgbwviomo.supabase.co'; 
@@ -56,7 +56,7 @@ const Contact: React.FC = () => {
     if (files && files[0]) {
       setAttachments(prev => ({ ...prev, [name]: files[0] }));
     }
-  };
+  }
 
   // --- THE MAGIC FUNCTION ---
   // Uploads to Supabase and returns the "Public URL" string
@@ -73,7 +73,11 @@ const Contact: React.FC = () => {
     if (uploadError) throw uploadError;
 
     // 2. Create the exact URL format you wanted
-    const fullUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/public/enquiry-attachments/${data.path}`;
+    const { data: urlData } = supabase.storage
+  .from('enquiry-attachments')
+  .getPublicUrl(data.path);
+
+const fullUrl = urlData.publicUrl;
     
     // Return both path (for admin) and fullUrl (for Google Sheet)
     return { path: data.path, fullUrl: fullUrl };
@@ -119,20 +123,31 @@ const Contact: React.FC = () => {
       if (supabaseError) throw new Error("Database insert failed");
 
       // 3. Send to Google Sheets (We send the FULL CLICKABLE URL)
-      const googlePayload = {
-        ...formData,
-        enquiry_id: newId,
-        timestamp: new Date().toLocaleString(),
-        document_url: docData.fullUrl, 
-        image_url: imgData.fullUrl     
-      };
+   const googlePayload = {
+  enquiry_id: newId,
+  timestamp: new Date().toLocaleString(),
+  first_name: formData.first_name,
+  last_name: formData.last_name,
+  email: formData.email,
+  phone: formData.phone,
+  subject: formData.subject,
+  message: formData.message,
+  document_url: docData.fullUrl || "No Document", // Make sure these keys match GAS
+  image_url: imgData.fullUrl || "No Image"    
+};
 
-      await fetch(GOOGLE_SHEET_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(googlePayload)
-      });
+try {
+  // We use text/plain to avoid CORS "pre-flight" blocks from Google
+  await fetch(GOOGLE_SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors', 
+    headers: { 'Content-Type': 'text/plain' }, 
+    body: JSON.stringify(googlePayload)
+  });
+  console.log("Payload sent to Google:", googlePayload);
+} catch (googleErr) {
+  console.error("Google Sheet Sync Error:", googleErr);
+}
 
       // 4. Success UI
       setShowPopup(true);

@@ -3,14 +3,16 @@ import { supabase } from '../../lib/supabase';
 import { 
   Save, Loader, Image as ImageIcon, FileText, RefreshCw, 
   Hash, Phone, Video, Plus, Trash2, LayoutTemplate, Briefcase, Users,
-  Settings, ArrowRight
+  Settings, ArrowRight,
+  BookOpen
 } from 'lucide-react';
 
 const AdminSiteContent = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
-
+const [blogs, setBlogs] = useState<any[]>([]);
+const [newBlog, setNewBlog] = useState({ title: '', category: '', read_time: '', image_url: '' });
   // --- STATE: HERO ---
   const [heroText, setHeroText] = useState({ line1: '', line2: '', line3: '' });
   const [heroImages, setHeroImages] = useState<string[]>([]);
@@ -46,6 +48,9 @@ const AdminSiteContent = () => {
     setFetching(true);
     try {
       const { data, error } = await supabase.from('site_content').select('*').eq('id', 1).single();
+const { data: blogData } = await supabase.from('blogs').select('*').order('created_at', { ascending: false });
+    if (blogData) setBlogs(blogData);
+
 
       if (data) {
         // Hero
@@ -103,7 +108,38 @@ const AdminSiteContent = () => {
   const handleHeroTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setHeroText({ ...heroText, [e.target.name]: e.target.value });
   };
+const handleBlogImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (!e.target.files || e.target.files[0] == null) return;
+  const file = e.target.files[0];
+  setUploading('blog-image');
+  
+  const fileExt = file.name.split('.').pop();
+  const fileName = `blogs/${Date.now()}.${fileExt}`;
+  
+  const { error } = await supabase.storage.from('site-assets').upload(fileName, file);
+  if (!error) {
+    const { data } = supabase.storage.from('site-assets').getPublicUrl(fileName);
+    setNewBlog({ ...newBlog, image_url: data.publicUrl });
+  }
+  setUploading(null);
+};
+// 3. Add Blog to Database
+const addBlog = async () => {
+  if (!newBlog.title || !newBlog.image_url) return alert("Fill all fields");
+  const { error } = await supabase.from('blogs').insert([newBlog]);
+  if (!error) {
+    setNewBlog({ title: '', category: '', read_time: '', image_url: '' });
+    fetchContent(); // Refresh list
+  }
+};
 
+// 4. Delete Blog
+const deleteBlog = async (id: string) => {
+  if (window.confirm("Delete this post?")) {
+    await supabase.from('blogs').delete().eq('id', id);
+    fetchContent();
+  }
+};
   // --- UPLOAD LOGIC ---
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: string, isHeroSlide = false) => {
     if (!event.target.files || event.target.files.length === 0) return;
@@ -296,7 +332,60 @@ const AdminSiteContent = () => {
             </div>
 
         </div>
+<div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+    <h2 className="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-4">
+        <BookOpen className="text-yellow-600" size={20}/> The Journal (Blog Posts)
+    </h2>
+    
+    {/* Form to add new */}
+    <div className="grid md:grid-cols-4 gap-4 mb-8 bg-slate-50 p-4 rounded-xl border border-dashed border-slate-300">
+        <div className="md:col-span-2">
+            <label className="text-[10px] font-bold uppercase text-slate-400">Post Title</label>
+            <input value={newBlog.title} onChange={e => setNewBlog({...newBlog, title: e.target.value})} className="w-full p-2 border rounded text-sm" placeholder="The Future of Fasteners..." />
+        </div>
+        <div>
+            <label className="text-[10px] font-bold uppercase text-slate-400">Category</label>
+            <input value={newBlog.category} onChange={e => setNewBlog({...newBlog, category: e.target.value})} className="w-full p-2 border rounded text-sm" placeholder="Innovation" />
+        </div>
+        <div>
+            <label className="text-[10px] font-bold uppercase text-slate-400">Read Time</label>
+            <input value={newBlog.read_time} onChange={e => setNewBlog({...newBlog, read_time: e.target.value})} className="w-full p-2 border rounded text-sm" placeholder="5 min read" />
+        </div>
+        <div className="md:col-span-3">
+             <label className="text-[10px] font-bold uppercase text-slate-400">Cover Image URL</label>
+             <div className="flex gap-2">
+                <input value={newBlog.image_url} readOnly className="flex-1 p-2 border rounded text-xs bg-white" placeholder="Upload an image..." />
+                <label className="bg-black text-white px-4 py-2 rounded text-xs font-bold cursor-pointer">
+                    {uploading === 'blog-image' ? <Loader className="animate-spin" size={14}/> : 'Upload'}
+                    <input type="file" className="hidden" accept="image/*" onChange={handleBlogImageUpload} />
+                </label>
+             </div>
+        </div>
+        <div className="flex items-end">
+            <button onClick={addBlog} className="w-full bg-yellow-500 text-black font-bold py-2 rounded-lg text-sm hover:bg-yellow-400">
+                Add Post
+            </button>
+        </div>
+    </div>
 
+    {/* List of existing blogs */}
+    <div className="space-y-3">
+        {blogs.map(blog => (
+            <div key={blog.id} className="flex items-center justify-between p-3 border rounded-xl hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-4">
+                    <img src={blog.image_url} className="w-12 h-12 object-cover rounded-lg" />
+                    <div>
+                        <h4 className="text-sm font-bold text-slate-800">{blog.title}</h4>
+                        <p className="text-[10px] text-slate-500 uppercase font-mono">{blog.category} • {blog.read_time}</p>
+                    </div>
+                </div>
+                <button onClick={() => deleteBlog(blog.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-full">
+                    <Trash2 size={16} />
+                </button>
+            </div>
+        ))}
+    </div>
+</div>
         {/* RIGHT COLUMN: DATA */}
         <div className="space-y-8">
             
