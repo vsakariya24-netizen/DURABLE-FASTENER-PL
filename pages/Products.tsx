@@ -73,55 +73,70 @@ const Products: React.FC = () => {
   // STEP 2: SET FILTER FROM URL (SMART MATCHING ADDED)
   // -------------------------------------------
   useEffect(() => {
-    if (categoryTree.length === 0) return;
+  if (categoryTree.length === 0) return;
 
-    if (urlCategory) {
-      const cleanUrlCat = fromSlug(urlCategory); // e.g., "fasteners"
+  if (urlCategory) {
+    const cleanUrlCat = fromSlug(urlCategory);
 
-      // 1. Exact Match Try karo (e.g. "fasteners segment" === "fasteners segment")
-      let matchedCat = categoryTree.find(c => 
-        c.name.toLowerCase().trim() === cleanUrlCat
-      );
-
-      // 2. Agar Exact Match na mile, to PARTIAL MATCH (Smart Search) karo
-      // e.g. Agar URL "fasteners" hai aur DB mein "Fasteners Segment" hai, to match kar lo
-      if (!matchedCat) {
-        matchedCat = categoryTree.find(c => 
-          c.name.toLowerCase().includes(cleanUrlCat) || 
-          cleanUrlCat.includes(c.name.toLowerCase())
-        );
-      }
-      
-      if (matchedCat) {
-        // MATCH FOUND!
-        let newFilter = { type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name };
-        let shouldExpand = matchedCat.id;
-
-        // Sub-Category Check
-        if (urlSubCategory) {
-           const cleanUrlSub = fromSlug(urlSubCategory);
-           const matchedSub = matchedCat.sub_categories.find((s: any) => 
-             s.name.toLowerCase().trim() === cleanUrlSub ||
-             s.name.toLowerCase().includes(cleanUrlSub) // Smart match for sub-cat too
-           );
-           
-           if (matchedSub) {
-             newFilter = { type: 'SUB_CATEGORY', value: matchedSub.id, name: matchedSub.name };
-           }
-        }
-
-        setActiveFilter(newFilter);
-        setExpandedCats(prev => prev.includes(shouldExpand) ? prev : [...prev, shouldExpand]);
-      } else {
-        console.warn("Category mismatch:", urlCategory);
-        // Fallback: Optional - Stay on All Products or show error
-      }
-    } else {
-       setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
-    }
+    // 1. Find the Category (Exact then Partial)
+    let matchedCat = categoryTree.find(c => c.name.toLowerCase().trim() === cleanUrlCat);
     
-  }, [urlCategory, urlSubCategory, categoryTree]);
+    if (!matchedCat) {
+      matchedCat = categoryTree.find(c => 
+        c.name.toLowerCase().includes(cleanUrlCat) || 
+        cleanUrlCat.includes(c.name.toLowerCase())
+      );
+    }
 
+    if (matchedCat) {
+      const correctCatSlug = toSlug(matchedCat.name);
+      let matchedSub = null;
+      let correctSubSlug = "";
+
+      // 2. Check for Sub-Category if needed
+      if (urlSubCategory) {
+        const cleanUrlSub = fromSlug(urlSubCategory);
+        matchedSub = matchedCat.sub_categories.find((s: any) => 
+          s.name.toLowerCase().trim() === cleanUrlSub ||
+          s.name.toLowerCase().includes(cleanUrlSub)
+        );
+        if (matchedSub) {
+          correctSubSlug = toSlug(matchedSub.name);
+        }
+      }
+
+      // 3. --- SEO REDIRECTION LOGIC ---
+      // Determine if the current URL matches the "Official" DB slugs
+      const isCatMismatch = urlCategory !== correctCatSlug;
+      const isSubMismatch = urlSubCategory && matchedSub && urlSubCategory !== correctSubSlug;
+
+      if (isCatMismatch || isSubMismatch) {
+        const targetPath = matchedSub 
+          ? `/products/${correctCatSlug}/${correctSubSlug}` 
+          : `/products/${correctCatSlug}`;
+        
+        // Use { replace: true } so the "bad" URL doesn't stay in browser history
+        navigate(targetPath, { replace: true });
+        return; // Exit and wait for the next render with the correct URL
+      }
+
+      // 4. Set Filters (only if URL is already correct)
+      let newFilter = { type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name };
+      if (matchedSub) {
+        newFilter = { type: 'SUB_CATEGORY', value: matchedSub.id, name: matchedSub.name };
+      }
+
+      setActiveFilter(newFilter);
+      setExpandedCats(prev => prev.includes(matchedCat.id) ? prev : [...prev, matchedCat.id]);
+      
+    } else {
+      console.warn("Category mismatch:", urlCategory);
+      setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
+    }
+  } else {
+    setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
+  }
+}, [urlCategory, urlSubCategory, categoryTree, navigate]);
   // -------------------------------------------
   // STEP 3: FETCH PRODUCTS
   // -------------------------------------------
@@ -196,15 +211,19 @@ const Products: React.FC = () => {
   return (
     <div className="bg-[#dbdbdc] min-h-screen pt-20">
       
-  <Helmet>
+<Helmet>
   <title>
     {activeFilter.name === 'All Products' 
       ? 'Top Screw Manufacturer in Rajkot | Industrial Fasteners India' 
       : `${activeFilter.name} Manufacturers in India | Durable Fastener`}
   </title>
+  
+  {/* CANONICAL TAG: This tells Google the 'Master' URL */}
+ <link rel="canonical" href={`https://durablefastener.com/products/${toSlug(activeFilter.name)}`} />
+
   <meta 
     name="description" 
-    content={`Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality Self Drilling Screws, Drywall Screws, and Stainless Steel Fasteners for industrial use.`} 
+    content={`Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality fasteners.`} 
   />
 </Helmet>
 

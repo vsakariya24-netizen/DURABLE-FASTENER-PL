@@ -81,11 +81,11 @@ const Navbar = () => {
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[400px] bg-white border border-slate-100 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
                     <div className="h-1 w-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
                     <div className="p-4 grid grid-cols-1 gap-2">
-                      <Link to="/products?category=fasteners" className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg">
+                     <Link to="/products/fasteners-segment" className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg">
                           <div className="bg-blue-100 p-2 rounded text-blue-600"><Settings size={18}/></div>
                           <div><h4 className="font-bold text-sm">Fasteners</h4><p className="text-xs text-gray-500">Screws & Bolts</p></div>
                       </Link>
-                      <Link to="/products?category=fittings" className="flex items-center gap-3 p-3 hover:bg-orange-50 rounded-lg">
+                      <Link to="/products/fittings-segment" className="flex items-center gap-3 p-3 hover:bg-orange-50 rounded-lg">
                           <div className="bg-orange-100 p-2 rounded text-orange-600"><Package size={18}/></div>
                           <div><h4 className="font-bold text-sm">Fittings</h4><p className="text-xs text-gray-500">Hardware Parts</p></div>
                       </Link>
