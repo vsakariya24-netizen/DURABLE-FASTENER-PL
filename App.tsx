@@ -112,7 +112,7 @@ const App: React.FC = () => {
               <Route path="/oem-platform" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><OEMPlatform /></main><Footer /></div></>} />
               <Route path="/careers" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Careers /></main><Footer /></div></>} />
               <Route path="/blog" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Blog /></main><Footer /></div></>} />
-              <Route path="/blog/:id" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><BlogDetail /></main><Footer /></div></>} />
+              <Route path="/blog/:slug" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><BlogDetail /></main><Footer /></div></>} />
 
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
              <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
