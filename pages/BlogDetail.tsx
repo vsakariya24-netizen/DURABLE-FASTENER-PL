@@ -1,11 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+// Change 'id' to 'slug' in useParams
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Loader, Share2, Bookmark, Clock, Layout, Table as TableIcon } from 'lucide-react';
+import { ArrowLeft, Loader, Share2, Bookmark, Clock, Layout } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 const BlogDetail: React.FC = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [post, setPost] = useState<any>(null);
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,25 +21,35 @@ const BlogDetail: React.FC = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+useEffect(() => {
+  const fetchPost = async () => {
+    if (!slug) return;
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      if (!id) return;
-      const { data } = await supabase.from('blogs').select('*').eq('id', id).single(); 
-      if (data) {
-        setPost(data);
-        try { 
-          // Parse JSON content which includes { type: 'text' | 'table' }
-          setSections(JSON.parse(data.content)); 
-        } catch { 
-          // Fallback for older posts
-          setSections([{ type: 'text', heading: '', body: data.content }]); 
-        }
-      }
+    // Search by 'slug' column instead of 'id'
+    const { data, error } = await supabase
+      .from('blogs')
+      .select('*')
+      .eq('slug', slug) 
+      .maybeSingle(); 
+
+    if (error) {
+      console.error("Fetch error:", error.message);
       setLoading(false);
-    };
-    fetchPost();
-  }, [id]);
+      return;
+    }
+
+    if (data) {
+      setPost(data);
+      try {
+        setSections(JSON.parse(data.content));
+      } catch {
+        setSections([{ type: 'text', heading: '', body: data.content }]);
+      }
+    }
+    setLoading(false);
+  };
+  fetchPost();
+}, [slug]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#FDFCF7]">

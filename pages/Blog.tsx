@@ -61,7 +61,10 @@ const Blog = () => {
             {posts.map((post) => (
               <article key={post.id} className="group flex flex-col">
                 {/* Image Section */}
-                <Link to={`/blog/${post.id}`} className="block overflow-hidden rounded-[2rem] mb-8 relative aspect-[16/10] bg-zinc-100 shadow-sm border border-zinc-200">
+             <Link 
+  to={`/blog/${post.slug}`} // Changed from post.id to post.slug
+  className="block overflow-hidden rounded-[2rem] mb-8 relative aspect-[16/10] bg-zinc-100 shadow-sm border border-zinc-200"
+>
                   <img 
                     src={post.image_url} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
@@ -86,18 +89,16 @@ const Blog = () => {
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-black text-zinc-900 mb-4 leading-tight group-hover:text-yellow-600 transition-colors tracking-tight">
-                    <Link to={`/blog/${post.id}`}>{post.title}</Link>
-                  </h3>
+                <h3 className="text-2xl font-black text-zinc-900 mb-4 leading-tight group-hover:text-yellow-600 transition-colors tracking-tight">
+    {/* CHANGED: post.id to post.slug */}
+    <Link to={`/blog/${post.slug}`}>{post.title}</Link> {/* Changed from post.id to post.slug */}
+  </h3>
 
                   <p className="text-zinc-500 text-base line-clamp-2 leading-relaxed mb-8 font-medium">
                     {post.excerpt}
                   </p>
-
-                  <Link 
-                    to={`/blog/${post.id}`} 
-                    className="inline-flex items-center text-xs font-black uppercase tracking-widest text-zinc-900 gap-2 group-hover:gap-4 transition-all"
-                  >
+<Link to={`/blog/${post.slug}`} // Changed from post.id to post.slug
+  className="inline-flex items-center text-xs font-black uppercase tracking-widest text-zinc-900 gap-2 group-hover:gap-4 transition-all">
                     Read Insight <ChevronRight size={18} className="text-yellow-500"/>
                   </Link>
                 </div>
