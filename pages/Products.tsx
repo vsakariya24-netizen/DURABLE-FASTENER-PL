@@ -141,62 +141,40 @@ const Products: React.FC = () => {
   // STEP 3: FETCH PRODUCTS
   // -------------------------------------------
  useEffect(() => {
-  const fetchProducts = async (retry = 2) => {
-    setLoading(true);
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        // Yahan 'created_at' ki jagah 'position' use kiya hai taaki 
+        // Admin panel wala drag-drop order yahan bhi dikhe.
+        let query = supabase
+          .from('products')
+          .select('*')
+          .order('position', { ascending: true }); // <--- Yeh change kiya hai
 
-    try {
-      let query = supabase
-        .from('products')
-        .select('*')
-        .order('position', { ascending: true });
+        if (activeFilter.type === 'CATEGORY') {
+          query = query.ilike('category', activeFilter.value); 
+        } else if (activeFilter.type === 'SUB_CATEGORY') {
+          query = query.eq('sub_category', activeFilter.value); 
+        }
 
-      if (activeFilter.type === 'CATEGORY') {
-        query = query.ilike('category', activeFilter.value);
-      } else if (activeFilter.type === 'SUB_CATEGORY') {
-        query = query.eq('sub_category', activeFilter.value);
+        if (searchTerm) {
+          query = query.ilike('name', `%${searchTerm}%`);
+        }
+
+        const { data, error } = await query;
+        if (data) setProducts(data);
+        
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (searchTerm) {
-        query = query.ilike('name', `%${searchTerm}%`);
-      }
+    const timeoutId = setTimeout(() => {
+      fetchProducts();
+    }, 300);
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setProducts(data);
-
-        // 💾 Cache products for fallback
-        localStorage.setItem("productsCache", JSON.stringify(data));
-      } else {
-        setProducts([]);
-      }
-
-    } catch (err) {
-      console.error("Product load failed:", err);
-
-      // 🔁 Retry automatically
-      if (retry > 0) {
-        setTimeout(() => fetchProducts(retry - 1), 2000);
-        return;
-      }
-
-      // 🧠 Fallback to cached products
-      const cached = localStorage.getItem("productsCache");
-      if (cached) {
-        setProducts(JSON.parse(cached));
-      } else {
-        setProducts([]);
-      }
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchProducts();
-}, [activeFilter, searchTerm]);
+    return () => clearTimeout(timeoutId);
+  }, [activeFilter, searchTerm]);
 
   // -------------------------------------------
   // UI HANDLERS

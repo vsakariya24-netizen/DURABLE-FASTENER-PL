@@ -1,12 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Access the environment variables defined in your .env file
+// ✅ Read ENV variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// validation to ensure keys exist
+// ✅ Debug: check if loaded
+console.log("URL:", supabaseUrl);
+console.log("KEY:", supabaseKey);
+
+// ✅ Validation
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables. Check your .env file.');
+  console.error("Supabase ENV missing:", { supabaseUrl, supabaseKey });
+  throw new Error('Missing Supabase environment variables.');
 }
 
+// ✅ Create client
 export const supabase = createClient(supabaseUrl, supabaseKey);
