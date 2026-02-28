@@ -28,36 +28,34 @@ const ProductList: React.FC = () => {
     setLoading(false);
   };
 
-  const onDragEnd = async (result: DropResult) => {
+ const onDragEnd = async (result: DropResult) => {
   if (!result.destination || isSearching) return;
 
   const items: Product[] = Array.from(products);
   const [reorderedItem] = items.splice(result.source.index, 1);
   items.splice(result.destination.index, 0, reorderedItem);
 
-  // UI update karein
   setProducts(items);
 
-  // Sirf wahi fields bhejein jo update karni hain (ID aur Position)
-  const updates = items.map((product, index) => ({
-    id: product.id,
-    position: index,
-    // Note: Agar baki fields (name, slug) missing honge toh upsert 
-    // unhe null kar sakta hai agar schema strict hai. 
-    // Isliye hum yahan product ka poora data bhej rahe hain:
-    ...product, 
-    position: index 
-  }));
+  // Use Promise.all to update positions one by one safely
+  try {
+    const updatePromises = items.map((product, index) =>
+      supabase
+        .from('products')
+        .update({ position: index }) // ONLY update position
+        .eq('id', product.id)
+    );
 
-  const { error } = await supabase
-    .from('products')
-    .upsert(updates, { onConflict: 'id' }); // Conflict hone par ID ke basis par update karein
+    const results = await Promise.all(updatePromises);
+    
+    // Check if any update failed
+    const error = results.find(r => r.error);
+    if (error) throw error.error;
 
-  if (error) {
-    console.error('Full Error Object:', error);
-    // Asal error message alert mein dikhayein
-    alert(`Error: ${error.message} (Code: ${error.code})`);
-    fetchProducts(); // Rollback to original order
+  } catch (error: any) {
+    console.error('Reorder Error:', error);
+    alert(`Update failed: ${error.message}`);
+    fetchProducts(); // Rollback UI if DB fails
   }
 };
 
@@ -121,48 +119,45 @@ const ProductList: React.FC = () => {
                     ref={provided.innerRef} 
                     className="divide-y divide-gray-100"
                   >
-                    {filtered.map((p, index) => (
-                      <Draggable 
-                        key={p.id} 
-                        draggableId={String(p.id)} 
-                        index={index}
-                        isDragDisabled={isSearching} // Disable drag when searching
-                      >
-                        {(provided, snapshot) => (
-                          <tr 
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={`${snapshot.isDragging ? 'bg-blue-50 shadow-lg z-50 relative' : 'hover:bg-gray-50'}`}
-                          >
-                            <td className="px-6 py-3">
-                              {/* Drag handle only works if NOT searching */}
-                              {!isSearching ? (
-                                <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-blue-500">
-                                  <GripVertical size={20} />
-                                </div>
-                              ) : (
-                                <div className="text-gray-200"><GripVertical size={20} /></div>
-                              )}
-                            </td>
-                            <td className="px-6 py-3">
-                              <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden border">
-                                {p.images?.[0] ? (
-                                  <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
-                                ) : <div className="text-xs text-gray-400 text-center pt-4">No Img</div>}
-                              </div>
-                            </td>
-                            <td className="px-6 py-3 font-medium text-gray-900">{p.name}</td>
-                            <td className="px-6 py-3 text-right">
-                              <div className="flex justify-end gap-2">
-                                <Link to={`/product/${p.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-blue-600"><Eye size={18} /></Link>
-                                <Link to={`/admin/products/edit/${p.id}`} className="p-2 text-gray-400 hover:text-orange-600"><Edit size={18} /></Link>
-                                <button onClick={() => handleDelete(p.id)} className="p-2 text-gray-400 hover:text-red-600"><Trash2 size={18} /></button>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </Draggable>
-                    ))}
+       {filtered.map((p, index) => (
+  <Draggable 
+    key={p.id.toString()}          // 1. Move key to the top
+    draggableId={p.id.toString()}  // 2. Ensure this is a string
+    index={index}
+    isDragDisabled={isSearching}
+  >
+    {(provided, snapshot) => (
+      <tr 
+        ref={provided.innerRef}
+        {...provided.draggableProps}
+        className={`${snapshot.isDragging ? 'bg-blue-50 shadow-lg z-50 relative' : 'hover:bg-gray-50'}`}
+      >
+        <td className="px-6 py-3">
+          {!isSearching ? (
+            <div 
+              {...provided.dragHandleProps} 
+              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-blue-500"
+            >
+              <GripVertical size={20} />
+            </div>
+          ) : (
+            <div className="text-gray-200">
+              <GripVertical size={20} />
+            </div>
+          )}
+        </td>
+        {/* ... rest of your td cells ... */}
+        <td className="px-6 py-3 text-right">
+          <div className="flex justify-end gap-2">
+            <Link to={`/product/${p.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-blue-600"><Eye size={18} /></Link>
+            <Link to={`/admin/products/edit/${p.id}`} className="p-2 text-gray-400 hover:text-orange-600"><Edit size={18} /></Link>
+            <button onClick={() => handleDelete(p.id)} className="p-2 text-gray-400 hover:text-red-600"><Trash2 size={18} /></button>
+          </div>
+        </td>
+      </tr>
+    )}
+  </Draggable>
+))}
                     {provided.placeholder}
                   </tbody>
                 )}
