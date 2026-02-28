@@ -525,8 +525,11 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
     const { error } = await supabase.storage.from('product-images').upload(fileName, file); 
     if (error) throw error;
     const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
-    return data.publicUrl;
-  };
+    return data.publicUrl.replace(
+    'wterhjmgsgyqgbwviomo.supabase.co', 
+    'supabase-proxy-dfpl.vsakariya24.workers.dev'
+  );
+};
 
   const handleAppImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
     if (!e.target.files?.[0]) return;

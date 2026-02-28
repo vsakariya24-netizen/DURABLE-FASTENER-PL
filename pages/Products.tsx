@@ -24,7 +24,13 @@ const Products: React.FC = () => {
   const { category: urlCategory, subcategory: urlSubCategory } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+  const cleanImageUrl = (url: string) => {
+    if (!url) return '';
+    return url.replace(
+      'wterhjmgsgyqgbwviomo.supabase.co', 
+      'supabase-proxy-dfpl.vsakariya24.workers.dev'
+    );
+  };
   // STATE
   const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; name: string }>({ 
     type: 'ALL', 
@@ -378,16 +384,17 @@ const Products: React.FC = () => {
      <div className="relative aspect-square bg-[#f8f8f8] flex items-center justify-center p-4 md:p-0 overflow-hidden">
   {/* Yahan p-4 ko p-6 ya p-8 kar diya hai */}
   {product.images && product.images[0] ? (
-    <img 
-      src={product.images[0]} 
-      alt={product.name}
-      loading="lazy"
-      className="max-w-full max-h-full w-auto h-auto object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
-    />
-  ) : (
-    <div className="text-zinc-300 text-[10px] font-bold uppercase">No Image</div>
-  )}
-</div>
+ <img 
+                          /* 👇 UPDATED: Using cleanImageUrl to bypass ISP block */
+                          src={cleanImageUrl(product.images[0])} 
+                          alt={product.name}
+                          loading="lazy"
+                          className="max-w-full max-h-full w-auto h-auto object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="text-zinc-300 text-[10px] font-bold uppercase">No Image</div>
+                      )}
+                    </div>
               {/* COMPACT CONTENT: Reduced padding and font sizes */}
               <div className="p-3 flex flex-col flex-grow bg-white">
                 <span className="inline-block text-[9px] font-bold text-yellow-600 uppercase tracking-wider mb-1">

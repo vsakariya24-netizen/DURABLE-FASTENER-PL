@@ -311,9 +311,17 @@ const ProductDetail: React.FC = () => {
 
   const displayImages = useMemo(() => {
     let images = product?.images || ['https://via.placeholder.com/600x600?text=No+Image'];
-    if (activeImageOverride) return [activeImageOverride, ...images];
-    return images;
-  }, [product, activeImageOverride]);
+    const cleanedImages = images.map(img => 
+    img.replace('wterhjmgsgyqgbwviomo.supabase.co', 'supabase-proxy-dfpl.vsakariya24.workers.dev')
+  );
+
+  if (activeImageOverride) {
+    const cleanOverride = activeImageOverride.replace('wterhjmgsgyqgbwviomo.supabase.co', 'supabase-proxy-dfpl.vsakariya24.workers.dev');
+    return [cleanOverride, ...cleanedImages];
+  }
+  
+  return cleanedImages;
+}, [product, activeImageOverride]);
 
   if (loading) return <div className={`h-screen flex items-center justify-center ${THEME.bg}`}><Loader2 className="animate-spin text-yellow-500" size={48} /></div>;
   if (!product) return <div className={`min-h-screen flex flex-col items-center justify-center ${THEME.bg}`}><h2 className={`text-3xl font-bold mb-4 ${THEME.textPrimary}`} style={fontHeading}>Product Not Found</h2><Link to="/products" className={THEME.accentText}>Back to Catalog</Link></div>;
