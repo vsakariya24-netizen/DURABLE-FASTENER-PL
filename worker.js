@@ -3,39 +3,55 @@ export default {
     const url = new URL(request.url);
     const SUPABASE_URL = "https://wterhjmgsgyqgbwviomo.supabase.co"; 
 
-    // 1. Handle CORS Preflight
+    // 1. Handle Preflight (OPTIONS) - Added x-upsert to Allowed Headers
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info, accept-profile, content-profile",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info, accept-profile, content-profile, x-supabase-api-version, x-upsert",
+          "Access-Control-Max-Age": "86400",
         },
       });
     }
 
-    // 2. Setup the proxy request
-    const newUrl = SUPABASE_URL + url.pathname + url.search;
+    // 2. Prepare the proxied request
     const newHeaders = new Headers(request.headers);
     newHeaders.set("Origin", SUPABASE_URL);
     newHeaders.set("Host", "wterhjmgsgyqgbwviomo.supabase.co");
 
-    const modifiedRequest = new Request(newUrl, {
+    // 3. Handle the Request Body (Crucial for PDF/Image uploads)
+    let body = null;
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      body = await request.clone().arrayBuffer();
+    }
+
+    const modifiedRequest = new Request(SUPABASE_URL + url.pathname + url.search, {
       method: request.method,
       headers: newHeaders,
-      body: request.method !== "GET" && request.method !== "HEAD" ? request.body : undefined,
+      body: body,
+      redirect: "follow",
     });
 
-    // 3. Fetch and add CORS headers to the response
-    const response = await fetch(modifiedRequest);
-    const newResponseHeaders = new Headers(response.headers);
-    
-    newResponseHeaders.set("Access-Control-Allow-Origin", "*");
-    
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: newResponseHeaders,
-    });
+    // 4. Fetch and return with CORS headers
+    try {
+      const response = await fetch(modifiedRequest);
+      const newResponseHeaders = new Headers(response.headers);
+      
+      newResponseHeaders.set("Access-Control-Allow-Origin", "*");
+      newResponseHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+      newResponseHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization, apikey, x-client-info, accept-profile, content-profile, x-supabase-api-version, x-upsert");
+
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newResponseHeaders,
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), { 
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
+    }
   },
 };
