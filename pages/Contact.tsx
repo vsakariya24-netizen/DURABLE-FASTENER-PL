@@ -60,29 +60,34 @@ const Contact: React.FC = () => {
 
   // --- THE MAGIC FUNCTION ---
   // Uploads to Supabase and returns the "Public URL" string
-  const uploadToSupabaseAndGetUrl = async (file: File, folder: string, enquiryId: string) => {
+ const uploadToSupabaseAndGetUrl = async (file: File, folder: string, enquiryId: string) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${enquiryId}-${Date.now()}.${fileExt}`;
     const filePath = `${folder}/${fileName}`;
 
-    // 1. Upload
+    // 1. Upload using the proxied Supabase client
     const { error: uploadError, data } = await supabase.storage
-      .from('enquiry-attachments') // Ensure this bucket exists in Supabase
+      .from('enquiry-attachments') 
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error("Upload Error Details:", uploadError);
+      throw uploadError;
+    }
 
-    // 2. Create the exact URL format you wanted
+    // 2. Generate the Public URL
     const { data: urlData } = supabase.storage
-  .from('enquiry-attachments')
-  .getPublicUrl(data.path);
+      .from('enquiry-attachments')
+      .getPublicUrl(data.path);
 
-const fullUrl = urlData.publicUrl;
+    // 👇 FIX: Replace the blocked domain with your Cloudflare Proxy URL
+    const proxiedUrl = urlData.publicUrl.replace(
+      'wterhjmgsgyqgbwviomo.supabase.co', 
+      'supabase-proxy-dfpl.vsakariya24.workers.dev'
+    );
     
-    // Return both path (for admin) and fullUrl (for Google Sheet)
-    return { path: data.path, fullUrl: fullUrl };
+    return { path: data.path, fullUrl: proxiedUrl };
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

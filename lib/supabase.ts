@@ -1,18 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
 // ✅ Read ENV variables
+// Ensure VITE_SUPABASE_URL in your .env is set to your .workers.dev link
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// ✅ Debug: check if loaded
-console.log("URL:", supabaseUrl);
-console.log("KEY:", supabaseKey);
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // ✅ Validation
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Supabase ENV missing:", { supabaseUrl, supabaseKey });
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Supabase ENV missing:", { supabaseUrl, supabaseAnonKey });
   throw new Error('Missing Supabase environment variables.');
 }
 
-// ✅ Create client
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// ✅ Create client with Auth configuration
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,   // Keeps your session active
+    persistSession: true,      // Saves login so you don't get 'Access Denied' on refresh
+    detectSessionInUrl: true   // Helps with login redirects
+  }
+});
