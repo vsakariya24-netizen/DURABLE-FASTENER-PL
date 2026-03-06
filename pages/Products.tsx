@@ -8,6 +8,43 @@ import {
   ArrowRight, LayoutGrid, ShoppingBag, Sparkles
 } from 'lucide-react';
 
+// ============================================================
+// ✅ CACHE HELPER — Saves data in localStorage with expiry
+// ============================================================
+const CACHE_TTL_LONG  = 60 * 60 * 1000;  // 1 hour  — for categories (rarely change)
+const CACHE_TTL_SHORT = 10 * 60 * 1000;  // 10 mins — for products
+
+function getCached<T>(key: string): T | null {
+  try {
+    const raw  = localStorage.getItem(`sb_${key}`);
+    const time = localStorage.getItem(`sb_${key}_time`);
+    if (!raw || !time) return null;
+
+    const age = Date.now() - Number(time);
+    const ttl = key.startsWith('categories') ? CACHE_TTL_LONG : CACHE_TTL_SHORT;
+
+    if (age > ttl) {
+      // Cache expired — remove it
+      localStorage.removeItem(`sb_${key}`);
+      localStorage.removeItem(`sb_${key}_time`);
+      return null;
+    }
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function setCache(key: string, data: any) {
+  try {
+    localStorage.setItem(`sb_${key}`, JSON.stringify(data));
+    localStorage.setItem(`sb_${key}_time`, String(Date.now()));
+  } catch (e) {
+    console.warn('Cache write failed:', e);
+  }
+}
+// ============================================================
+
 // --- HELPER: Slugify ---
 const toSlug = (text: string) => {
   if (!text) return '';
@@ -24,6 +61,7 @@ const Products: React.FC = () => {
   const { category: urlCategory, subcategory: urlSubCategory } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
   const cleanImageUrl = (url: string) => {
     if (!url) return '';
     return url.replace(
@@ -31,6 +69,7 @@ const Products: React.FC = () => {
       'supabase-proxy-dfpl.vsakariya24.workers.dev'
     );
   };
+
   // STATE
   const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; name: string }>({ 
     type: 'ALL', 
@@ -38,11 +77,11 @@ const Products: React.FC = () => {
     name: 'All Products' 
   });
 
-  const [expandedCats, setExpandedCats] = useState<string[]>([]);
-  const [categoryTree, setCategoryTree] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedCats, setExpandedCats]   = useState<string[]>([]);
+  const [categoryTree, setCategoryTree]   = useState<any[]>([]);
+  const [products, setProducts]           = useState<any[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [searchTerm, setSearchTerm]       = useState('');
 
   // -------------------------------------------
   // STEP 0: LEGACY REDIRECT
@@ -56,10 +95,20 @@ const Products: React.FC = () => {
 
 
   // -------------------------------------------
-  // STEP 1: LOAD CATEGORIES
+  // STEP 1: LOAD CATEGORIES  ✅ WITH CACHE
   // -------------------------------------------
   useEffect(() => {
     const fetchCategories = async () => {
+      // 1️⃣ Try cache first
+      const cached = getCached<any[]>('categories_tree');
+      if (cached) {
+        console.log('✅ Categories loaded from cache');
+        setCategoryTree(cached);
+        return; // ← No Supabase query needed!
+      }
+
+      // 2️⃣ Cache miss → fetch from Supabase
+      console.log('🔄 Fetching categories from Supabase...');
       const [cats, subs] = await Promise.all([
         supabase.from('categories').select('*').order('name'),
         supabase.from('sub_categories').select('*').order('name')
@@ -70,92 +119,102 @@ const Products: React.FC = () => {
         sub_categories: subs.data?.filter(s => s.category_id === cat.id) || []
       })) || [];
 
+      // 3️⃣ Save to cache for next time
+      setCache('categories_tree', tree);
       setCategoryTree(tree);
     };
+
     fetchCategories();
   }, []);
 
   // -------------------------------------------
-  // STEP 2: SET FILTER FROM URL (SMART MATCHING ADDED)
+  // STEP 2: SET FILTER FROM URL (SMART MATCHING)
   // -------------------------------------------
   useEffect(() => {
-  if (categoryTree.length === 0) return;
+    if (categoryTree.length === 0) return;
 
-  if (urlCategory) {
-    const cleanUrlCat = fromSlug(urlCategory);
+    if (urlCategory) {
+      const cleanUrlCat = fromSlug(urlCategory);
 
-    // 1. Find the Category (Exact then Partial)
-    let matchedCat = categoryTree.find(c => c.name.toLowerCase().trim() === cleanUrlCat);
-    
-    if (!matchedCat) {
-      matchedCat = categoryTree.find(c => 
-        c.name.toLowerCase().includes(cleanUrlCat) || 
-        cleanUrlCat.includes(c.name.toLowerCase())
-      );
-    }
-
-    if (matchedCat) {
-      const correctCatSlug = toSlug(matchedCat.name);
-      let matchedSub = null;
-      let correctSubSlug = "";
-
-      // 2. Check for Sub-Category if needed
-      if (urlSubCategory) {
-        const cleanUrlSub = fromSlug(urlSubCategory);
-        matchedSub = matchedCat.sub_categories.find((s: any) => 
-          s.name.toLowerCase().trim() === cleanUrlSub ||
-          s.name.toLowerCase().includes(cleanUrlSub)
+      let matchedCat = categoryTree.find(c => c.name.toLowerCase().trim() === cleanUrlCat);
+      if (!matchedCat) {
+        matchedCat = categoryTree.find(c => 
+          c.name.toLowerCase().includes(cleanUrlCat) || 
+          cleanUrlCat.includes(c.name.toLowerCase())
         );
-        if (matchedSub) {
-          correctSubSlug = toSlug(matchedSub.name);
+      }
+
+      if (matchedCat) {
+        const correctCatSlug = toSlug(matchedCat.name);
+        let matchedSub = null;
+        let correctSubSlug = "";
+
+        if (urlSubCategory) {
+          const cleanUrlSub = fromSlug(urlSubCategory);
+          matchedSub = matchedCat.sub_categories.find((s: any) => 
+            s.name.toLowerCase().trim() === cleanUrlSub ||
+            s.name.toLowerCase().includes(cleanUrlSub)
+          );
+          if (matchedSub) correctSubSlug = toSlug(matchedSub.name);
         }
-      }
 
-      // 3. --- SEO REDIRECTION LOGIC ---
-      // Determine if the current URL matches the "Official" DB slugs
-      const isCatMismatch = urlCategory !== correctCatSlug;
-      const isSubMismatch = urlSubCategory && matchedSub && urlSubCategory !== correctSubSlug;
+        const isCatMismatch = urlCategory !== correctCatSlug;
+        const isSubMismatch = urlSubCategory && matchedSub && urlSubCategory !== correctSubSlug;
 
-      if (isCatMismatch || isSubMismatch) {
-        const targetPath = matchedSub 
-          ? `/products/${correctCatSlug}/${correctSubSlug}` 
-          : `/products/${correctCatSlug}`;
+        if (isCatMismatch || isSubMismatch) {
+          const targetPath = matchedSub 
+            ? `/products/${correctCatSlug}/${correctSubSlug}` 
+            : `/products/${correctCatSlug}`;
+          navigate(targetPath, { replace: true });
+          return;
+        }
+
+        let newFilter = { type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name };
+        if (matchedSub) {
+          newFilter = { type: 'SUB_CATEGORY', value: matchedSub.id, name: matchedSub.name };
+        }
+
+        setActiveFilter(newFilter);
+        setExpandedCats(prev => prev.includes(matchedCat.id) ? prev : [...prev, matchedCat.id]);
         
-        // Use { replace: true } so the "bad" URL doesn't stay in browser history
-        navigate(targetPath, { replace: true });
-        return; // Exit and wait for the next render with the correct URL
+      } else {
+        console.warn("Category mismatch:", urlCategory);
+        setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
       }
-
-      // 4. Set Filters (only if URL is already correct)
-      let newFilter = { type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name };
-      if (matchedSub) {
-        newFilter = { type: 'SUB_CATEGORY', value: matchedSub.id, name: matchedSub.name };
-      }
-
-      setActiveFilter(newFilter);
-      setExpandedCats(prev => prev.includes(matchedCat.id) ? prev : [...prev, matchedCat.id]);
-      
     } else {
-      console.warn("Category mismatch:", urlCategory);
       setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
     }
-  } else {
-    setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
-  }
-}, [urlCategory, urlSubCategory, categoryTree, navigate]);
+  }, [urlCategory, urlSubCategory, categoryTree, navigate]);
+
+
   // -------------------------------------------
-  // STEP 3: FETCH PRODUCTS
+  // STEP 3: FETCH PRODUCTS  ✅ WITH CACHE
   // -------------------------------------------
- useEffect(() => {
+  useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        // Yahan 'created_at' ki jagah 'position' use kiya hai taaki 
-        // Admin panel wala drag-drop order yahan bhi dikhe.
+        // Build a unique cache key based on current filter + search
+        // e.g. "products_CATEGORY_Screws" or "products_ALL_" or "products_ALL_bolt"
+        const cacheKey = `products_${activeFilter.type}_${activeFilter.value}_${searchTerm}`;
+
+        // 1️⃣ Try cache first (skip cache if user is searching — show fresh results)
+        if (!searchTerm) {
+          const cached = getCached<any[]>(cacheKey);
+          if (cached) {
+            console.log(`✅ Products loaded from cache [${cacheKey}]`);
+            setProducts(cached);
+            setLoading(false);
+            return; // ← No Supabase query needed!
+          }
+        }
+
+        // 2️⃣ Cache miss → fetch from Supabase
+        console.log(`🔄 Fetching products from Supabase [${cacheKey}]...`);
         let query = supabase
           .from('products')
           .select('*')
-          .order('position', { ascending: true }); // <--- Yeh change kiya hai
+          .order('position', { ascending: true });
 
         if (activeFilter.type === 'CATEGORY') {
           query = query.ilike('category', activeFilter.value); 
@@ -168,7 +227,13 @@ const Products: React.FC = () => {
         }
 
         const { data, error } = await query;
-        if (data) setProducts(data);
+        if (data) {
+          // 3️⃣ Save to cache (only when not searching)
+          if (!searchTerm) {
+            setCache(cacheKey, data);
+          }
+          setProducts(data);
+        }
         
       } finally {
         setLoading(false);
@@ -181,6 +246,7 @@ const Products: React.FC = () => {
 
     return () => clearTimeout(timeoutId);
   }, [activeFilter, searchTerm]);
+
 
   // -------------------------------------------
   // UI HANDLERS
@@ -217,21 +283,18 @@ const Products: React.FC = () => {
   return (
     <div className="bg-[#dbdbdc] min-h-screen pt-20">
       
-<Helmet>
-  <title>
-    {activeFilter.name === 'All Products' 
-      ? 'Top Screw Manufacturer in Rajkot | Industrial Fasteners India' 
-      : `${activeFilter.name} Manufacturers in India | Durable Fastener`}
-  </title>
-  
-  {/* CANONICAL TAG: This tells Google the 'Master' URL */}
- <link rel="canonical" href={`https://durablefastener.com/products/${toSlug(activeFilter.name)}`} />
-
-  <meta 
-    name="description" 
-    content={`Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality fasteners.`} 
-  />
-</Helmet>
+      <Helmet>
+        <title>
+          {activeFilter.name === 'All Products' 
+            ? 'Top Screw Manufacturer in Rajkot | Industrial Fasteners India' 
+            : `${activeFilter.name} Manufacturers in India | Durable Fastener`}
+        </title>
+        <link rel="canonical" href={`https://durablefastener.com/products/${toSlug(activeFilter.name)}`} />
+        <meta 
+          name="description" 
+          content={`Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality fasteners.`} 
+        />
+      </Helmet>
 
       {/* HERO */}
       <section className="relative h-[30vh] flex items-center justify-center bg-[#0a0a0a] overflow-hidden">
@@ -256,7 +319,6 @@ const Products: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-12">
           
           {/* SIDEBAR */}
-          
           <aside className="lg:w-[300px] shrink-0">
             <div className="sticky top-32 space-y-6">
               {/* Search */}
@@ -289,10 +351,10 @@ const Products: React.FC = () => {
                   </button>
 
                   {categoryTree.map((cat) => {
-                      const isActiveCat = activeFilter.value === cat.name || (activeFilter.type === 'SUB_CATEGORY' && expandedCats.includes(cat.id));
-                      const isExpanded = expandedCats.includes(cat.id);
+                    const isActiveCat = activeFilter.value === cat.name || (activeFilter.type === 'SUB_CATEGORY' && expandedCats.includes(cat.id));
+                    const isExpanded = expandedCats.includes(cat.id);
 
-                      return (
+                    return (
                       <div key={cat.id} className="space-y-1">
                         <div className={`flex items-center justify-between group rounded-lg px-3 py-2 transition-colors ${isActiveCat ? 'bg-yellow-50' : 'hover:bg-zinc-50'}`}>
                            <button 
@@ -335,7 +397,7 @@ const Products: React.FC = () => {
                           )}
                         </AnimatePresence>
                       </div>
-                      );
+                    );
                   })}
                 </div>
               </div>
@@ -343,81 +405,73 @@ const Products: React.FC = () => {
           </aside>
 
           {/* MAIN GRID */}
-          {/* MAIN GRID */}
-<main className="flex-1">
-  <div className="flex items-center justify-between mb-6">
-    <p className="text-zinc-500 font-medium text-xs">
-      Showing <strong className="text-black">{products.length}</strong> results
-    </p>
-  </div>
+          <main className="flex-1">
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-zinc-500 font-medium text-xs">
+                Showing <strong className="text-black">{products.length}</strong> results
+              </p>
+            </div>
 
-  {loading ? (
-    /* Loading Skeleton - Adjusted for smaller cards */
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
-        <div key={i} className="h-[250px] bg-white/50 animate-pulse rounded-2xl" />
-      ))}
-    </div>
-  ) : products.length === 0 ? (
-    <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200">
-      <h3 className="text-xl font-bold text-zinc-400">No products found</h3>
-      <button onClick={resetFilter} className="mt-4 text-sm text-blue-600 font-bold underline">Clear Filters</button>
-    </div>
-  ) : (
-    <motion.div 
-      variants={containerVars}
-      initial="hidden"
-      animate="show"
-      /* INCREASED COLUMNS: 2 on mobile, 3 on tablet, 4 on desktop, 5 on wide screens */
-      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
-    >
-      <AnimatePresence mode='wait'>
-        {products.map((product) => (
-          <motion.div 
-            layout
-            variants={itemVars}
-            key={product.id}
-            className="group bg-white rounded-xl border border-zinc-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
-          >
-            <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
-              {/* SMALLER IMAGE CONTAINER: Changed aspect and reduced padding */}
-     <div className="relative aspect-square bg-[#f8f8f8] flex items-center justify-center p-4 md:p-0 overflow-hidden">
-  {/* Yahan p-4 ko p-6 ya p-8 kar diya hai */}
-  {product.images && product.images[0] ? (
- <img 
-                          /* 👇 UPDATED: Using cleanImageUrl to bypass ISP block */
-                          src={cleanImageUrl(product.images[0])} 
-                          alt={product.name}
-                          loading="lazy"
-                          className="max-w-full max-h-full w-auto h-auto object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="text-zinc-300 text-[10px] font-bold uppercase">No Image</div>
-                      )}
-                    </div>
-              {/* COMPACT CONTENT: Reduced padding and font sizes */}
-              <div className="p-3 flex flex-col flex-grow bg-white">
-                <span className="inline-block text-[9px] font-bold text-yellow-600 uppercase tracking-wider mb-1">
-                  {product.category}
-                </span>
-                <h3 className="text-xs md:text-sm font-bold text-zinc-900 leading-snug group-hover:text-yellow-600 transition-colors line-clamp-2 mb-2">
-                  {product.name}
-                </h3>
-                
-                <div className="mt-auto flex items-center justify-between border-t border-zinc-50 pt-2">
-                  <span className="text-[10px] font-semibold text-green-600 flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> In Stock
-                  </span>
-                  <ArrowRight size={12} className="text-zinc-300 group-hover:text-yellow-600 group-hover:translate-x-1 transition-all" />
-                </div>
+            {loading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
+                  <div key={i} className="h-[250px] bg-white/50 animate-pulse rounded-2xl" />
+                ))}
               </div>
-            </Link>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </motion.div>
-  )}
-</main>
+            ) : products.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200">
+                <h3 className="text-xl font-bold text-zinc-400">No products found</h3>
+                <button onClick={resetFilter} className="mt-4 text-sm text-blue-600 font-bold underline">Clear Filters</button>
+              </div>
+            ) : (
+              <motion.div 
+                variants={containerVars}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
+              >
+                <AnimatePresence mode='wait'>
+                  {products.map((product) => (
+                    <motion.div 
+                      layout
+                      variants={itemVars}
+                      key={product.id}
+                      className="group bg-white rounded-xl border border-zinc-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
+                    >
+                      <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
+                        <div className="relative aspect-square bg-[#f8f8f8] flex items-center justify-center p-4 md:p-0 overflow-hidden">
+                          {product.images && product.images[0] ? (
+                            <img 
+                              src={cleanImageUrl(product.images[0])} 
+                              alt={product.name}
+                              loading="lazy"
+                              className="max-w-full max-h-full w-auto h-auto object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="text-zinc-300 text-[10px] font-bold uppercase">No Image</div>
+                          )}
+                        </div>
+                        <div className="p-3 flex flex-col flex-grow bg-white">
+                          <span className="inline-block text-[9px] font-bold text-yellow-600 uppercase tracking-wider mb-1">
+                            {product.category}
+                          </span>
+                          <h3 className="text-xs md:text-sm font-bold text-zinc-900 leading-snug group-hover:text-yellow-600 transition-colors line-clamp-2 mb-2">
+                            {product.name}
+                          </h3>
+                          <div className="mt-auto flex items-center justify-between border-t border-zinc-50 pt-2">
+                            <span className="text-[10px] font-semibold text-green-600 flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> In Stock
+                            </span>
+                            <ArrowRight size={12} className="text-zinc-300 group-hover:text-yellow-600 group-hover:translate-x-1 transition-all" />
+                          </div>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </main>
         </div>
       </div>
     </div>
