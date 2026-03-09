@@ -7,7 +7,36 @@ import {
   Search, ChevronDown, ChevronRight, 
   ArrowRight, LayoutGrid, ShoppingBag, Sparkles
 } from 'lucide-react';
+interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  primarySrc: string;   // Cloudflare R2 URL
+  fallbackSrc?: string; // Original Supabase URL
+}
 
+const SafeImage: React.FC<SafeImageProps> = ({ primarySrc, fallbackSrc, alt, className, ...props }) => {
+  const [imgSrc, setImgSrc] = useState(primarySrc);
+  const [hasFailed, setHasFailed] = useState(false);
+
+  const handleError = () => {
+    if (!hasFailed && fallbackSrc) {
+      // Plan B: Agar R2 fail hua, Supabase use karo
+      setImgSrc(fallbackSrc);
+      setHasFailed(true);
+    } else {
+      // Plan C: Agar dono fail huye, placeholder dikhao
+      setImgSrc('https://via.placeholder.com/400x400?text=No+Image');
+    }
+  };
+
+  return (
+    <img 
+      {...props} 
+      src={imgSrc} 
+      alt={alt} 
+      className={className} 
+      onError={handleError} 
+    />
+  );
+};
 // ============================================================
 // ✅ CACHE HELPER — Saves data in localStorage with expiry
 // ============================================================
@@ -61,15 +90,19 @@ const Products: React.FC = () => {
   const { category: urlCategory, subcategory: urlSubCategory } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+const cleanImageUrl = (url: string) => {
+  if (!url) return '';
 
-  const cleanImageUrl = (url: string) => {
-    if (!url) return '';
-    return url.replace(
-      'wterhjmgsgyqgbwviomo.supabase.co', 
-      'supabase-proxy-dfpl.vsakariya24.workers.dev'
-    );
-  };
+  // 1. Aapka Verified Cloudflare R2 Public URL
+  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
 
+  // 2. Agar database mein pura path hai (e.g. 'applications/screw.jpg'), 
+  // toh hum split karke sirf file name 'screw.jpg' nikalenge
+  const fileName = url.split('/').pop();
+
+  // 3. Direct R2 root se image serve karein
+  return `${R2_BASE}/${fileName}`;
+};
   // STATE
   const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; name: string }>({ 
     type: 'ALL', 
@@ -190,64 +223,45 @@ const Products: React.FC = () => {
   // -------------------------------------------
   // STEP 3: FETCH PRODUCTS  ✅ WITH CACHE
   // -------------------------------------------
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        // Build a unique cache key based on current filter + search
-        // e.g. "products_CATEGORY_Screws" or "products_ALL_" or "products_ALL_bolt"
-        const cacheKey = `products_${activeFilter.type}_${activeFilter.value}_${searchTerm}`;
+ // -------------------------------------------
+// STEP 3: FETCH PRODUCTS 
+// -------------------------------------------
+useEffect(() => {
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      // ✅ Naya cache version (v2) use karein taaki purana data clear ho jaye
+      const cacheKey = `products_v2_${activeFilter.type}_${activeFilter.value}_${searchTerm}`;
 
-        // 1️⃣ Try cache first (skip cache if user is searching — show fresh results)
-        if (!searchTerm) {
-          const cached = getCached<any[]>(cacheKey);
-          if (cached) {
-            console.log(`✅ Products loaded from cache [${cacheKey}]`);
-            setProducts(cached);
-            setLoading(false);
-            return; // ← No Supabase query needed!
-          }
-        }
+      let query = supabase
+        .from('products')
+        .select('*')
+        .order('position', { ascending: true });
 
-        // 2️⃣ Cache miss → fetch from Supabase
-        console.log(`🔄 Fetching products from Supabase [${cacheKey}]...`);
-        let query = supabase
-          .from('products')
-          .select('*')
-          .order('position', { ascending: true });
-
-        if (activeFilter.type === 'CATEGORY') {
-          query = query.ilike('category', activeFilter.value); 
-        } else if (activeFilter.type === 'SUB_CATEGORY') {
-          query = query.eq('sub_category', activeFilter.value); 
-        }
-
-        if (searchTerm) {
-          query = query.ilike('name', `%${searchTerm}%`);
-        }
-
-        const { data, error } = await query;
-        if (data) {
-          // 3️⃣ Save to cache (only when not searching)
-          if (!searchTerm) {
-            setCache(cacheKey, data);
-          }
-          setProducts(data);
-        }
-        
-      } finally {
-        setLoading(false);
+      // 🎯 YE LINES FILTERING KE LIYE ZARURI HAIN:
+      if (activeFilter.type === 'CATEGORY') {
+        query = query.ilike('category', activeFilter.value); 
+      } else if (activeFilter.type === 'SUB_CATEGORY') {
+        query = query.eq('sub_category', activeFilter.value); 
       }
-    };
 
-    const timeoutId = setTimeout(() => {
-      fetchProducts();
-    }, 300);
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
 
-    return () => clearTimeout(timeoutId);
-  }, [activeFilter, searchTerm]);
+      const { data } = await query;
+      if (data) {
+        setProducts(data);
+        // setCache(cacheKey, data); // Check karne ke baad uncomment karein
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
+  const timeoutId = setTimeout(fetchProducts, 300);
+  return () => clearTimeout(timeoutId);
+}, [activeFilter, searchTerm]);
   // -------------------------------------------
   // UI HANDLERS
   // -------------------------------------------

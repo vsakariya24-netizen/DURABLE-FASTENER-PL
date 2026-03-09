@@ -520,15 +520,23 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
       const newRows = [...materialRows]; newRows[idx][field] = val; setMaterialRows(newRows);
   };
 
-  const uploadFile = async (file: File, folder: string) => {
-    const fileName = `${folder}/${Date.now()}-${file.name.replace(/\s/g, '-')}`;
-    const { error } = await supabase.storage.from('product-images').upload(fileName, file); 
-    if (error) throw error;
-    const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
-    return data.publicUrl.replace(
-    'wterhjmgsgyqgbwviomo.supabase.co', 
-    'supabase-proxy-dfpl.vsakariya24.workers.dev'
+const uploadFile = async (file: File, folder: string) => {
+  // ✅ Upload directly to Cloudinary
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'durable-fastener'); // your preset name
+  formData.append('folder', `product-images/${folder}`);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/dgvaymupuS/image/upload`, // 👈 replace cloud name
+    { method: 'POST', body: formData }
   );
+
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message);
+
+  // ✅ Return optimized Cloudinary URL
+  return data.secure_url;
 };
 
   const handleAppImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {

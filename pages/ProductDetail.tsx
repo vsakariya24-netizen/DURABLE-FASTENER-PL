@@ -142,7 +142,13 @@ const SectionHeader = ({ icon: Icon, title }: { icon: any, title: string }) => (
     </span>
   </div>
 );
-
+const cleanImageUrl = (url: string) => {
+  if (!url) return '';
+  // Aapka Verified Cloudflare R2 Public URL
+  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+  const fileName = url.split('/').pop();
+  return `${R2_BASE}/${fileName}`;
+};
 const ProductDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<any | null>(null);
@@ -267,7 +273,7 @@ const ProductDetail: React.FC = () => {
       return Array.from(new Set(relevantVariants.map((v: any) => v.type).filter(Boolean)));
   }, [product, selectedDia, selectedLen, selectedUnit]);
 
-  const handleFinishClick = (finish: string) => {
+const handleFinishClick = (finish: string) => {
       let imageToUse = null;
       if (product.finish_images && product.finish_images[finish]) {
           imageToUse = product.finish_images[finish];
@@ -276,6 +282,7 @@ const ProductDetail: React.FC = () => {
           const variantMatch = product.variants.find((v: any) => v.finish === finish && v.image);
           if (variantMatch) imageToUse = variantMatch.image;
       }
+      // Note: cleanImageUrl is called inside useMemo (displayImages)
       if (imageToUse) { 
         setActiveImageOverride(imageToUse); 
         setSelectedImageIndex(0); 
@@ -284,22 +291,22 @@ const ProductDetail: React.FC = () => {
       }
   };
 
-  const handleTypeClick = (type: string) => {
+ const handleTypeClick = (type: string) => {
       setSelectedType(type);
       let imageToUse = null;
       if (product.type_images && product.type_images[type]) { 
         imageToUse = product.type_images[type];
       } 
       if (!imageToUse && product.variants) {
-         const matchingVariant = product.variants.find((v: any) => 
-             v.type === type && 
-             v.diameter === selectedDia && 
-             (v.image && v.image !== "")
-         );
-         const genericTypeMatch = !matchingVariant 
+          const matchingVariant = product.variants.find((v: any) => 
+              v.type === type && 
+              v.diameter === selectedDia && 
+              (v.image && v.image !== "")
+          );
+          const genericTypeMatch = !matchingVariant 
             ? product.variants.find((v: any) => v.type === type && v.image)
             : matchingVariant;
-         if (genericTypeMatch) imageToUse = genericTypeMatch.image;
+          if (genericTypeMatch) imageToUse = genericTypeMatch.image;
       }
       if (imageToUse) {
         setActiveImageOverride(imageToUse);
@@ -311,17 +318,18 @@ const ProductDetail: React.FC = () => {
 
   const displayImages = useMemo(() => {
     let images = product?.images || ['https://via.placeholder.com/600x600?text=No+Image'];
-    const cleanedImages = images.map(img => 
-    img.replace('wterhjmgsgyqgbwviomo.supabase.co', 'supabase-proxy-dfpl.vsakariya24.workers.dev')
-  );
+    
+    // Clean all primary images using R2 Helper
+    const cleanedImages = images.map(img => cleanImageUrl(img));
 
-  if (activeImageOverride) {
-    const cleanOverride = activeImageOverride.replace('wterhjmgsgyqgbwviomo.supabase.co', 'supabase-proxy-dfpl.vsakariya24.workers.dev');
-    return [cleanOverride, ...cleanedImages];
-  }
-  
-  return cleanedImages;
-}, [product, activeImageOverride]);
+    if (activeImageOverride) {
+      // Clean the override image (from finish/type selection)
+      const cleanOverride = cleanImageUrl(activeImageOverride);
+      return [cleanOverride, ...cleanedImages];
+    }
+    
+    return cleanedImages;
+  }, [product, activeImageOverride]);
 
   if (loading) return <div className={`h-screen flex items-center justify-center ${THEME.bg}`}><Loader2 className="animate-spin text-yellow-500" size={48} /></div>;
   if (!product) return <div className={`min-h-screen flex flex-col items-center justify-center ${THEME.bg}`}><h2 className={`text-3xl font-bold mb-4 ${THEME.textPrimary}`} style={fontHeading}>Product Not Found</h2><Link to="/products" className={THEME.accentText}>Back to Catalog</Link></div>;
@@ -704,14 +712,15 @@ const ProductDetail: React.FC = () => {
                       </span>
                 </div>
                 {product.technical_drawing ? (
-                    <motion.img 
-                        initial={{ opacity: 0, scale: 0.9 }} 
-                        whileInView={{ opacity: 1, scale: 1 }} 
-                        transition={{ duration: 0.8 }}
-                        src={product.technical_drawing} 
-                        className="relative z-10 max-h-[450px] w-auto object-contain opacity-90 transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
-                        alt="Technical Drawing"
-                    />
+  <motion.img 
+    initial={{ opacity: 0, scale: 0.9 }} 
+    whileInView={{ opacity: 1, scale: 1 }} 
+    transition={{ duration: 0.8 }}
+    // ✅ Updated to use Cloudflare R2
+    src={cleanImageUrl(product.technical_drawing)} 
+    className="relative z-10 max-h-[450px] w-auto object-contain opacity-90 transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
+    alt="Technical Drawing"
+  />
                 ) : <div className="text-neutral-500 font-mono text-sm tracking-wide border border-neutral-200 px-6 py-3 rounded bg-neutral-50">[ DRAWING DATA UNAVAILABLE ]</div>}
             </div>
 
@@ -880,9 +889,9 @@ const ProductDetail: React.FC = () => {
 
         <div className="w-full lg:w-2/3 aspect-[4/3] lg:aspect-square relative group perspective-1000">
           <AnimatePresence mode="wait">
-            {product.applications.map((app: any, idx: number) => {
-              if (selectedImageIndex !== idx) return null;
-              const appImage = typeof app === 'object' ? app.image : null;
+           {product.applications.map((app: any, idx: number) => {
+  if (selectedImageIndex !== idx) return null;
+  const appImage = typeof app === 'object' ? app.image : null;
 
               return (
                 <motion.div
@@ -894,22 +903,22 @@ const ProductDetail: React.FC = () => {
                   className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] bg-neutral-800"
                 >
                   <div className="relative w-full h-full overflow-hidden group">
-                    <img 
-                      src={appImage || 'https://via.placeholder.com/800'} 
-                      className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
-                      alt="Application"
-                    />
-                    
-                    <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-700 pointer-events-none mix-blend-screen"
-                      style={{
-                        backgroundImage: `url(${product.technical_drawing || ''})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        filter: 'invert(1) brightness(2) sepia(1) hue-rotate(180deg)'
-                      }}
-                    />
-
+        <img 
+          // ✅ Updated Application Image
+          src={cleanImageUrl(appImage) || 'https://via.placeholder.com/800'} 
+          className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
+          alt="Application"
+        />
+               <div 
+          className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-700 pointer-events-none mix-blend-screen"
+          style={{
+            // ✅ Updated Overlay Background Image
+            backgroundImage: `url(${cleanImageUrl(product.technical_drawing) || ''})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'invert(1) brightness(2) sepia(1) hue-rotate(180deg)'
+          }}
+        />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                     
                     <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end">
