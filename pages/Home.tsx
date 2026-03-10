@@ -16,6 +16,35 @@ import { twMerge } from "tailwind-merge";
 
 const { Link } = ReactRouterDOM;
 
+// =========================================
+// CLOUDFLARE R2 IMAGE ROUTER
+// All Supabase/workers.dev images are
+// redirected through your R2 bucket.
+// =========================================
+const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+
+const cleanImageUrl = (url: string): string => {
+  if (!url || typeof url !== 'string') return '';
+
+  // Already an R2 URL → return as-is
+  if (url.startsWith(R2_BASE)) return url;
+
+  // External CDN images (Unsplash etc.) → return as-is, no need to proxy
+  if (url.includes('unsplash.com') || url.includes('images.unsplash')) return url;
+
+  // Local static files (e.g. /durablefastener.png) → return as-is
+  if (url.startsWith('/') && !url.startsWith('//')) return url;
+
+  // Any Supabase or workers.dev URL → extract filename → redirect to R2
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    const fileName = url.split('/').pop(); // e.g. "1773038153437-panhead.png"
+    return `${R2_BASE}/${fileName}`;
+  }
+
+  // Relative path → prepend R2
+  return `${R2_BASE}/${url}`;
+};
+
 // --- UTILITIES ---
 function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)); }
 
@@ -55,10 +84,6 @@ const RevealText = ({ text, className }: { text: string, className?: string }) =
   </div>
 );
 
-/**
- * FAQItem COMPONENT
- * Handles individual accordion logic with animations
- */
 const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick }) => {
   return (
     <div className="border-b border-white/10">
@@ -234,7 +259,9 @@ const AnimatedManifesto = () => {
   );
 };
 
-// --- MAIN HOME COMPONENT ---
+// =========================================
+// MAIN HOME COMPONENT
+// =========================================
 const Home: React.FC = () => {
   const [blogs, setBlogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -246,6 +273,7 @@ const Home: React.FC = () => {
   const heroY = useTransform(smoothProgress, [0, 0.2], [0, -150]);
   const rotate = useTransform(smoothProgress, [0, 0.2], [0, 5]);
 
+  // ✅ All dynamic image states — will be routed through R2
   const [heroImages, setHeroImages] = useState<string[]>(["/allscrewtemplate123.jpg"]);
   const [heroText, setHeroText] = useState({ line1: "WHERE DESIRE", line2: "MEETS", line3: "VALUE" });
   const [stats, setStats] = useState({ dealers: 350, years: 13, products: 120 });
@@ -261,20 +289,50 @@ const Home: React.FC = () => {
     const fetchContent = async () => {
       const { data } = await supabase.from('site_content').select('*').single();
       if (data) {
-        if (data.hero_images?.length > 0) setHeroImages(data.hero_images);
-        setHeroText({ line1: data.hero_title_1 || "WHERE DESIRE", line2: data.hero_title_2 || "MEETS", line3: data.hero_title_3 || "VALUE" });
-        setStats({ dealers: data.stat_dealers || 350, years: data.stat_years || 13, products: data.stat_products || 120 });
+        // ✅ Route hero images array through R2
+        if (data.hero_images?.length > 0) {
+          setHeroImages(data.hero_images.map((url: string) => cleanImageUrl(url)));
+        }
+
+        setHeroText({
+          line1: data.hero_title_1 || "WHERE DESIRE",
+          line2: data.hero_title_2 || "MEETS",
+          line3: data.hero_title_3 || "VALUE"
+        });
+
+        setStats({
+          dealers: data.stat_dealers || 350,
+          years: data.stat_years || 13,
+          products: data.stat_products || 120
+        });
+
+        // ✅ Route category images through R2
         setCategoryImages({
-            industrial: data.cat_fasteners || categoryImages.industrial,
-            fittings: data.cat_fittings || categoryImages.fittings,
-            automotive: data.cat_automotive || categoryImages.automotive,
-            oem: data.cat_oem || categoryImages.oem
+          industrial: cleanImageUrl(data.cat_fasteners) || categoryImages.industrial,
+          fittings:   cleanImageUrl(data.cat_fittings)  || categoryImages.fittings,
+          automotive: cleanImageUrl(data.cat_automotive) || categoryImages.automotive,
+          oem:        cleanImageUrl(data.cat_oem)        || categoryImages.oem,
         });
       }
-      const { data: blogData } = await supabase.from('blogs').select('*').eq('status', 'published').order('created_at', { ascending: false }).limit(3);
-      if (blogData) setBlogs(blogData);
+
+      // ✅ Route blog images through R2
+      const { data: blogData } = await supabase
+        .from('blogs')
+        .select('*')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (blogData) {
+        setBlogs(blogData.map((post: any) => ({
+          ...post,
+          image_url: cleanImageUrl(post.image_url), // ✅ R2 routed
+        })));
+      }
+
       setTimeout(() => setIsLoading(false), 1500);
     };
+
     fetchContent();
   }, []);
 
@@ -312,13 +370,14 @@ const Home: React.FC = () => {
             <AnimatePresence mode="popLayout">
                 <motion.img 
                     key={currentHeroIndex}
-                    src={heroImages[currentHeroIndex]} 
+                    src={heroImages[currentHeroIndex]}  // ✅ R2 URL
                     initial={{ opacity: 0, scale: 1.1 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 1.2 }} 
                     className="absolute inset-0 w-full h-full object-cover grayscale-[0.5] contrast-125" 
-                    alt="Hero Background" 
+                    alt="Hero Background"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
             </AnimatePresence>
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-[#050505] z-10" />
@@ -390,7 +449,12 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {Object.keys(categoryImages).map((key, i) => (
               <div key={i} className="relative h-[600px] rounded-[2rem] overflow-hidden group cursor-pointer border border-white/5">
-                <img src={categoryImages[key as keyof typeof categoryImages]} className="w-full h-full object-cover grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-110" alt={key}/>
+                <img 
+                  src={categoryImages[key as keyof typeof categoryImages]} // ✅ R2 URL
+                  className="w-full h-full object-cover grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-110" 
+                  alt={key}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                 <div className="absolute bottom-10 left-10">
                   <h3 className="text-4xl font-black mb-2 uppercase">{key}</h3>
@@ -403,11 +467,8 @@ const Home: React.FC = () => {
 
         {/* MANUFACTURING DNA */}
         <section className="py-24 md:py-32 relative bg-[#050505] overflow-hidden border-y border-neutral-900">
-          
           <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-yellow-500/5 blur-[150px] rounded-full pointer-events-none" />
-
           <div className="container mx-auto px-6 relative z-10">
-              
               <SectionReveal>
                 <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
                    <div className="max-w-2xl">
@@ -441,7 +502,6 @@ const Home: React.FC = () => {
                          className="group relative p-8 h-full bg-neutral-900/50 border border-neutral-800 hover:border-yellow-500/50 rounded-3xl transition-all duration-300"
                        >
                           <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
-                          
                           <div className="relative z-10 flex flex-col h-full justify-between">
                              <div>
                                 <div className="flex justify-between items-start mb-6">
@@ -452,7 +512,6 @@ const Home: React.FC = () => {
                                       {item.step}
                                    </span>
                                 </div>
-                                
                                 <h3 className="text-xl font-bold text-white mb-3 group-hover:text-yellow-400 transition-colors">
                                    {item.title}
                                 </h3>
@@ -460,7 +519,6 @@ const Home: React.FC = () => {
                                    {item.desc}
                                 </p>
                              </div>
-
                              <div className="w-full h-px bg-neutral-800 mt-8 group-hover:bg-yellow-500/50 transition-colors relative">
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-neutral-800 rounded-full group-hover:bg-yellow-500 transition-colors" />
                              </div>
@@ -487,9 +545,9 @@ const Home: React.FC = () => {
                     </Link>
                  </div>
               </SectionReveal>
-
           </div>
         </section>
+
         {/* JOURNAL */}
         <section className="py-32 px-6 container mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
@@ -505,7 +563,12 @@ const Home: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {blogs.map((post, i) => (
                     <Link key={post.id} to={`/blog/${post.id}`} className="group relative h-[500px] rounded-[2.5rem] overflow-hidden border border-white/5 bg-neutral-900">
-                        <img src={post.image_url} className="w-full h-full object-cover transition-all duration-700 opacity-60 group-hover:opacity-100 group-hover:scale-110" alt={post.title} />
+                        <img 
+                          src={post.image_url}  // ✅ Already R2-routed in fetchContent
+                          className="w-full h-full object-cover transition-all duration-700 opacity-60 group-hover:opacity-100 group-hover:scale-110" 
+                          alt={post.title}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                         <div className="absolute bottom-0 left-0 p-8">
                             <h3 className="text-2xl font-bold text-white group-hover:text-yellow-400 mb-4">{post.title}</h3>
@@ -536,12 +599,10 @@ const Home: React.FC = () => {
           </Link>
         </section>
 
-        {/* FAQ SECTION: Matched to request */}
+        {/* FAQ SECTION */}
         <section className="py-32 bg-[#050505] border-t border-white/5">
           <div className="container mx-auto px-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-              
-              {/* Left Column: Heading */}
               <div className="lg:col-span-4">
                 <SectionReveal>
                   <div className="flex items-center gap-2 mb-6">
@@ -560,8 +621,6 @@ const Home: React.FC = () => {
                   </Link>
                 </SectionReveal>
               </div>
-
-              {/* Right Column: Accordion */}
               <div className="lg:col-span-8">
                 <SectionReveal delay={0.2}>
                   <div className="flex flex-col">
@@ -577,7 +636,6 @@ const Home: React.FC = () => {
                   </div>
                 </SectionReveal>
               </div>
-
             </div>
           </div>
         </section>

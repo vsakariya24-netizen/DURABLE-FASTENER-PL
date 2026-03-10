@@ -7,36 +7,7 @@ import {
   Search, ChevronDown, ChevronRight, 
   ArrowRight, LayoutGrid, ShoppingBag, Sparkles
 } from 'lucide-react';
-interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  primarySrc: string;   // Cloudflare R2 URL
-  fallbackSrc?: string; // Original Supabase URL
-}
 
-const SafeImage: React.FC<SafeImageProps> = ({ primarySrc, fallbackSrc, alt, className, ...props }) => {
-  const [imgSrc, setImgSrc] = useState(primarySrc);
-  const [hasFailed, setHasFailed] = useState(false);
-
-  const handleError = () => {
-    if (!hasFailed && fallbackSrc) {
-      // Plan B: Agar R2 fail hua, Supabase use karo
-      setImgSrc(fallbackSrc);
-      setHasFailed(true);
-    } else {
-      // Plan C: Agar dono fail huye, placeholder dikhao
-      setImgSrc('https://via.placeholder.com/400x400?text=No+Image');
-    }
-  };
-
-  return (
-    <img 
-      {...props} 
-      src={imgSrc} 
-      alt={alt} 
-      className={className} 
-      onError={handleError} 
-    />
-  );
-};
 // ============================================================
 // ✅ CACHE HELPER — Saves data in localStorage with expiry
 // ============================================================

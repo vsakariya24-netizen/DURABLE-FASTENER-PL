@@ -12,6 +12,35 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
 // =========================================
+// 0. SMART IMAGE URL HELPER
+// =========================================
+
+/**
+ * Returns the correct image URL for OEM assets.
+ * - If the DB value is already a full URL (http/https) → use it directly (Supabase storage)
+ * - If it's a relative path → build the Cloudflare R2 URL
+ */
+const cleanImageUrl = (url: string): string => {
+  if (!url || typeof url !== 'string') return '';
+  
+  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+  
+  // Already R2 → return as-is
+  if (url.startsWith(R2_BASE)) return url;
+  
+  // ✅ ANY full URL (workers.dev, supabase.co, etc.)
+  // → extract just the filename → redirect to R2
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    const fileName = url.split('/').pop(); // "1773037925108-hex.png"
+    return `${R2_BASE}/${fileName}`;
+  }
+  
+  // Relative path → prepend R2
+  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
+  return `${R2_BASE}/${cleanPath}`;
+};
+
+// =========================================
 // 1. UTILITY COMPONENTS
 // =========================================
 
@@ -29,6 +58,7 @@ const ScrollReveal: React.FC<{ children: React.ReactNode; delay?: number; classN
     </motion.div>
   );
 };
+
 // Custom Screw Icon based on your uploaded image
 const CustomScrew: React.FC<{ size?: number; className?: string }> = ({ size = 80, className = "" }) => (
   <svg 
@@ -598,11 +628,17 @@ const OEMPlatform: React.FC = () => {
                  {liveThreading.length > 0 ? (
                     liveThreading.map((item: any, i: number) => {
                       const { name, img } = getCleanData(item);
+                      // ✅ FIX: Pass img through cleanImageUrl before rendering
+                      const imageUrl = cleanImageUrl(img);
                       return (
                         <div key={i} className="bg-white/5 border border-white/10 rounded-lg py-4 px-1 hover:border-blue-500/50 hover:bg-white/10 transition-all group/thread cursor-default relative flex flex-col items-center gap-3">
                            <div className="h-24 w-full flex items-center justify-center overflow-hidden">
-                              {img ? (
-                                <img src={img} alt={name} className="h-full w-auto object-contain drop-shadow-lg opacity-80 group-hover/thread:opacity-100 transition-opacity" />
+                              {imageUrl ? (
+                                <img 
+                                  src={imageUrl} 
+                                  alt={name} 
+                                  className="h-full w-auto object-contain drop-shadow-lg opacity-80 group-hover/thread:opacity-100 transition-opacity" 
+                                />
                               ) : (
                                 <Settings className="text-slate-700 h-10 w-10" />
                               )}
@@ -708,6 +744,8 @@ const OEMPlatform: React.FC = () => {
               <div className="grid grid-cols-3 gap-8">
                 {liveHeadStyles.map((item: any, i: number) => {
                   const { name, img } = getCleanData(item);
+                  // ✅ FIX: Pass img through cleanImageUrl before rendering
+                  const imageUrl = cleanImageUrl(img);
                   const info = getStandard(name, 'head');
                   return (
                     <ScrollReveal key={i} delay={i * 0.1}>
@@ -718,7 +756,15 @@ const OEMPlatform: React.FC = () => {
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
                             <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
                               <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
-                                {img ? <img src={img} alt={name} className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(59,130,246,0.3)] transition-all duration-300" /> : <Component size={48} className="text-slate-700" />}
+                                {imageUrl ? (
+                                  <img 
+                                    src={imageUrl} 
+                                    alt={name} 
+                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(59,130,246,0.3)] transition-all duration-300" 
+                                  />
+                                ) : (
+                                  <Component size={48} className="text-slate-700" />
+                                )}
                               </motion.div>
                             </div>
                             <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
@@ -747,6 +793,8 @@ const OEMPlatform: React.FC = () => {
               <div className="grid grid-cols-3 gap-8">
                 {liveDriveSystems.map((item: any, i: number) => {
                   const { name, img } = getCleanData(item);
+                  // ✅ FIX: Pass img through cleanImageUrl before rendering
+                  const imageUrl = cleanImageUrl(img);
                   const info = getStandard(name, 'drive');
                   return (
                     <ScrollReveal key={i} delay={i * 0.1}>
@@ -757,7 +805,15 @@ const OEMPlatform: React.FC = () => {
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
                             <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
                                <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
-                                {img ? <img src={img} alt={name} className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" /> : <Microscope size={48} className="text-slate-700" />}
+                                {imageUrl ? (
+                                  <img 
+                                    src={imageUrl} 
+                                    alt={name} 
+                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" 
+                                  />
+                                ) : (
+                                  <Microscope size={48} className="text-slate-700" />
+                                )}
                               </motion.div>
                             </div>
                             <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
@@ -778,9 +834,7 @@ const OEMPlatform: React.FC = () => {
         </div>
      </section>
 
-     {/* =========================================
-         4. QUALITY STANDARDS (DYNAMICALLY LOADED)
-     ========================================= */}
+     {/* 4. QUALITY STANDARDS */}
      <section className="py-32 px-6 bg-[#050505] relative border-t border-white/5">
         <div className="max-w-7xl mx-auto relative z-10">
           
@@ -797,7 +851,7 @@ const OEMPlatform: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
-            {/* CARD 1: RAW MATERIAL (Blue Theme) */}
+            {/* CARD 1: RAW MATERIAL */}
             <ScrollReveal delay={0.1}>
               <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-blue-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
                 <div className="flex items-center gap-5 mb-8">
@@ -820,7 +874,7 @@ const OEMPlatform: React.FC = () => {
               </div>
             </ScrollReveal>
 
-            {/* CARD 2: HEAT TREATMENT (Amber Theme) */}
+            {/* CARD 2: HEAT TREATMENT */}
             <ScrollReveal delay={0.2}>
               <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-amber-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
                 <div className="flex items-center gap-5 mb-8">
@@ -843,7 +897,7 @@ const OEMPlatform: React.FC = () => {
               </div>
             </ScrollReveal>
 
-            {/* CARD 3: SURFACE FINISH (Emerald Theme) */}
+            {/* CARD 3: SURFACE FINISH */}
             <ScrollReveal delay={0.3}>
               <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-emerald-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
                 <div className="flex items-center gap-5 mb-8">
@@ -870,7 +924,7 @@ const OEMPlatform: React.FC = () => {
         </div>
      </section>
      
-     {/* 7. THE GOLDEN SAMPLE */}
+     {/* 5. THE GOLDEN SAMPLE */}
      <ProtocolVisualization 
         theme="amber" 
         icon={CustomScrew} 
@@ -879,7 +933,7 @@ const OEMPlatform: React.FC = () => {
         steps={["Drawing Approval", "Lab Testing", "Sample Dispatch", "Mass Production"]}
      />
 
-     {/* 8. FOOTER CTA */}
+     {/* 6. FOOTER CTA */}
      <section className="py-24 bg-white text-black relative">
        <div className="max-w-4xl mx-auto px-6 text-center">
           <ScrollReveal>
