@@ -390,11 +390,10 @@ const OEMPlatform: React.FC = () => {
   <meta name="twitter:title" content="OEM Fastener Manufacturer | Durable Fastener" />
   <meta name="twitter:description" content="Precision engineered OEM fasteners from India for global industries." />
 
-   <script type="application/ld+json">
-    {JSON.stringify({
+   <script type="application/ld+json">{JSON.stringify({
       "@context": "https://schema.org",
-      "@type": "Manufacturer",
-      "@id": "https://durablefastener.com/#manufacturer",
+      "@type": "Organization", 
+      "@id": "https://durablefastener.com/#organization",
       "name": "Durable Fastener",
       "url": "https://durablefastener.com",
       "logo": "https://durablefastener.com/logo.png",
@@ -430,7 +429,7 @@ const OEMPlatform: React.FC = () => {
   "url": "https://durablefastener.com/oem",
   "name": "OEM Fastener Manufacturer in India",
   "about": {
-    "@id": "https://durablefastener.com/#manufacturer"
+    "@id": "https://durablefastener.com/#organization"
   }
 })}
 </script>
