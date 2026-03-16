@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getProductRecommendations, RecommendationResult } from '../services/aiService'; // ← updated import
+import { getProductRecommendations, RecommendationResult } from '../services/aiService';
 import { PRODUCTS } from '../constants';
 import * as ReactRouterDOM from 'react-router-dom';
 import { Sparkles, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
