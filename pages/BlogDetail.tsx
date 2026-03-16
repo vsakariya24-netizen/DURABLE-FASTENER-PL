@@ -74,7 +74,7 @@ const BlogDetail: React.FC = () => {
       />
 
       {/* TOP NAVIGATION */}
-      <nav className="fixed top-0 left-0 w-full z-[150] px-6 py-4 flex justify-between items-center pointer-events-none">
+      <nav className="fixed top-9 left-0 w-full z-[150] px-6 py-4 flex justify-between items-center pointer-events-none">
         <div className="pointer-events-auto">
           <Link 
             to="/blog" 

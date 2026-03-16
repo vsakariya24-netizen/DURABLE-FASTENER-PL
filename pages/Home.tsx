@@ -13,6 +13,72 @@ import {
 } from 'framer-motion';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import GoogleReviews from "../components/GoogleReviews";
+
+const homeFaqSchema = JSON.stringify({
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "Who is the best screw manufacturer in India?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Durable Fastener Private Limited is a leading screw manufacturer in India producing high-quality self-drilling, drywall, and stainless steel screws for industrial and construction use."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Where can I buy drywall screws in bulk in India?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "You can purchase bulk drywall screws directly from Durable Fastener Private Limited, a trusted manufacturer and supplier based in Gujarat, India."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Which company manufactures self-drilling screws in Gujarat?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Durable Fastener Private Limited in Rajkot, Gujarat manufactures premium quality self-drilling screws for domestic and export markets."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Do you supply screws for export and wholesale?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes, Durable Fastener supplies bulk quantities for distributors, wholesalers, and international buyers."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can I get custom size screws manufactured?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes, custom OEM manufacturing is available according to client specifications including size, coating, and packaging."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Where is Durable Fastener located?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Durable Fastener Private Limited is located in Rajkot, Gujarat, India."
+   }
+  },
+{
+      "@type": "Question",
+      "name": "What is the difference between self-drilling and self-tapping screws?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Self-drilling screws (TEK screws) have a drill-point tip to create their own hole in metal. Self-tapping screws tap their own threads but usually require a pre-drilled pilot hole."
+      }
+
+    }
+]
+});
+
 
 const { Link } = ReactRouterDOM;
 
@@ -22,6 +88,7 @@ const { Link } = ReactRouterDOM;
 // redirected through your R2 bucket.
 // =========================================
 const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+
 
 const cleanImageUrl = (url: string): string => {
   if (!url || typeof url !== 'string') return '';
@@ -277,12 +344,10 @@ const Home: React.FC = () => {
   const [heroImages, setHeroImages] = useState<string[]>(["/allscrewtemplate123.jpg"]);
   const [heroText, setHeroText] = useState({ line1: "WHERE DESIRE", line2: "MEETS", line3: "VALUE" });
   const [stats, setStats] = useState({ dealers: 350, years: 13, products: 120 });
-  const [categoryImages, setCategoryImages] = useState({ 
-    industrial: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=600&q=80",
-    automotive: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=600&q=80",
-    fittings: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=600&q=80",
-    oem: "https://images.unsplash.com/photo-1565439396655-0dc065c717b0?auto=format&fit=crop&w=600&q=80"
-  });
+  const [categoryImages, setCategoryImages] = useState({
+  fasteners: '',
+  fittings:  ''
+});
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
 
   useEffect(() => {
@@ -307,27 +372,23 @@ const Home: React.FC = () => {
         });
 
         // ✅ Route category images through R2
-        setCategoryImages({
-          industrial: cleanImageUrl(data.cat_fasteners) || categoryImages.industrial,
-          fittings:   cleanImageUrl(data.cat_fittings)  || categoryImages.fittings,
-          automotive: cleanImageUrl(data.cat_automotive) || categoryImages.automotive,
-          oem:        cleanImageUrl(data.cat_oem)        || categoryImages.oem,
-        });
+setCategoryImages({
+  fasteners: cleanImageUrl(data.cat_fasteners || ''),
+  fittings:  cleanImageUrl(data.cat_fittings  || '')
+});
       }
 
       // ✅ Route blog images through R2
+      
       const { data: blogData } = await supabase
         .from('blogs')
         .select('*')
-        .eq('status', 'published')
         .order('created_at', { ascending: false })
         .limit(3);
 
+     
       if (blogData) {
-        setBlogs(blogData.map((post: any) => ({
-          ...post,
-          image_url: cleanImageUrl(post.image_url), // ✅ R2 routed
-        })));
+        setBlogs(blogData);   // use image_url exactly as stored, no R2 transform
       }
 
       setTimeout(() => setIsLoading(false), 1500);
@@ -439,31 +500,196 @@ const Home: React.FC = () => {
         <AnimatedManifesto />
 
         {/* PRODUCTS */}
-        <section className="py-40 px-6 container mx-auto">
-          <div className="flex justify-between items-end mb-20">
-            <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase">The Core<br/>Portfolio</h2>
-            <Link to="/products" className="hidden md:flex items-center gap-4 text-yellow-500 font-bold group uppercase tracking-widest text-xs">
-              Browse Categories <div className="w-12 h-12 rounded-full border border-yellow-500 flex items-center justify-center group-hover:bg-yellow-500 group-hover:text-black transition-all"><ArrowRight size={20}/></div>
-            </Link>
+       <section className="py-40 px-6 container mx-auto">
+
+  {/* Section Header */}
+  <div className="flex justify-between items-end mb-20 flex-wrap gap-6">
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <span className="h-px w-10 bg-yellow-500" />
+        <span className="text-yellow-500 font-mono text-[10px] uppercase tracking-[0.35em] font-bold">
+          Product Divisions
+        </span>
+      </div>
+      <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.88]">
+        The Core<br />Portfolio
+      </h2>
+    </div>
+    <Link
+      to="/products"
+      className="hidden md:flex items-center gap-4 text-yellow-500 font-bold group uppercase tracking-widest text-xs"
+    >
+      Browse All Products
+      <div className="w-12 h-12 rounded-full border border-yellow-500 flex items-center justify-center group-hover:bg-yellow-500 group-hover:text-black transition-all">
+        <ArrowRight size={20} />
+      </div>
+    </Link>
+  </div>
+
+  {/* 2-Column Cards */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    {/* ── FASTENERS CARD ── */}
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.7, delay: 0, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative rounded-[2rem] overflow-hidden border border-white/5 bg-neutral-900 flex flex-col"
+    >
+      {/* Image */}
+      <div className="relative h-[260px] md:h-[300px] overflow-hidden flex-shrink-0">
+        {categoryImages.fasteners ? (
+          <img
+            src={categoryImages.fasteners}
+            alt="Fasteners"
+            className="w-full h-full object-cover grayscale-[0.3] brightness-75 transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105 group-hover:brightness-85"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center">
+            <span className="text-white/10 text-8xl font-black">01</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Object.keys(categoryImages).map((key, i) => (
-              <div key={i} className="relative h-[600px] rounded-[2rem] overflow-hidden group cursor-pointer border border-white/5">
-                <img 
-                  src={categoryImages[key as keyof typeof categoryImages]} // ✅ R2 URL
-                  className="w-full h-full object-cover grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-110" 
-                  alt={key}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                <div className="absolute bottom-10 left-10">
-                  <h3 className="text-4xl font-black mb-2 uppercase">{key}</h3>
-                  <p className="text-white/60 uppercase tracking-widest text-[10px]">Explore Division</p>
-                </div>
-              </div>
-            ))}
+        )}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-neutral-900 to-transparent" />
+        {/* Segment badge */}
+        <div className="absolute top-5 left-5 bg-black/60 backdrop-blur-sm border border-yellow-500/30 text-yellow-500 text-[9px] font-black uppercase tracking-[0.25em] px-3 py-1.5 rounded-full">
+          Fasteners Segment
+        </div>
+        {/* Count badge */}
+        <div className="absolute top-5 right-5 bg-black/60 backdrop-blur-sm border border-white/10 text-white/70 text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
+          9 Products
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col flex-1 px-8 pt-4 pb-8">
+        <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-white uppercase mb-2 group-hover:text-yellow-400 transition-colors duration-300">
+          Fasteners
+        </h3>
+        <p className="text-neutral-500 text-sm leading-relaxed mb-6 italic">
+          Precision-engineered fastening solutions for construction, woodwork, drywall & structural applications.
+        </p>
+
+        <div className="w-full h-px bg-white/8 mb-5" />
+        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-500 mb-4">Products in this division</p>
+
+        <div className="grid grid-cols-2 gap-x-4 flex-1">
+          {[
+            'Carriage Bolt', 'Chipboard Screw',
+            'M.S. Sheet Metal Self Tapping', 'Machine Screw',
+            'Nylon Frame Fixing Anchors', 'POP Drywall (Gypsum) Screw',
+            'S.S. Self Tapping Screw', 'Self Drilling Screw (SDS)',
+            'Wire Nails'
+          ].map((product, i) => (
+            <div key={i} className="flex items-start gap-2.5 py-2.5 border-b border-white/5">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500/40 flex-shrink-0 group-hover:bg-yellow-500 transition-colors" />
+              <span className="text-[12px] text-neutral-400 leading-snug hover:text-white transition-colors">
+                {product}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/8">
+          <span className="text-xs text-neutral-600 font-mono">9 types available</span>
+          <Link
+            to="/products"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 hover:text-white transition-colors group/cta"
+          >
+            Explore Division
+            <div className="w-6 h-6 rounded-full border border-yellow-500 flex items-center justify-center group-hover/cta:bg-yellow-500 transition-all">
+              <ArrowRight size={10} className="text-yellow-500 group-hover/cta:text-black" />
+            </div>
+          </Link>
+        </div>
+      </div>
+    </motion.div>
+
+    {/* ── FITTINGS CARD ── */}
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.7, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative rounded-[2rem] overflow-hidden border border-white/5 bg-neutral-900 flex flex-col"
+    >
+      {/* Image */}
+      <div className="relative h-[260px] md:h-[300px] overflow-hidden flex-shrink-0">
+        {categoryImages.fittings ? (
+          <img
+            src={categoryImages.fittings}
+            alt="Fittings"
+            className="w-full h-full object-cover grayscale-[0.3] brightness-75 transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105 group-hover:brightness-85"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center">
+            <span className="text-white/10 text-8xl font-black">02</span>
           </div>
-        </section>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-neutral-900 to-transparent" />
+        {/* Segment badge */}
+        <div className="absolute top-5 left-5 bg-black/60 backdrop-blur-sm border border-yellow-500/30 text-yellow-500 text-[9px] font-black uppercase tracking-[0.25em] px-3 py-1.5 rounded-full">
+          Fittings
+        </div>
+        {/* Count badge */}
+        <div className="absolute top-5 right-5 bg-black/60 backdrop-blur-sm border border-white/10 text-white/70 text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
+          8 Products
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col flex-1 px-8 pt-4 pb-8">
+        <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-white uppercase mb-2 group-hover:text-yellow-400 transition-colors duration-300">
+          Fittings
+        </h3>
+        <p className="text-neutral-500 text-sm leading-relaxed mb-6 italic">
+          Smart door and furniture fitting solutions built for durability, smooth operation & long-lasting performance.
+        </p>
+
+        <div className="w-full h-px bg-white/8 mb-5" />
+        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-500 mb-4">Products in this division</p>
+
+        <div className="grid grid-cols-2 gap-x-4 flex-1">
+          {[
+            'Auto Hinges', 'Buffers',
+            'Caster Wheels', 'Door Catcher',
+            'Door Magnet', 'Door Silencers',
+            'Slim Magnet', 'Wall Grip'
+          ].map((product, i) => (
+            <div key={i} className="flex items-start gap-2.5 py-2.5 border-b border-white/5">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500/40 flex-shrink-0 group-hover:bg-yellow-500 transition-colors" />
+              <span className="text-[12px] text-neutral-400 leading-snug hover:text-white transition-colors">
+                {product}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/8">
+          <span className="text-xs text-neutral-600 font-mono">8 types available</span>
+          <Link
+            to="/products"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 hover:text-white transition-colors group/cta"
+          >
+            Explore Division
+            <div className="w-6 h-6 rounded-full border border-yellow-500 flex items-center justify-center group-hover/cta:bg-yellow-500 transition-all">
+              <ArrowRight size={10} className="text-yellow-500 group-hover/cta:text-black" />
+            </div>
+          </Link>
+        </div>
+      </div>
+    </motion.div>
+
+  </div>
+
+  {/* Mobile CTA */}
+  <div className="flex md:hidden justify-center mt-10">
+    <Link to="/products" className="flex items-center gap-3 text-yellow-500 font-bold uppercase tracking-widest text-xs">
+      Browse All Products <ArrowRight size={16} />
+    </Link>
+  </div>
+
+</section>
 
         {/* MANUFACTURING DNA */}
         <section className="py-24 md:py-32 relative bg-[#050505] overflow-hidden border-y border-neutral-900">
@@ -549,34 +775,219 @@ const Home: React.FC = () => {
         </section>
 
         {/* JOURNAL */}
-        <section className="py-32 px-6 container mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-                <div className="max-w-2xl">
-                    <div className="flex items-center gap-2 mb-4">
-                        <BookOpen className="text-yellow-500 w-5 h-5" />
-                        <span className="text-yellow-500 font-mono text-xs uppercase tracking-[0.3em]">Insights & Innovation</span>
-                    </div>
-                    <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter">THE <span className="text-yellow-500">JOURNAL.</span></h2>
+          <section className="py-32 relative bg-[#050505] overflow-hidden">
+
+          {/* Background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-yellow-500/4 blur-[140px] rounded-full pointer-events-none" />
+
+          <div className="container mx-auto px-6 relative z-10">
+
+            {/* ── Section Header ── */}
+            <SectionReveal>
+              <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+                <div>
+                  <div className="flex items-center gap-3 mb-5">
+                    <BookOpen className="text-yellow-500 w-4 h-4" />
+                    <span className="text-yellow-500 font-mono text-[10px] uppercase tracking-[0.4em] font-bold">
+                      Insights & Innovation
+                    </span>
+                  </div>
+                  <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
+                    THE <span className="text-yellow-500">JOURNAL.</span>
+                  </h2>
+                  <p className="text-neutral-500 text-sm mt-4 max-w-sm leading-relaxed">
+                    Industry insights, manufacturing updates, and product knowledge from the Durable Fastener team.
+                  </p>
                 </div>
-                <Link to="/blog" className="px-8 py-4 bg-white/5 hover:bg-yellow-500 hover:text-black transition-all rounded-full border border-white/10 font-bold uppercase tracking-widest text-xs">View All Posts</Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <Link
+                  to="/blog"
+                  className="group flex items-center gap-3 px-8 py-4 border border-white/10 rounded-full text-white font-bold text-xs uppercase tracking-widest hover:bg-yellow-500 hover:text-black hover:border-yellow-500 transition-all duration-300 flex-shrink-0"
+                >
+                  View All Posts
+                  <div className="w-6 h-6 rounded-full border border-current flex items-center justify-center group-hover:bg-black group-hover:border-black transition-all">
+                    <ArrowRight size={11} />
+                  </div>
+                </Link>
+              </div>
+            </SectionReveal>
+
+            {/* ── Blog Cards ── */}
+            {blogs.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {blogs.map((post, i) => (
-                    <Link key={post.id} to={`/blog/${post.id}`} className="group relative h-[500px] rounded-[2.5rem] overflow-hidden border border-white/5 bg-neutral-900">
-                        <img 
-                          src={post.image_url}  // ✅ Already R2-routed in fetchContent
-                          className="w-full h-full object-cover transition-all duration-700 opacity-60 group-hover:opacity-100 group-hover:scale-110" 
-                          alt={post.title}
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                        <div className="absolute bottom-0 left-0 p-8">
-                            <h3 className="text-2xl font-bold text-white group-hover:text-yellow-400 mb-4">{post.title}</h3>
-                            <div className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Read Article <ArrowRight className="inline ml-2" size={14} /></div>
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <Link
+                      to={`/blog/${post.slug}`}
+                      className="group flex flex-col h-full rounded-[2rem] overflow-hidden border border-white/5 bg-neutral-900 hover:border-yellow-500/30 transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(234,179,8,0.15)]"
+           >
+                      {/* Image */}
+                      <div className="relative h-56 overflow-hidden flex-shrink-0 bg-neutral-800">
+                        {post.image_url ? (
+                          <img
+                            src={post.image_url}
+                            alt={post.title}
+                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center">
+                            <BookOpen className="w-12 h-12 text-white/10" />
+                          </div>
+                        )}
+
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-transparent to-transparent" />
+
+                        {/* Category tag */}
+                        {post.category && (
+                          <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm border border-yellow-500/30 text-yellow-500 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full">
+                            {post.category}
+                          </div>
+                        )}
+
+                        {/* Read time */}
+                        {post.read_time && (
+                          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm border border-white/10 text-white/60 text-[9px] font-bold px-3 py-1.5 rounded-full">
+                            {post.read_time}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex flex-col flex-1 p-6 gap-4">
+
+                        {/* Title */}
+                        <h3 className="text-lg font-black text-white leading-snug tracking-tight group-hover:text-yellow-400 transition-colors duration-300 line-clamp-2">
+                          {post.title}
+                        </h3>
+
+                        {/* Excerpt if exists */}
+                        {post.excerpt && (
+                          <p className="text-neutral-500 text-sm leading-relaxed line-clamp-2 flex-1">
+                            {post.excerpt}
+                          </p>
+                        )}
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
+                          <span className="text-neutral-600 text-[10px] font-mono uppercase tracking-wider">
+                            {post.created_at
+                              ? new Date(post.created_at).toLocaleDateString('en-IN', {
+                                  day: 'numeric', month: 'short', year: 'numeric'
+                                })
+                              : 'Durable Fastener'
+                            }
+                          </span>
+                          <div className="flex items-center gap-1.5 text-yellow-500 text-[10px] font-black uppercase tracking-widest group-hover:gap-3 transition-all duration-300">
+                            Read
+                            <ArrowRight size={11} />
+                          </div>
                         </div>
+                      </div>
                     </Link>
+                  </motion.div>
                 ))}
-            </div>
+              </div>
+            ) : (
+              /* ── Empty State — no blog posts yet ── */
+              <SectionReveal delay={0.1}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    {
+                      title: "Why Self-Drilling Screws Are Industry Standard",
+                      category: "Technology",
+                      read_time: "4 min read",
+                      desc: "A deep dive into how SDS screws revolutionized metal-to-metal fastening in roofing and structural work."
+                    },
+                    {
+                      title: "Zinc vs Phosphate Coating — What Lasts Longer?",
+                      category: "Manufacturing",
+                      read_time: "5 min read",
+                      desc: "Understanding corrosion resistance and which surface treatment is right for your application."
+                    },
+                    {
+                      title: "The Complete Guide to Choosing Door Hinges",
+                      category: "Fittings",
+                      read_time: "6 min read",
+                      desc: "From auto-closing to concealed hinges — everything a contractor needs to know before specifying."
+                    }
+                  ].map((placeholder, i) => (
+                    <Link
+                      key={i}
+                      to="/blog"
+                      className="group flex flex-col rounded-[2rem] overflow-hidden border border-white/5 bg-neutral-900 hover:border-yellow-500/30 transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(234,179,8,0.15)]"
+                    >
+                      {/* Placeholder image area */}
+                      <div className="relative h-56 bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center overflow-hidden">
+                        <div className="absolute inset-0 opacity-5">
+                          <div className="absolute top-4 left-4 w-16 h-16 border border-white rounded-full" />
+                          <div className="absolute bottom-6 right-6 w-24 h-24 border border-white rounded-full" />
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[80px] font-black text-white">
+                            0{i + 1}
+                          </div>
+                        </div>
+                        <BookOpen className="w-10 h-10 text-white/15 relative z-10" />
+
+                        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm border border-yellow-500/30 text-yellow-500 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full">
+                          {placeholder.category}
+                        </div>
+                        <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm border border-white/10 text-white/60 text-[9px] font-bold px-3 py-1.5 rounded-full">
+                          {placeholder.read_time}
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-transparent to-transparent" />
+                      </div>
+
+                      <div className="flex flex-col flex-1 p-6 gap-4">
+                        <h3 className="text-lg font-black text-white leading-snug tracking-tight group-hover:text-yellow-400 transition-colors duration-300">
+                          {placeholder.title}
+                        </h3>
+                        <p className="text-neutral-500 text-sm leading-relaxed flex-1">
+                          {placeholder.desc}
+                        </p>
+                        <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
+                          <span className="text-neutral-600 text-[10px] font-mono uppercase tracking-wider">
+                            Coming Soon
+                          </span>
+                          <div className="flex items-center gap-1.5 text-yellow-500 text-[10px] font-black uppercase tracking-widest group-hover:gap-3 transition-all duration-300">
+                            Read <ArrowRight size={11} />
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Hint message */}
+                <p className="text-center text-neutral-700 text-xs font-mono mt-8 uppercase tracking-widest">
+                  ↑ Add posts via Admin → Journal to replace placeholders
+                </p>
+              </SectionReveal>
+            )}
+
+            {/* ── Bottom CTA strip ── */}
+            {blogs.length > 0 && (
+              <SectionReveal delay={0.3}>
+                <div className="flex justify-center mt-14">
+                  <Link
+                    to="/blog"
+                    className="group flex items-center gap-4 text-neutral-400 hover:text-yellow-500 font-bold text-xs uppercase tracking-[0.3em] transition-colors duration-300"
+                  >
+                    <span className="h-px w-12 bg-current transition-all group-hover:w-20" />
+                    See All Articles
+                    <span className="h-px w-12 bg-current transition-all group-hover:w-20" />
+                  </Link>
+                </div>
+              </SectionReveal>
+            )}
+
+          </div>
         </section>
 
         {/* GLOBAL REACH & CAREERS */}
@@ -585,7 +996,7 @@ const Home: React.FC = () => {
             <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover opacity-40 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-700" alt="Global Shipping" />
             <div className="absolute inset-0 flex flex-col items-center justify-center p-10 text-center z-20">
               <AnimatedGlobalIcon />
-              <h3 className="text-5xl font-black text-white tracking-tighter group-hover:text-yellow-400 uppercase">Global Reach</h3>
+              <h3 className="text-5xl font-black text-white tracking-tighter group-hover:text-yellow-400 uppercase">Global OEM</h3>
               <p className="mt-2 text-white/60 uppercase tracking-[0.3em] text-[10px]">Logistics & Export</p>
             </div>
           </Link>
@@ -598,7 +1009,7 @@ const Home: React.FC = () => {
             </div>
           </Link>
         </section>
-
+<GoogleReviews />
         {/* FAQ SECTION */}
         <section className="py-32 bg-[#050505] border-t border-white/5">
           <div className="container mx-auto px-6">
