@@ -9,26 +9,28 @@ export default function GoogleReviews() {
   // Link to your Google Business Profile for "Read more" and "Review us"
   const GOOGLE_PAGE_URL = "https://search.google.com/local/writereview?placeid=ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
 
- useEffect(() => {
-    // 1. We change the URL to look at your Vercel API, not localhost
-    // This tells the browser: "The data is on the same server as this website"
-    const API_URL = "/api/reviews"; 
+useEffect(() => {
+  // This automatically detects where you are
+  const isLocal = window.location.hostname === "localhost";
+  
+  const API_URL = isLocal 
+    ? "http://localhost:5000/api/reviews" // While you are working locally
+    : "/api/reviews";                     // When you upload to Vercel
 
-    fetch(API_URL)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.result) {
-          // 2. This puts the data on the screen
-          setReviews(data.result.reviews || []);
-          setRating(data.result.rating || 4.9);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error loading reviews:", err);
-        setLoading(false);
-      });
-  }, []);
+  fetch(API_URL)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.result) {
+        setReviews(data.result.reviews || []);
+        setRating(data.result.rating || 4.9);
+      }
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Reviews failed to load:", err);
+      setLoading(false);
+    });
+}, []);
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       const { scrollLeft, clientWidth } = scrollRef.current;
