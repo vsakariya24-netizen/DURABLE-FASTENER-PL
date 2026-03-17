@@ -7,7 +7,7 @@ export default function GoogleReviews() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Link to your Google Business Profile for "Read more" and "Review us"
-  const GOOGLE_PAGE_URL = "https://search.google.com/local/writereview?placeid=ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
+  const GOOGLE_PAGE_URL = "";
 
 useEffect(() => {
   // This automatically detects where you are
