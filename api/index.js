@@ -16,7 +16,7 @@ app.get('/api/reviews', async (req, res) => {
       return res.status(500).json({ error: "Missing API Key" });
     }
 
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=reviews,rating&key=${API_KEY}`;
+    const url = ``;
     
     const response = await fetch(url);
     const data = await response.json();
