@@ -1,22 +1,5 @@
-// src/services/geminiService.ts
-import { GoogleGenerativeAI } from "@google/generative-ai"; // <--- Correct Import
-import { PRODUCTS } from "../constants";
-
-// Fix TypeScript errors by telling it "specifications" can be anything
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  description?: string;
-  specifications?: any; 
-  [key: string]: any;
-}
-
-// PASTE YOUR API KEY HERE
-const API_KEY = "YOUR_PASTED_API_KEY_HERE"; 
-
-// Initialize the correct class
-const genAI = new GoogleGenerativeAI(API_KEY);
+// geminiService.ts — Free Gemini 1.5 Flash API
+// Get your FREE key at: https://aistudio.google.com/app/apikey
 
 export interface RecommendationResult {
   productId: string;
@@ -24,69 +7,95 @@ export interface RecommendationResult {
   rationale: string;
 }
 
-export const getProductRecommendations = async (userQuery: string): Promise<RecommendationResult[]> => {
-  // Safety check for missing key
-  if (!API_KEY || API_KEY.includes("YOUR_PASTED")) {
-    console.warn("Gemini API Key missing. Using Mock Data.");
-    return mockRecommendations(userQuery);
+export async function getProductRecommendations(
+  query: string,
+  products: { id: string; name: string; category: string; description?: string; tags?: string[] }[]
+): Promise<RecommendationResult[]> {
+
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Missing VITE_GEMINI_API_KEY in your .env file');
   }
 
-  // Prepare data for AI (converting arrays to string so AI can read them)
-  const productContext = (PRODUCTS as unknown as Product[]).map(p => ({
+  const productCatalog = products.map(p => ({
     id: p.id,
     name: p.name,
     category: p.category,
-    specs: p.specifications ? JSON.stringify(p.specifications) : (p.description || ""), 
+    description: p.description || '',
+    tags: p.tags || [],
   }));
 
-  const prompt = `
-    You are an expert sales engineer for Durable Fastener Pvt. Ltd.
-    User Query: "${userQuery}"
-    
-    Based on the following product catalog, identify the top 3 most relevant products.
-    Catalog: ${JSON.stringify(productContext)}
-    
-    Return a strictly valid JSON array (no markdown) where each object has:
-    - productId (string): matching the catalog ID
-    - matchScore (number): 0-100 confidence
-    - rationale (string): 1 sentence explaining why this fits the query.
-  `;
+  const prompt = `You are a precise industrial fastener expert for CLASSONE — a professional fastener export company.
 
+Given the user's project requirement, find the best matching products from the catalog below.
+
+STRICT RULES:
+- Return ONLY a raw JSON array. No markdown, no explanation, no backticks.
+- Each object must have exactly: { "productId": string, "matchScore": number, "rationale": string }
+- matchScore: integer between 50 and 99 (higher = better match)
+- rationale: 1 to 2 sentences explaining WHY this product fits the user's specific need
+- Only include products with matchScore >= 55
+- Sort by matchScore descending
+- Maximum 4 results
+- If nothing matches well, return: []
+
+Product catalog:
+${JSON.stringify(productCatalog)}
+
+User requirement: ${query}`;
+
+  let response: Response;
   try {
-    // Use the correct model setup for this library
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        generationConfig: { responseMimeType: "application/json" } 
-    });
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text(); 
-
-    if (!text) return [];
-    
-    // Clean up response
-    const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson) as RecommendationResult[];
-
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return mockRecommendations(userQuery);
+    response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.2,       // low = more precise, consistent
+            maxOutputTokens: 1024,
+          },
+        }),
+      }
+    );
+  } catch (networkError) {
+    console.error('Network error calling Gemini:', networkError);
+    throw new Error('Network error — check your internet connection.');
   }
-};
 
-const mockRecommendations = (query: string): RecommendationResult[] => {
-  const lowerQ = query.toLowerCase();
-  return (PRODUCTS as unknown as Product[])
-    .filter(p => {
-       const nameMatch = p.name.toLowerCase().includes(lowerQ);
-       const descMatch = (p.description || "").toLowerCase().includes(lowerQ); 
-       return nameMatch || descMatch;
-    })
-    .slice(0, 3)
-    .map(p => ({
-      productId: p.id,
-      matchScore: 85,
-      rationale: "Selected based on keyword matching (Offline Mode)."
-    }));
-};
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Gemini API error:', errorText);
+    throw new Error(`Gemini API failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // Extract text from Gemini response structure
+  const text: string =
+    data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+  console.log('Gemini raw response:', text); // helpful for debugging
+
+  // Remove any accidental backticks or markdown
+  const cleaned = text.replace(/```json|```/gi, '').trim();
+
+  let parsed: RecommendationResult[];
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (parseError) {
+    console.error('Failed to parse Gemini response:', cleaned);
+    throw new Error('Gemini returned an unexpected format.');
+  }
+
+  return Array.isArray(parsed) ? parsed : [];
+}
