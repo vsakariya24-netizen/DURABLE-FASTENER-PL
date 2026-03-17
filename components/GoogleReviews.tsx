@@ -7,29 +7,54 @@ export default function GoogleReviews() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Link to your Google Business Profile for "Read more" and "Review us"
-  const GOOGLE_PAGE_URL = "";
+  const GOOGLE_PAGE_URL = "https://search.google.com/local/writereview?placeid=ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
 
 useEffect(() => {
-  // This automatically detects where you are
-  const isLocal = window.location.hostname === "localhost";
-  
-  const API_URL = isLocal 
-    ? "http://localhost:5000/api/reviews" // While you are working locally
-    : "/api/reviews";                     // When you upload to Vercel
+  const CACHE_KEY = "google_reviews_cache";
+  const CACHE_TIME = 6 * 60 * 60 * 1000; // 6 hours
 
+  const cached = localStorage.getItem(CACHE_KEY);
+
+  if (cached) {
+    const { data, timestamp } = JSON.parse(cached);
+
+    if (Date.now() - timestamp < CACHE_TIME) {
+      setReviews(data.reviews);
+      setRating(data.rating);
+      setLoading(false);
+      return; // ✅ API call skip
+    }
+  }
+
+  const isLocal = window.location.hostname === "localhost";
+
+  const API_URL = isLocal
+    ? "http://localhost:5000/api/reviews"
+  : "https://supabase-proxy-dfpl.vsakariya24.workers.dev";  
   fetch(API_URL)
     .then((res) => res.json())
     .then((data) => {
       if (data.result) {
-        setReviews(data.result.reviews || []);
-        setRating(data.result.rating || 4.9);
+        const reviewData = {
+          reviews: data.result.reviews || [],
+          rating: data.result.rating || 4.9,
+        };
+
+        setReviews(reviewData.reviews);
+        setRating(reviewData.rating);
+
+        // ✅ Save cache
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            data: reviewData,
+            timestamp: Date.now(),
+          })
+        );
       }
       setLoading(false);
     })
-    .catch((err) => {
-      console.error("Reviews failed to load:", err);
-      setLoading(false);
-    });
+    .catch(() => setLoading(false));
 }, []);
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
