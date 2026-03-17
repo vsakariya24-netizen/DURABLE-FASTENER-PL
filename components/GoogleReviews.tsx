@@ -1,53 +1,212 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export default function GoogleReviews() {
   const [reviews, setReviews] = useState([]);
-  const [rating, setRating] = useState(null);
+  const [rating, setRating] = useState(4.9);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetch("http://localhost:5000/api/reviews")
+  // Link to your Google Business Profile for "Read more" and "Review us"
+  const GOOGLE_PAGE_URL = "https://search.google.com/local/writereview?placeid=ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
+
+ useEffect(() => {
+    // 1. We change the URL to look at your Vercel API, not localhost
+    // This tells the browser: "The data is on the same server as this website"
+    const API_URL = "/api/reviews"; 
+
+    fetch(API_URL)
       .then((res) => res.json())
       .then((data) => {
-        setReviews(data.reviews);
-        setRating(data.overallRating);
+        if (data.result) {
+          // 2. This puts the data on the screen
+          setReviews(data.result.reviews || []);
+          setRating(data.result.rating || 4.9);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error("Error loading reviews:", err);
+        setLoading(false);
+      });
   }, []);
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      // Scrolls one full page width
+      const scrollTo = direction === "left" ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
+    }
+  };
 
-  const renderStars = (count) => "⭐".repeat(count);
+  const renderStars = (count: number) => "★".repeat(Math.round(count));
 
-  if (loading) return <p>Loading reviews...</p>;
+  if (loading) return <p style={{ textAlign: "center", padding: "100px", color: "#666" }}>Loading Classone Reviews...</p>;
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "20px" }}>
-      <h2>Google Reviews {rating && `— ${rating} ⭐`}</h2>
-
-      {reviews.map((review, index) => (
-        <div key={index} style={{
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          padding: "16px",
-          marginBottom: "12px"
+    <section style={{ backgroundColor: "#fdfdfd", padding: "80px 0", fontFamily: "'Segoe UI', Roboto, sans-serif" }}>
+      <div style={{ maxWidth: "1250px", margin: "0 auto", padding: "0 20px" }}>
+        
+        {/* --- 1. SECTION MAIN TITLE --- */}
+        <h2 style={{ 
+          textAlign: "center", 
+          fontSize: "36px", 
+          fontWeight: "800", 
+          color: "#1a1a1a", 
+          marginBottom: "10px" 
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <img
-              src={review.profile_photo_url}
-              alt={review.author_name}
-              style={{ width: "40px", borderRadius: "50%" }}
-            />
-            <div>
-              <strong>{review.author_name}</strong>
-              <p style={{ margin: 0, color: "#888", fontSize: "12px" }}>
-                {review.relative_time_description}
-              </p>
+          What Our Customers Say
+        </h2>
+        
+
+        {/* --- 2. GOOGLE HEADER BAR --- */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "flex-end", 
+          marginBottom: "30px",
+          borderBottom: "1px solid #eee",
+          paddingBottom: "20px"
+        }}>
+          <div>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#333" }}>
+              <span style={{ color: "#4285F4" }}>G</span>
+              <span style={{ color: "#EA4335" }}>o</span>
+              <span style={{ color: "#FBBC05" }}>o</span>
+              <span style={{ color: "#4285F4" }}>g</span>
+              <span style={{ color: "#34A853" }}>l</span>
+              <span style={{ color: "#EA4335" }}>e</span> <span style={{ color: "#555" }}>Reviews</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "8px" }}>
+              <span style={{ fontWeight: "800", fontSize: "22px", color: "#222" }}>{rating}</span>
+              <span style={{ color: "#FBBC05", fontSize: "20px" }}>{renderStars(5)}</span>
+              <span style={{ color: "#999", fontSize: "13px" }}>(Verified)</span>
             </div>
           </div>
-          <p>{renderStars(review.rating)}</p>
-          <p>{review.text}</p>
+          <a 
+            href={GOOGLE_PAGE_URL}
+            target="_blank"
+            rel="noreferrer"
+            style={reviewButtonStyle}
+          >
+            Review us on Google
+          </a>
         </div>
-      ))}
-    </div>
+
+        {/* --- 3. MULTI-CARD SLIDER --- */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          
+          <button onClick={() => scroll("left")} style={{ ...navButtonStyle, left: "-20px" }}>‹</button>
+
+          <div 
+            ref={scrollRef}
+            style={{ 
+              display: "flex", 
+              gap: "25px", 
+              overflowX: "hidden", 
+              scrollBehavior: "smooth",
+              padding: "15px 5px"
+            }}
+          >
+            {reviews.map((review: any, index: number) => (
+              <div key={index} style={cardStyle}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "15px" }}>
+                  <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                    <img 
+                      src={review.profile_photo_url} 
+                      alt="" 
+                      referrerPolicy="no-referrer"
+                      onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.author_name)}&background=random&color=fff`; }}
+                      style={{ width: "45px", height: "45px", borderRadius: "50%", objectFit: "cover" }}
+                    />
+                    <div>
+                      <div style={{ fontSize: "15px", fontWeight: "700", color: "#333" }}>{review.author_name}</div>
+                      <div style={{ fontSize: "12px", color: "#999" }}>{review.relative_time_description}</div>
+                    </div>
+                  </div>
+                  <span style={{ color: "#4285F4", fontSize: "16px" }}>✔</span>
+                </div>
+
+                <div style={{ color: "#FBBC05", fontSize: "15px", marginBottom: "12px" }}>{renderStars(5)}</div>
+                
+                <p style={textStyle}>{review.text}</p>
+                
+                <a 
+                  href={review.author_url || GOOGLE_PAGE_URL} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  style={{ color: "#1a73e8", fontSize: "13px", textDecoration: "none", fontWeight: "bold", marginTop: "auto" }}
+                >
+                  Read more
+                </a>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={() => scroll("right")} style={{ ...navButtonStyle, right: "-20px" }}>›</button>
+        </div>
+
+        {/* --- 4. PAGINATION DOTS --- */}
+        <div style={{ textAlign: "center", marginTop: "40px" }}>
+          <span style={{ color: "#333", fontSize: "24px", cursor: "pointer" }}>•</span>
+          <span style={{ color: "#ddd", fontSize: "24px", marginLeft: "8px", cursor: "pointer" }}>• •</span>
+        </div>
+
+      </div>
+    </section>
   );
 }
+
+// --- CSS STYLES ---
+const cardStyle: React.CSSProperties = {
+  minWidth: "280px", 
+  maxWidth: "280px",
+  backgroundColor: "#fff",
+  borderRadius: "18px",
+  padding: "28px",
+  boxShadow: "0 6px 18px rgba(0,0,0,0.05)",
+  border: "1px solid #f0f0f0",
+  flexShrink: 0,
+  display: "flex",
+  flexDirection: "column",
+};
+
+const textStyle: React.CSSProperties = {
+  fontSize: "14px",
+  lineHeight: "1.7",
+  color: "#444",
+  height: "95px",
+  overflow: "hidden",
+  marginBottom: "15px",
+  display: "-webkit-box",
+  WebkitLineClamp: 4,
+  WebkitBoxOrient: "vertical",
+  fontStyle: "italic"
+};
+
+const navButtonStyle: React.CSSProperties = {
+  position: "absolute",
+  width: "48px",
+  height: "48px",
+  borderRadius: "50%",
+  backgroundColor: "#fff",
+  border: "1px solid #eee",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+  fontSize: "28px",
+  cursor: "pointer",
+  zIndex: 10,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#444",
+};
+
+const reviewButtonStyle: React.CSSProperties = {
+  backgroundColor: "#1a73e8",
+  color: "#fff",
+  padding: "12px 28px",
+  borderRadius: "30px",
+  textDecoration: "none",
+  fontWeight: "bold",
+  fontSize: "14px",
+  boxShadow: "0 4px 12px rgba(26, 115, 232, 0.2)"
+};
