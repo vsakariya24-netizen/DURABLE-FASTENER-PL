@@ -4,6 +4,31 @@ import { Loader, Clock, ChevronRight, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
+// ✅ R2 Base URL — same jo Home.tsx mein hai
+const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+
+const cleanImageUrl = (url: string): string => {
+  if (!url || typeof url !== 'string') return '';
+
+  // Already R2 URL → as-is
+  if (url.startsWith(R2_BASE)) return url;
+
+  // Unsplash ya external CDN → as-is
+  if (url.includes('unsplash.com') || url.includes('images.unsplash')) return url;
+
+  // Local static file → as-is
+  if (url.startsWith('/') && !url.startsWith('//')) return url;
+
+  // Supabase ya koi bhi http URL → filename nikalo → R2 se serve karo
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    const fileName = url.split('/').pop();
+    return `${R2_BASE}/${fileName}`;
+  }
+
+  // Relative path → R2 se serve karo
+  return `${R2_BASE}/${url}`;
+};
+
 const getBadgeStyles = (category: string) => {
   const styles: Record<string, string> = {
     'Industry Trends': 'bg-blue-500/10 text-blue-600 border-blue-200',
@@ -23,7 +48,16 @@ const Blog = () => {
         .from('blogs')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) setPosts(data);
+
+      if (data) {
+        // ✅ Har blog image R2 se serve hogi — Supabase egress ZERO
+        const postsWithR2 = data.map((post: any) => ({
+          ...post,
+          image_url: cleanImageUrl(post.image_url)
+        }));
+        setPosts(postsWithR2);
+      }
+
       setLoading(false);
     };
     fetchPosts();
@@ -56,19 +90,23 @@ const Blog = () => {
             <Loader className="animate-spin text-yellow-500" size={40} />
           </div>
         ) : (
-          /* CONSISTENT UNIFORM GRID */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
             {posts.map((post) => (
               <article key={post.id} className="group flex flex-col">
-                {/* Image Section */}
-             <Link 
-  to={`/blog/${post.slug}`} // Changed from post.id to post.slug
-  className="block overflow-hidden rounded-[2rem] mb-8 relative aspect-[16/10] bg-zinc-100 shadow-sm border border-zinc-200"
->
-                  <img 
-                    src={post.image_url} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                    alt={post.title} 
+
+                {/* Image — ✅ R2 se aa rahi hai */}
+                <Link
+                  to={`/blog/${post.slug}`}
+                  className="block overflow-hidden rounded-[2rem] mb-8 relative aspect-[16/10] bg-zinc-100 shadow-sm border border-zinc-200"
+                >
+                  <img
+                    src={post.image_url}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    alt={post.title}
+                    onError={(e) => {
+                      // ✅ R2 pe image nahi mili toh fallback
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
                   />
                   <div className="absolute top-5 left-5">
                     <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest backdrop-blur-md bg-white/90 border shadow-sm ${getBadgeStyles(post.category)}`}>
@@ -77,29 +115,31 @@ const Blog = () => {
                   </div>
                 </Link>
 
-                {/* Content Section */}
+                {/* Content */}
                 <div className="px-2">
                   <div className="flex items-center gap-3 text-[10px] font-black text-zinc-400 mb-4 uppercase tracking-[0.1em]">
                     <span className="flex items-center gap-1.5">
-                      <Calendar size={12}/> {new Date(post.created_at).toLocaleDateString()}
+                      <Calendar size={12} /> {new Date(post.created_at).toLocaleDateString()}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-zinc-300"></span>
                     <span className="flex items-center gap-1.5">
-                      <Clock size={12}/> 5 MIN READ
+                      <Clock size={12} /> 5 MIN READ
                     </span>
                   </div>
 
-                <h3 className="text-2xl font-black text-zinc-900 mb-4 leading-tight group-hover:text-yellow-600 transition-colors tracking-tight">
-    {/* CHANGED: post.id to post.slug */}
-    <Link to={`/blog/${post.slug}`}>{post.title}</Link> {/* Changed from post.id to post.slug */}
-  </h3>
+                  <h3 className="text-2xl font-black text-zinc-900 mb-4 leading-tight group-hover:text-yellow-600 transition-colors tracking-tight">
+                    <Link to={`/blog/${post.slug}`}>{post.title}</Link>
+                  </h3>
 
                   <p className="text-zinc-500 text-base line-clamp-2 leading-relaxed mb-8 font-medium">
                     {post.excerpt}
                   </p>
-<Link to={`/blog/${post.slug}`} // Changed from post.id to post.slug
-  className="inline-flex items-center text-xs font-black uppercase tracking-widest text-zinc-900 gap-2 group-hover:gap-4 transition-all">
-                    Read Insight <ChevronRight size={18} className="text-yellow-500"/>
+
+                  <Link
+                    to={`/blog/${post.slug}`}
+                    className="inline-flex items-center text-xs font-black uppercase tracking-widest text-zinc-900 gap-2 group-hover:gap-4 transition-all"
+                  >
+                    Read Insight <ChevronRight size={18} className="text-yellow-500" />
                   </Link>
                 </div>
               </article>
