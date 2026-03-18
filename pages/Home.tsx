@@ -388,8 +388,13 @@ setCategoryImages({
 
      
       if (blogData) {
-        setBlogs(blogData);   // use image_url exactly as stored, no R2 transform
-      }
+  // ✅ Blog images bhi R2 se serve karo
+  const blogsWithR2 = blogData.map((blog: any) => ({
+    ...blog,
+    image_url: cleanImageUrl(blog.image_url)
+  }));
+  setBlogs(blogsWithR2);
+}
 
       setTimeout(() => setIsLoading(false), 1500);
     };
