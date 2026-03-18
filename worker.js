@@ -3,9 +3,7 @@ export default {
     const url = new URL(request.url);
     const SUPABASE_URL = "https://wterhjmgsgyqgbwviomo.supabase.co";
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // OPTIONS Preflight
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
@@ -17,14 +15,11 @@ export default {
       });
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ROUTE: /api/reviews → Google API
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ✅ ROUTE: /api/reviews → Google Places API
     if (url.pathname === "/api/reviews" && request.method === "GET") {
       const PLACE_ID = "ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
-      const CACHE_TTL = 60 * 60 * 24; // 24 hours
+      const CACHE_TTL = 60 * 60 * 24;
 
-      // Check Cloudflare edge cache first
       const cache = caches.default;
       const cacheKey = new Request("https://internal-cache/google-reviews-v1");
       const cachedRes = await cache.match(cacheKey);
@@ -36,14 +31,13 @@ export default {
         return cloned;
       }
 
-      // Cache miss → fetch from Google (once per 24h only)
       try {
-        const GOOGLE_API_KEY = env.GOOGLE_API_KEY; // ← Worker environment variable
+        const GOOGLE_API_KEY = env.GOOGLE_API_KEY;
 
         if (!GOOGLE_API_KEY) {
-          return new Response(JSON.stringify({ 
-            error: "Missing API key", 
-            details: "GOOGLE_API_KEY not set in Worker environment variables" 
+          return new Response(JSON.stringify({
+            error: "Missing API key",
+            details: "GOOGLE_API_KEY not set in Worker environment"
           }), {
             status: 500,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
@@ -60,12 +54,11 @@ export default {
         const googleRes = await fetch(googleUrl);
         const raw = await googleRes.json();
 
-        // Return full raw response for debugging
         if (!raw.result) {
-          return new Response(JSON.stringify({ 
+          return new Response(JSON.stringify({
             error: "No result from Google",
-            google_status: raw.status,        // ← shows exact Google error
-            raw_response: raw                 // ← full debug info
+            google_status: raw.status,
+            raw_response: raw
           }), {
             status: 502,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
@@ -90,14 +83,13 @@ export default {
           },
         });
 
-        // Store in Cloudflare edge cache
         await cache.put(cacheKey, response.clone());
         return response;
 
       } catch (err) {
-        return new Response(JSON.stringify({ 
-          error: "Worker fetch failed", 
-          details: err.message 
+        return new Response(JSON.stringify({
+          error: "Worker fetch failed",
+          details: err.message
         }), {
           status: 500,
           headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
@@ -105,9 +97,7 @@ export default {
       }
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ROUTE: Everything else → Supabase proxy
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ✅ ROUTE: Baaki sab → Supabase proxy
     const newHeaders = new Headers(request.headers);
     newHeaders.set("Origin", SUPABASE_URL);
     newHeaders.set("Host", "wterhjmgsgyqgbwviomo.supabase.co");
