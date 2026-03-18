@@ -5,10 +5,19 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
-        base: "/", // <--- THIS IS THE KEY FIX
+        base: "/",
         server: {
             port: 3000,
             host: '0.0.0.0',
+            proxy: {
+              // ✅ यह line add करो — localhost /api/reviews को
+              // directly Cloudflare Worker पर forward करेगा
+              '/api/reviews': {
+                target: 'https://durablefastener.com',
+                changeOrigin: true,
+                secure: true,
+              }
+            }
         },
         plugins: [react()],
         define: {
