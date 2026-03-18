@@ -3,7 +3,6 @@ export default {
     const url = new URL(request.url);
     const SUPABASE_URL = "https://wterhjmgsgyqgbwviomo.supabase.co";
 
-    // OPTIONS Preflight
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
@@ -15,7 +14,7 @@ export default {
       });
     }
 
-    // ✅ ROUTE: /api/reviews → Google Places API
+    // ✅ Google Reviews Route
     if (url.pathname === "/api/reviews" && request.method === "GET") {
       const PLACE_ID = "ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
       const CACHE_TTL = 60 * 60 * 24;
@@ -97,7 +96,7 @@ export default {
       }
     }
 
-    // ✅ ROUTE: Baaki sab → Supabase proxy
+    // ✅ Baaki sab → Supabase proxy
     const newHeaders = new Headers(request.headers);
     newHeaders.set("Origin", SUPABASE_URL);
     newHeaders.set("Host", "wterhjmgsgyqgbwviomo.supabase.co");
