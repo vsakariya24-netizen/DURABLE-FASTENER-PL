@@ -3,72 +3,9 @@ export default {
     const url = new URL(request.url);
     const SUPABASE_URL = "https://wterhjmgsgyqgbwviomo.supabase.co";
 
-    // ✅ NEW: Intercept Google Reviews route BEFORE Supabase proxy
-    if (url.pathname === "/api/reviews") {
-      if (request.method === "OPTIONS") {
-        return new Response(null, {
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Max-Age": "86400",
-          },
-        });
-      }
-
-      const CACHE_TTL = 21600; // 6 hours
-      const cache = caches.default;
-      const cacheRequest = new Request("https://fake-cache-key.internal/google_reviews_v1");
-      const cachedResponse = await cache.match(cacheRequest);
-
-      if (cachedResponse) {
-        const body = await cachedResponse.json();
-        return new Response(JSON.stringify(body), {
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "X-Cache": "HIT",
-          },
-        });
-      }
-
-      // Cache miss — call Google Places API
-      const PLACE_ID = "ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
-      const API_KEY = env.GOOGLE_API_KEY; // ← Add this in Worker env variables
-
-      try {
-        const googleRes = await fetch(
-          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=reviews,rating&key=${API_KEY}`
-        );
-        const data = await googleRes.json();
-
-        // Store in Cloudflare edge cache
-        await cache.put(
-          cacheRequest,
-          new Response(JSON.stringify(data), {
-            headers: { "Cache-Control": `public, max-age=${CACHE_TTL}`, "Content-Type": "application/json" },
-          })
-        );
-
-        return new Response(JSON.stringify(data), {
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "X-Cache": "MISS",
-          },
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ error: e.message }), {
-          status: 500,
-          headers: { "Access-Control-Allow-Origin": "*" },
-        });
-      }
-    }
-
-    // ──────────────────────────────────────────────
-    // EXISTING SUPABASE PROXY — completely untouched
-    // ──────────────────────────────────────────────
-
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // OPTIONS Preflight
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
@@ -80,6 +17,97 @@ export default {
       });
     }
 
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ROUTE: /api/reviews → Google API
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    if (url.pathname === "/api/reviews" && request.method === "GET") {
+      const PLACE_ID = "ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
+      const CACHE_TTL = 60 * 60 * 24; // 24 hours
+
+      // Check Cloudflare edge cache first
+      const cache = caches.default;
+      const cacheKey = new Request("https://internal-cache/google-reviews-v1");
+      const cachedRes = await cache.match(cacheKey);
+
+      if (cachedRes) {
+        const cloned = new Response(cachedRes.body, cachedRes);
+        cloned.headers.set("X-Cache", "HIT");
+        cloned.headers.set("Access-Control-Allow-Origin", "*");
+        return cloned;
+      }
+
+      // Cache miss → fetch from Google (once per 24h only)
+      try {
+        const GOOGLE_API_KEY = env.GOOGLE_API_KEY; // ← Worker environment variable
+
+        if (!GOOGLE_API_KEY) {
+          return new Response(JSON.stringify({ 
+            error: "Missing API key", 
+            details: "GOOGLE_API_KEY not set in Worker environment variables" 
+          }), {
+            status: 500,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+
+        const googleUrl =
+          `https://maps.googleapis.com/maps/api/place/details/json` +
+          `?place_id=${PLACE_ID}` +
+          `&fields=name,rating,user_ratings_total,reviews` +
+          `&language=en` +
+          `&key=${GOOGLE_API_KEY}`;
+
+        const googleRes = await fetch(googleUrl);
+        const raw = await googleRes.json();
+
+        // Return full raw response for debugging
+        if (!raw.result) {
+          return new Response(JSON.stringify({ 
+            error: "No result from Google",
+            google_status: raw.status,        // ← shows exact Google error
+            raw_response: raw                 // ← full debug info
+          }), {
+            status: 502,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+
+        const payload = {
+          result: {
+            reviews: raw.result.reviews || [],
+            rating: raw.result.rating || 4.9,
+            total: raw.result.user_ratings_total || 0,
+          },
+          cachedAt: new Date().toISOString(),
+        };
+
+        const response = new Response(JSON.stringify(payload), {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": `public, max-age=${CACHE_TTL}`,
+            "Access-Control-Allow-Origin": "*",
+            "X-Cache": "MISS",
+          },
+        });
+
+        // Store in Cloudflare edge cache
+        await cache.put(cacheKey, response.clone());
+        return response;
+
+      } catch (err) {
+        return new Response(JSON.stringify({ 
+          error: "Worker fetch failed", 
+          details: err.message 
+        }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ROUTE: Everything else → Supabase proxy
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const newHeaders = new Headers(request.headers);
     newHeaders.set("Origin", SUPABASE_URL);
     newHeaders.set("Host", "wterhjmgsgyqgbwviomo.supabase.co");
@@ -89,17 +117,14 @@ export default {
       body = await request.clone().arrayBuffer();
     }
 
-    const modifiedRequest = new Request(SUPABASE_URL + url.pathname + url.search, {
-      method: request.method,
-      headers: newHeaders,
-      body: body,
-      redirect: "follow",
-    });
+    const modifiedRequest = new Request(
+      SUPABASE_URL + url.pathname + url.search,
+      { method: request.method, headers: newHeaders, body, redirect: "follow" }
+    );
 
     try {
       const response = await fetch(modifiedRequest);
       const newResponseHeaders = new Headers(response.headers);
-
       newResponseHeaders.set("Access-Control-Allow-Origin", "*");
       newResponseHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
       newResponseHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization, apikey, x-client-info, accept-profile, content-profile, x-supabase-api-version, x-upsert");
@@ -112,7 +137,7 @@ export default {
     } catch (e) {
       return new Response(JSON.stringify({ error: e.message }), {
         status: 500,
-        headers: { "Access-Control-Allow-Origin": "*" },
+        headers: { "Access-Control-Allow-Origin": "*" }
       });
     }
   },
