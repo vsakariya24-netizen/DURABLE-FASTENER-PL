@@ -42,9 +42,13 @@ export default function GoogleReviews() {
         return res.json();
       })
       .then((data) => {
-        if (data.result) {
+        if (data.result && data.result.reviews) {
+          
+          // ✅ 1. YAHAN FILTER ADD KIYA HAI (Sirf 4 & 5 Star dikhane ke liye)
+          const filteredReviews = data.result.reviews.filter((rev: any) => rev.rating >= 4);
+console.log("Filtered Reviews for Website:", filteredReviews);
           const reviewData = {
-            reviews: data.result.reviews || [],
+            reviews: filteredReviews, // Filtered list save hogi
             rating: data.result.rating || 4.9,
             total: data.result.total || 0,
           };
@@ -53,7 +57,6 @@ export default function GoogleReviews() {
           setRating(reviewData.rating);
           setTotal(reviewData.total);
 
-          // ✅ Save to localStorage for 6 hours
           localStorage.setItem(
             CACHE_KEY,
             JSON.stringify({ data: reviewData, timestamp: Date.now() })
@@ -70,32 +73,19 @@ export default function GoogleReviews() {
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       const { scrollLeft, clientWidth } = scrollRef.current;
-      const scrollTo =
-        direction === "left"
-          ? scrollLeft - clientWidth
-          : scrollLeft + clientWidth;
+      const scrollTo = direction === "left" ? scrollLeft - clientWidth : scrollLeft + clientWidth;
       scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
     }
   };
 
   const renderStars = (count: number) => "★".repeat(Math.round(count));
-
-  if (loading)
-    return (
-      <p style={{ textAlign: "center", padding: "100px", color: "#666" }}>
-        Loading Reviews...
-      </p>
-    );
+console.log("Current Reviews on Screen:", reviews);
+  if (loading) return <p style={{ textAlign: "center", padding: "100px", color: "#666" }}>Loading Reviews...</p>;
 
   if (error || reviews.length === 0)
     return (
       <section style={{ backgroundColor: "#fdfdfd", padding: "80px 0", textAlign: "center" }}>
-        <p style={{ color: "#999" }}>
-          Reviews temporarily unavailable.{" "}
-          <a href={GOOGLE_PAGE_URL} target="_blank" rel="noreferrer">
-            View on Google
-          </a>
-        </p>
+        <p style={{ color: "#999" }}>Reviews temporarily unavailable. <a href={GOOGLE_PAGE_URL} target="_blank" rel="noreferrer">View on Google</a></p>
       </section>
     );
 
