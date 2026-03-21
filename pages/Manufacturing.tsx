@@ -52,7 +52,8 @@ const RevealOnScroll: React.FC<{ children: React.ReactNode; delay?: number; clas
 // --- MAIN PAGE COMPONENT ---
 const Manufacturing: React.FC = () => {
   const [data, setData] = useState<any>(null);
-const [instaPosts, setInstaPosts] = useState<any[]>([]);
+  const [instaPosts, setInstaPosts] = useState<any[]>([]);
+
   useEffect(() => {
     const loadContent = async () => {
       const { data, error } = await supabase
@@ -64,8 +65,9 @@ const [instaPosts, setInstaPosts] = useState<any[]>([]);
       if (error) console.error("Error loading factory data:", error);
       if (data) setData(data);
     };
+
     const fetchInstagram = async () => {
-      const token = 'IGAARZAzYtC0PBBZAGFWMm5tcFZAaN2hHZAGxFYmVjVEhFQkpldEZAfX005R1p2NnVZAbUt6WGl3dFQ2c0YydElzbTZAtT2kyRTl5eUpuNXFjWUpSLVlvN1lGbkRhbjQzTDBuVlpfMTY2bHB3eHpTX0dMbXJlRFZAGZAVJ4eXpNbXdLN0VGSQZDZD'; // <--- Yahan apna token dalein
+      const token = 'IGAARZAzYtC0PBBZAGFWMm5tcFZAaN2hHZAGxFYmVjVEhFQkpldEZAfX005R1p2NnVZAbUt6WGl3dFQ2c0YydElzbTZAtT2kyRTl5eUpuNXFjWUpSLVlvN1lGbkRhbjQzTDBuVlpfMTY2bHB3eHpTX0dMbXJlRFZAGZAVJ4eXpNbXdLN0VGSQZDZD'; 
       try {
         const res = await fetch(`https://graph.instagram.com/me/media?fields=id,caption,media_url,permalink,media_type&limit=8&access_token=${token}`);
         const json = await res.json();
@@ -78,9 +80,7 @@ const [instaPosts, setInstaPosts] = useState<any[]>([]);
     loadContent();
     fetchInstagram();
   }, []);
-   
 
-  // --- PROCESS STEPS DATA ---
   const steps = [
     { id: "01", title: "Raw Material Inspection", icon: FileCheck },
     { id: "02", title: "Wire Drawing & Annealing", icon: Activity },
@@ -92,18 +92,16 @@ const [instaPosts, setInstaPosts] = useState<any[]>([]);
     { id: "08", title: "Packing & Dispatch", icon: Truck },
   ];
 
-  // --- HELPER: SNAKE LAYOUT LOGIC ---
-  // This maps the steps to the "S-Shape" grid positions
   const getGridPosition = (index: number) => {
     const positions = [
-      "md:col-start-1 md:row-start-1", // 01
-      "md:col-start-2 md:row-start-1", // 02
-      "md:col-start-3 md:row-start-1", // 03
-      "md:col-start-4 md:row-start-1", // 04 (Turns Down)
-      "md:col-start-4 md:row-start-2", // 05 (Starts Backwards)
-      "md:col-start-3 md:row-start-2", // 06
-      "md:col-start-2 md:row-start-2", // 07
-      "md:col-start-1 md:row-start-2", // 08
+      "md:col-start-1 md:row-start-1",
+      "md:col-start-2 md:row-start-1",
+      "md:col-start-3 md:row-start-1",
+      "md:col-start-4 md:row-start-1",
+      "md:col-start-4 md:row-start-2",
+      "md:col-start-3 md:row-start-2",
+      "md:col-start-2 md:row-start-2",
+      "md:col-start-1 md:row-start-2",
     ];
     return positions[index];
   };
@@ -112,44 +110,38 @@ const [instaPosts, setInstaPosts] = useState<any[]>([]);
     <div className="bg-white min-h-screen pt-20 font-sans text-slate-800 overflow-x-hidden selection:bg-blue-600 selection:text-white">
       <Helmet>
         <title>Fastener Manufacturing Factory in Rajkot | Durable Fastener</title>
-        <meta name="description" content="Inside Durable Fastener's Rajkot factory: Explore our Cold Forging, Thread Rolling, and Heat Treatment lines." />
+        <style>
+          {`
+            html, body { max-width: 100%; overflow-x: hidden; }
+            h1, h2, h3, h4, p, span { overflow-wrap: break-word; word-wrap: break-word; hyphens: auto; }
+          `}
+        </style>
       </Helmet>
 
       {/* ================= 1. HERO SECTION ================= */}
-      <div className="relative py-32 md:py-48 bg-slate-900 overflow-hidden group">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1565193566173-7a641a980755?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-20 transition-transform duration-[20s] group-hover:scale-105"></div>
+      <div className="relative py-24 md:py-48 bg-slate-900 overflow-hidden px-4">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1565193566173-7a641a980755?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-20"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent"></div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6">
+        <div className="relative z-10 max-w-7xl mx-auto">
             <div className="max-w-4xl">
               <RevealOnScroll>
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm font-bold mb-8 uppercase tracking-widest">
-                    <Globe size={16} /> Global Supply Chain & Quality Hub
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] md:text-sm font-bold mb-6 uppercase tracking-widest">
+                    <Globe size={14} /> Global Supply Chain Hub
                 </div>
               </RevealOnScroll>
               <RevealOnScroll delay={100}>
-                <h1 className="text-6xl md:text-8xl font-black text-white mb-8 leading-[1.1] tracking-tight">
+                <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-white mb-6 leading-tight tracking-tight">
                     {data?.hero_title || <>PRODUCTION <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-slate-300">EXCELLENCE</span></>}
                 </h1>
               </RevealOnScroll>
               <RevealOnScroll delay={200}>
-                <p className="text-xl md:text-2xl text-slate-300 mb-10 font-medium leading-relaxed border-l-4 border-blue-600 pl-8 max-w-2xl">
-                    {data?.hero_subtitle || "From technical blueprints to global delivery. We manage a high-precision manufacturing ecosystem with Total Quality Supervision."}
+                <p className="text-lg md:text-2xl text-slate-300 mb-10 font-medium border-l-4 border-blue-600 pl-4 md:pl-8 max-w-2xl">
+                    {data?.hero_subtitle || "High-precision manufacturing ecosystem with Total Quality Supervision."}
                 </p>
-              </RevealOnScroll>
-              <RevealOnScroll delay={300}>
-                <div className="flex flex-col sm:flex-row gap-5">
-                  <Link to="/Products" className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20 hover:-translate-y-1">
-                    View Production Standards <ArrowRight size={22} />
-                  </Link>
-                  <a href="/public/Durable Fastener Pvt. Ltd. Catalogue.pdf" download className="bg-white/10 hover:bg-white/20 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all border border-white/20 flex items-center justify-center gap-3 hover:-translate-y-1 backdrop-blur-sm">
-                    Download Capability Profile
-                  </a>
-                </div>
               </RevealOnScroll>
             </div>
         </div>
       </div>
-
       {/* ================= 2. MANUFACTURING OVERVIEW ================= */}
       <section className="py-24 px-6 bg-slate-50">
         <RevealOnScroll>
@@ -282,30 +274,30 @@ const [instaPosts, setInstaPosts] = useState<any[]>([]);
       </section>
 
       {/* ================= 6. RAW MATERIAL ================= */}
-      <section className="py-24 px-6 bg-slate-50">
-         <RevealOnScroll>
-             <div className="max-w-7xl mx-auto bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-800">
+    <section className="py-16 md:py-24 px-4 md:px-6 bg-slate-50">
+          <RevealOnScroll>
+              <div className="max-w-7xl mx-auto bg-slate-900 rounded-3xl md:rounded-[2.5rem] overflow-hidden border border-slate-800">
                 <div className="grid md:grid-cols-2">
-                   <div className="p-12 md:p-16">
-                      <h2 className="text-4xl font-black text-white mb-6">Raw Material Integrity</h2>
-                      <p className="text-xl text-slate-300 mb-8 leading-relaxed">
-                          Quality starts with the wire. We source exclusively from premium mills like <span className="text-white font-bold border-b-2 border-blue-600">JSW, TATA Steel</span>.
+                   <div className="p-6 sm:p-10 md:p-16">
+                      <h2 className="text-3xl md:text-4xl font-black text-white mb-6">Raw Material Integrity</h2>
+                      <p className="text-lg md:text-xl text-slate-300 mb-8 leading-relaxed">
+                          Quality starts with the wire. We source from mills like <span className="text-white font-bold border-b-2 border-blue-600">JSW, TATA Steel</span>.
                       </p>
                       <ul className="space-y-4">
-                          {["Grade Control: C1022,C1010,C1008,C1018,SS204,SS316,SS304", "Full Chemical Traceability (Heat No.)", "Incoming Wire Testing Lab"].map((item, i) => (
-                              <li key={i} className="flex items-center gap-4 text-slate-300 font-medium">
-                                  <CheckCircle2 className="text-blue-400 shrink-0" size={24}/> {item}
+                          {["Grade Control: C1022, C1010, C1008, C1018, SS204, SS316, SS304", "Full Chemical Traceability", "Incoming Wire Testing Lab"].map((item, i) => (
+                              <li key={i} className="flex items-start gap-3 text-slate-300 font-medium text-sm md:text-base">
+                                  <CheckCircle2 className="text-blue-400 shrink-0 mt-0.5" size={20}/> 
+                                  <span className="break-words">{item}</span>
                               </li>
                           ))}
                       </ul>
                    </div>
-                   <div className="relative h-80 md:h-auto min-h-[400px]">
-                       <img src="/public/factoryimage.jpg" alt="Raw material wire" className="absolute inset-0 w-full h-full object-cover opacity-60"/>
-                       <div className="absolute inset-0 bg-slate-900/40 mix-blend-multiply"></div>
+                   <div className="relative h-64 md:h-auto">
+                       <img src="/public/factoryimage.jpg" alt="Raw material" className="absolute inset-0 w-full h-full object-cover opacity-60"/>
                    </div>
                 </div>
-             </div>
-         </RevealOnScroll>
+              </div>
+          </RevealOnScroll>
       </section>
 
       {/* ================= 7. HEAT TREATMENT & COATING ================= */}
@@ -341,33 +333,39 @@ const [instaPosts, setInstaPosts] = useState<any[]>([]);
       </section>
 
       {/* ================= 8. QUALITY CONTROL & CAPACITY ================= */}
-      <section className="py-24 px-6 bg-slate-50">
-         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16">
-            <div>
-               <RevealOnScroll><h2 className="text-4xl font-black text-slate-900 mb-10 border-b-4 border-blue-600 inline-block">Quality Assurance Lab</h2></RevealOnScroll>
-               <div className="grid gap-6">
+     <section className="py-16 md:py-24 px-4 md:px-6 bg-slate-50">
+         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 md:gap-16">
+            <div className="flex flex-col justify-center">
+               <RevealOnScroll><h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-6 md:mb-10 border-b-4 border-blue-600 inline-block">Quality Lab</h2></RevealOnScroll>
+               <div className="grid gap-4 md:gap-6">
                    {[
-                       { id: "1", title: "Incoming Check", desc: "Spectro analysis of raw wire rod." },
-                       { id: "2", title: "In-Process QC", desc: "Hourly dimension checks by operators." },
-                       { id: "3", title: "Final Lab Certification", desc: "Tensile, Torque, & SST before dispatch." }
+                       { id: "1", title: "Incoming Check", desc: "Spectro analysis of wire rod." },
+                       { id: "2", title: "In-Process QC", desc: "Hourly dimension checks." },
                    ].map((qc, i) => (
                        <RevealOnScroll key={i} delay={i * 100}>
-                           <div className="bg-white p-8 rounded-2xl border border-slate-200 flex gap-6 hover:shadow-lg transition-all">
-                               <div className="h-14 w-14 bg-slate-900 rounded-full flex items-center justify-center text-white font-black text-xl shrink-0 group-hover:bg-blue-600">{qc.id}</div>
-                               <div><h4 className="text-slate-900 font-bold text-xl mb-2">{qc.title}</h4><p className="text-slate-500 text-base leading-relaxed">{qc.desc}</p></div>
+                           <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 flex gap-4 md:gap-6">
+                               <div className="h-10 w-10 md:h-14 md:w-14 bg-slate-900 rounded-full flex items-center justify-center text-white font-black shrink-0">{qc.id}</div>
+                               <div><h4 className="text-slate-900 font-bold text-lg md:text-xl mb-1">{qc.title}</h4><p className="text-slate-500 text-sm md:text-base">{qc.desc}</p></div>
                            </div>
                        </RevealOnScroll>
                    ))}
                </div>
             </div>
-            <div className="bg-slate-900 p-10 rounded-[2.5rem] shadow-2xl">
-               <RevealOnScroll><h2 className="text-4xl font-black text-white mb-10">Production Capacity</h2></RevealOnScroll>
-               <div className="grid grid-cols-2 gap-6">
-                  {[{l:"Monthly Output",v:"50TONS+"},{l:"Shift System",v:"24/7 Ops"},{l:"Expansion",v:"Ready Infra"},{l:"Lead Time",v:"Quick Turnaround"}].map((stat, i) => (
+
+            {/* CAPACITY GRID FIX */}
+            <div className="bg-slate-900 p-6 sm:p-10 rounded-3xl md:rounded-[2.5rem] shadow-2xl">
+               <RevealOnScroll><h2 className="text-3xl md:text-4xl font-black text-white mb-8 md:mb-10">Production Capacity</h2></RevealOnScroll>
+               <div className="grid grid-cols-2 gap-3 md:gap-6">
+                  {[
+                    {l:"Monthly Output", v:"50 TONS+"},
+                    {l:"Shift System", v:"24/7 Ops"},
+                    {l:"Expansion", v:"Ready Infra"},
+                    {l:"Lead Time", v:"Quick Turn"}
+                  ].map((stat, i) => (
                       <RevealOnScroll key={i} delay={i * 100}>
-                          <div className="p-8 bg-slate-800/50 rounded-2xl border border-slate-700 h-full flex flex-col justify-center hover:bg-slate-800 transition-all">
-                             <p className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-3">{stat.l}</p>
-                             <p className="text-3xl md:text-4xl font-black text-white">{stat.v}</p>
+                          <div className="p-4 md:p-8 bg-slate-800/50 rounded-xl md:rounded-2xl border border-slate-700 h-full flex flex-col justify-center hover:bg-slate-800 transition-all">
+                             <p className="text-blue-400 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2">{stat.l}</p>
+                             <p className="text-xl sm:text-2xl md:text-4xl font-black text-white leading-tight">{stat.v}</p>
                           </div>
                       </RevealOnScroll>
                   ))}
@@ -383,7 +381,7 @@ const [instaPosts, setInstaPosts] = useState<any[]>([]);
                 <h2 className="text-blue-600 font-bold uppercase tracking-widest text-sm mb-3 flex items-center justify-center md:justify-start gap-2">
                   <Instagram size={18} /> Live from Rajkot Factory
                 </h2>
-                <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Our Production Journey</h3>
+                <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Our Social Media Journey</h3>
               </div>
               <a 
                 href="https://instagram.com/durablefastener" 

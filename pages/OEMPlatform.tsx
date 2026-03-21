@@ -363,7 +363,28 @@ const OEMPlatform: React.FC = () => {
     name="description"
     content="Durable Fastener is an ISO 9001:2015 certified OEM fastener manufacturer in Rajkot, India. We specialize in custom automotive, industrial, and precision fasteners with global export standards."
   />
+<style>
+          {`
+            html, body {
+              max-width: 100%;
+              overflow-x: hidden;
+              width: 100%;
+              position: relative;
+            }
 
+            /* Force long words to break if they exceed container width on mobile */
+            h1, h2, h3, h4, span, p {
+              overflow-wrap: break-word;
+              word-wrap: break-word;
+              hyphens: auto;
+            }
+
+            /* Fix for Framer Motion or absolute elements causing tiny horizontal gaps */
+            * {
+              box-sizing: border-box;
+            }
+          `}
+        </style>
   {/* GEO SEO */}
   <meta name="geo.region" content="IN-GJ" />
   <meta name="geo.placename" content="Rajkot, Gujarat, India" />
@@ -475,16 +496,17 @@ const OEMPlatform: React.FC = () => {
     </ScrollReveal>
 
     <motion.h1 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-white mb-6 leading-none"
-    >
-      {content?.hero_title?.split(' ')[0] || "PRECISION"} <br/>
-      <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-white to-blue-500 bg-[length:200%_auto] animate-gradient">
-        {content?.hero_title?.split(' ').slice(1).join(' ') || "ENGINEERED."}
-      </span>
-    </motion.h1>
+  initial={{ opacity: 0, scale: 0.95 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ duration: 0.8, ease: "easeOut" }}
+  /* FIX: Changed text-6xl to text-4xl on mobile, added break-words */
+  className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-white mb-6 leading-tight md:leading-none break-words px-2"
+>
+  {content?.hero_title?.split(' ')[0] || "PRECISION"} <br/>
+  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-white to-blue-500 bg-[length:200%_auto] animate-gradient">
+    {content?.hero_title?.split(' ').slice(1).join(' ') || "ENGINEERED."}
+  </span>
+</motion.h1>
 
     <ScrollReveal delay={0.3}>
       <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 font-light">
@@ -516,41 +538,45 @@ const OEMPlatform: React.FC = () => {
         <div className="max-w-7xl mx-auto relative z-10">
           
           {/* Section Header */}
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-px w-8 bg-blue-500"></div>
-                <span className="text-blue-500 font-mono text-xs uppercase tracking-[0.2em] font-bold">
-                  Production Capabilities
-                </span>
-              </div>
-              <h3 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
-                TECHNICAL <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-400 to-slate-600">
-                  BASELINE.
-                </span>
-              </h3>
-            </div>
-            
-            <div className="flex items-center gap-4 border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-3 rounded-sm">
-              <ShieldCheck className="text-emerald-500" size={24} />
-              <div className="flex flex-col">
-                <span className="text-white font-bold text-sm tracking-wide">ISO 9001:2015</span>
-                <span className="text-emerald-500 text-[10px] font-mono uppercase tracking-wider">Certified Facility</span>
-              </div>
-            </div>
-          </div>
+         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
+  <div>
+    <div className="flex items-center gap-3 mb-4">
+      <div className="h-px w-8 bg-blue-500"></div>
+      <span className="text-blue-500 font-mono text-xs uppercase tracking-[0.2em] font-bold">
+        Production Capabilities
+      </span>
+    </div>
+    {/* FIX: Changed text-4xl to text-3xl on mobile */}
+    <h3 className="text-3xl md:text-6xl font-black text-white tracking-tight leading-tight uppercase">
+      TECHNICAL <br />
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-400 to-slate-600">
+        BASELINE.
+      </span>
+    </h3>
+  </div>
+  
+  {/* ISO Badge - Ensure it doesn't overlap */}
+  <div className="flex items-center gap-4 border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-2 md:px-6 md:py-3 rounded-sm w-fit">
+    <ShieldCheck className="text-emerald-500" size={20} />
+    <div className="flex flex-col">
+      <span className="text-white font-bold text-xs md:text-sm tracking-wide">ISO 9001:2015</span>
+      <span className="text-emerald-500 text-[8px] md:text-[10px] font-mono uppercase tracking-wider">Certified Facility</span>
+    </div>
+  </div>
+</div>
 
           {/* BENTO GRID */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             
             {/* MATERIAL */}
-            <div className="md:col-span-5 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
-               <div className="flex justify-between items-start mb-6">
-                 <div>
-                    <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest mb-1 block">Raw Material</span>
-                    <h4 className="text-3xl text-white font-bold font-mono">{specs.material || "Steel & SS"}</h4>
-                 </div>
+            <div className="md:col-span-5 bg-[#0A0A0C] border border-white/10 rounded-xl p-6 md:p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
+   <div className="flex justify-between items-start mb-6">
+     <div>
+        {/* FIX: Reduced mobile font from 20px to text-xs/sm */}
+        <span className="text-blue-500 font-mono text-xs md:text-sm uppercase tracking-widest mb-1 block">Monthly Output</span>
+        {/* FIX: Changed text-3xl to text-2xl on mobile */}
+        <h4 className="text-2xl md:text-3xl text-white font-bold font-mono">50 TONS+</h4>
+     </div>
                  <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
                     <FlaskConical size={24} />
                  </div>
@@ -739,117 +765,114 @@ const OEMPlatform: React.FC = () => {
      </section>
 
      {/* 3. CATALOGUE */}
-     <section className="py-32 px-6 bg-[#030304] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#1e293b_0%,#030304_70%)] opacity-30"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <ScrollReveal>
-            <div className="text-center mb-20">
-               <span className="text-blue-500 font-mono text-xs uppercase tracking-[0.3em] font-bold">Catalogue</span>
-              <h2 className="text-4xl md:text-5xl font-black text-white mt-2">Engineering <span className="text-blue-500">Inventory.</span></h2>
-            </div>
-          </ScrollReveal>
+    <section className="py-20 md:py-32 px-4 md:px-6 bg-[#030304] relative overflow-hidden">
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#1e293b_0%,#030304_70%)] opacity-30"></div>
+  <div className="max-w-7xl mx-auto relative z-10">
+    
+    <ScrollReveal>
+      <div className="text-center mb-12 md:mb-20">
+        <span className="text-blue-500 font-mono text-xs uppercase tracking-[0.3em] font-bold">Catalogue</span>
+        <h2 className="text-3xl md:text-5xl font-black text-white mt-2">Engineering <span className="text-blue-500">Inventory.</span></h2>
+      </div>
+    </ScrollReveal>
 
-          <div className="grid lg:grid-cols-2 gap-20">
-            {/* Head Styles */}
-            <div>
-              <ScrollReveal>
-                <div className="flex items-center gap-4 mb-8 pl-2 border-l-4 border-blue-500">
-                  <Database className="text-blue-500" size={24} />
-                  <h4 className="text-xl font-bold text-white tracking-widest uppercase">Head Styles</h4>
-                </div>
-              </ScrollReveal>
-              <div className="grid grid-cols-3 gap-8">
-                {liveHeadStyles.map((item: any, i: number) => {
-                  const { name, img } = getCleanData(item);
-                  // ✅ FIX: Pass img through cleanImageUrl before rendering
-                  const imageUrl = cleanImageUrl(img);
-                  const info = getStandard(name, 'head');
-                  return (
-                    <ScrollReveal key={i} delay={i * 0.1}>
-                      <div className="h-64 perspective-1000 group">
-                        <TiltedCard>
-                          <div className="relative h-full w-full bg-[#0B0F17] rounded-xl border border-white/10 p-6 flex flex-col items-center justify-center gap-4 overflow-hidden transition-all duration-500 group-hover:border-blue-500/40 group-hover:shadow-[0_0_40px_rgba(59,130,246,0.1)]">
-                            <div className="absolute inset-0 bg-[linear-gradient(to_right,#3b82f610_1px,transparent_1px),linear-gradient(to_bottom,#3b82f610_1px,transparent_1px)] bg-[size:20px_20px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
-                            <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
-                              <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
-                                {imageUrl ? (
-                                  <img 
-                                    src={imageUrl} 
-                                    alt={name} 
-                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(59,130,246,0.3)] transition-all duration-300" 
-                                  />
-                                ) : (
-                                  <Component size={48} className="text-slate-700" />
-                                )}
-                              </motion.div>
-                            </div>
-                            <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
-                              <div className="text-white font-bold text-sm uppercase tracking-wider">{name}</div>
-                              <div className="flex items-center gap-2 mt-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase scale-0 group-hover:scale-100 transition-transform delay-75">{info.label}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </TiltedCard>
-                      </div>
-                    </ScrollReveal>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Drive Systems */}
-            <div>
-              <ScrollReveal>
-                <div className="flex items-center gap-4 mb-8 pl-2 border-l-4 border-emerald-500">
-                  <Microscope className="text-emerald-500" size={24} />
-                  <h4 className="text-xl font-bold text-white tracking-widest uppercase">Drive Systems</h4>
-                </div>
-              </ScrollReveal>
-              <div className="grid grid-cols-3 gap-8">
-                {liveDriveSystems.map((item: any, i: number) => {
-                  const { name, img } = getCleanData(item);
-                  // ✅ FIX: Pass img through cleanImageUrl before rendering
-                  const imageUrl = cleanImageUrl(img);
-                  const info = getStandard(name, 'drive');
-                  return (
-                    <ScrollReveal key={i} delay={i * 0.1}>
-                      <div className="h-64 perspective-1000 group">
-                        <TiltedCard>
-                           <div className="relative h-full w-full bg-[#0B0F17] rounded-xl border border-white/10 p-6 flex flex-col items-center justify-center gap-4 overflow-hidden transition-all duration-500 group-hover:border-emerald-500/40 group-hover:shadow-[0_0_40px_rgba(16,185,129,0.1)]">
-                            <div className="absolute inset-0 bg-[linear-gradient(to_right,#10b98110_1px,transparent_1px),linear-gradient(to_bottom,#10b98110_1px,transparent_1px)] bg-[size:20px_20px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
-                            <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
-                               <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
-                                {imageUrl ? (
-                                  <img 
-                                    src={imageUrl} 
-                                    alt={name} 
-                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" 
-                                  />
-                                ) : (
-                                  <Microscope size={48} className="text-slate-700" />
-                                )}
-                              </motion.div>
-                            </div>
-                            <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
-                              <div className="text-white font-bold text-sm uppercase tracking-wider">{name}</div>
-                              <div className="flex flex-col items-center mt-1 gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase scale-0 group-hover:scale-100 transition-transform delay-75">{info.label}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </TiltedCard>
-                      </div>
-                    </ScrollReveal>
-                  );
-                })}
-              </div>
-            </div>
+    <div className="grid lg:grid-cols-2 gap-12 md:gap-20">
+      
+      {/* --- HEAD STYLES --- */}
+      <div>
+        <ScrollReveal>
+          <div className="flex items-center gap-4 mb-6 md:mb-8 pl-2 border-l-4 border-blue-500">
+            <Database className="text-blue-500" size={24} />
+            <h4 className="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Head Styles</h4>
           </div>
+        </ScrollReveal>
+        
+        {/* FIX: Changed to grid-cols-2 for mobile, grid-cols-3 for tablet/desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+          {liveHeadStyles.map((item: any, i: number) => {
+            const { name, img } = getCleanData(item);
+            const imageUrl = cleanImageUrl(img);
+            const info = getStandard(name, 'head');
+            return (
+              <ScrollReveal key={i} delay={i * 0.1}>
+                {/* FIX: Dynamic height - shorter on mobile */}
+                <div className="h-48 sm:h-64 perspective-1000 group">
+                  <TiltedCard>
+                    <div className="relative h-full w-full bg-[#0B0F17] rounded-xl border border-white/10 p-4 md:p-6 flex flex-col items-center justify-center gap-2 overflow-hidden transition-all duration-500 group-hover:border-blue-500/40">
+                      <div className="relative z-20 w-24 h-24 md:w-32 md:h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110">
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={name} className="w-full h-full object-contain drop-shadow-lg" />
+                        ) : (
+                          <Component size={40} className="text-slate-700" />
+                        )}
+                      </div>
+                      
+                      {/* FIX: Improved text container for responsiveness */}
+                      <div className="absolute bottom-0 inset-x-0 p-2 md:p-4 bg-white/5 backdrop-blur-md border-t border-white/5 flex flex-col items-center">
+                        <div className="text-white font-bold text-[10px] sm:text-xs md:text-sm uppercase tracking-tight sm:tracking-wider text-center break-words w-full">
+                          {name}
+                        </div>
+                        <span className="hidden sm:block text-[9px] text-slate-400 font-bold tracking-widest uppercase mt-1">
+                          {info.label}
+                        </span>
+                      </div>
+                    </div>
+                  </TiltedCard>
+                </div>
+              </ScrollReveal>
+            );
+          })}
         </div>
-     </section>
+      </div>
+
+      {/* --- DRIVE SYSTEMS --- */}
+      <div>
+        <ScrollReveal>
+          <div className="flex items-center gap-4 mb-6 md:mb-8 pl-2 border-l-4 border-emerald-500">
+            <Microscope className="text-emerald-500" size={24} />
+            <h4 className="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Drive Systems</h4>
+          </div>
+        </ScrollReveal>
+
+        {/* FIX: Changed to grid-cols-2 for mobile */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+          {liveDriveSystems.map((item: any, i: number) => {
+            const { name, img } = getCleanData(item);
+            const imageUrl = cleanImageUrl(img);
+            const info = getStandard(name, 'drive');
+            return (
+              <ScrollReveal key={i} delay={i * 0.1}>
+                <div className="h-48 sm:h-64 perspective-1000 group">
+                  <TiltedCard>
+                    <div className="relative h-full w-full bg-[#0B0F17] rounded-xl border border-white/10 p-4 md:p-6 flex flex-col items-center justify-center gap-2 overflow-hidden transition-all duration-500 group-hover:border-emerald-500/40">
+                      <div className="relative z-20 w-24 h-24 md:w-32 md:h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110">
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={name} className="w-full h-full object-contain drop-shadow-lg" />
+                        ) : (
+                          <Microscope size={40} className="text-slate-700" />
+                        )}
+                      </div>
+                      
+                      <div className="absolute bottom-0 inset-x-0 p-2 md:p-4 bg-white/5 backdrop-blur-md border-t border-white/5 flex flex-col items-center">
+                        <div className="text-white font-bold text-[10px] sm:text-xs md:text-sm uppercase tracking-tight sm:tracking-wider text-center break-words w-full">
+                          {name}
+                        </div>
+                        <span className="hidden sm:block text-[9px] text-slate-400 font-bold tracking-widest uppercase mt-1">
+                          {info.label}
+                        </span>
+                      </div>
+                    </div>
+                  </TiltedCard>
+                </div>
+              </ScrollReveal>
+            );
+          })}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
      {/* 4. QUALITY STANDARDS */}
      <section className="py-32 px-6 bg-[#050505] relative border-t border-white/5">
