@@ -125,10 +125,13 @@ const PrivacyPolicy = () => {
                     <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse"></div> Active
                   </span>
                 </div>
-                <div className="flex justify-between md:justify-start gap-8">
-                  <span className="text-slate-500">Effective</span>
-                  <span className="font-semibold text-slate-900">Jan 06, 2026</span>
-                </div>
+              <div className="flex justify-between md:justify-start gap-8">
+  <span className="text-slate-500">Effective</span>
+  {/* The 'time' tag with 'dateTime' helps Google's bot read the value type correctly */}
+  <time dateTime="2026-01-06" className="font-semibold text-slate-900">
+    Jan 06, 2026
+  </time>
+</div>
               </div>
               <button 
                 onClick={handlePrint}
