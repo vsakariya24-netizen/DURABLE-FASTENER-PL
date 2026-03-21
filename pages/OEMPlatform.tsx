@@ -12,35 +12,6 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
 // =========================================
-// 0. SMART IMAGE URL HELPER
-// =========================================
-
-/**
- * Returns the correct image URL for OEM assets.
- * - If the DB value is already a full URL (http/https) → use it directly (Supabase storage)
- * - If it's a relative path → build the Cloudflare R2 URL
- */
-const cleanImageUrl = (url: string): string => {
-  if (!url || typeof url !== 'string') return '';
-  
-  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
-  
-  // Already R2 → return as-is
-  if (url.startsWith(R2_BASE)) return url;
-  
-  // ✅ ANY full URL (workers.dev, supabase.co, etc.)
-  // → extract just the filename → redirect to R2
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    const fileName = url.split('/').pop(); // "1773037925108-hex.png"
-    return `${R2_BASE}/${fileName}`;
-  }
-  
-  // Relative path → prepend R2
-  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
-  return `${R2_BASE}/${cleanPath}`;
-};
-
-// =========================================
 // 1. UTILITY COMPONENTS
 // =========================================
 
@@ -58,7 +29,6 @@ const ScrollReveal: React.FC<{ children: React.ReactNode; delay?: number; classN
     </motion.div>
   );
 };
-
 // Custom Screw Icon based on your uploaded image
 const CustomScrew: React.FC<{ size?: number; className?: string }> = ({ size = 80, className = "" }) => (
   <svg 
@@ -358,82 +328,9 @@ const OEMPlatform: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#030305] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden">
       <Helmet>
-  {/* Primary SEO */}
-  <title>OEM Fastener Manufacturer in India | Automotive & Industrial Screws – Durable Fastener</title>
-  <meta
-    name="description"
-    content="Durable Fastener is an ISO 9001:2015 certified OEM fastener manufacturer in Rajkot, India. We specialize in custom automotive, industrial, and precision fasteners with global export standards."
-  />
-
-  {/* GEO SEO */}
-  <meta name="geo.region" content="IN-GJ" />
-  <meta name="geo.placename" content="Rajkot, Gujarat, India" />
-  <meta name="geo.position" content="22.3039;70.8022" />
-  <meta name="ICBM" content="22.3039, 70.8022" />
-
-  {/* AEO / AI Search */}
-  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-  <meta name="googlebot" content="index, follow" />
-
-  {/* Open Graph */}
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="OEM Fastener Manufacturer in India – Durable Fastener" />
-  <meta
-    property="og:description"
-    content="Custom OEM fasteners engineered for automotive, construction, and industrial supply chains. Manufactured in India, supplied globally."
-  />
-  <meta property="og:url" content="https://durablefastener.com/oem" />
-  <meta property="og:site_name" content="Durable Fastener" />
-
-  {/* Twitter */}
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="OEM Fastener Manufacturer | Durable Fastener" />
-  <meta name="twitter:description" content="Precision engineered OEM fasteners from India for global industries." />
-
-   <script type="application/ld+json">{JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "Organization", 
-      "@id": "https://durablefastener.com/#organization",
-      "name": "Durable Fastener",
-      "url": "https://durablefastener.com",
-      "logo": "https://durablefastener.com/logo.png",
-      "description":
-        "Durable Fastener is an ISO certified OEM manufacturer of automotive and industrial fasteners based in Rajkot, India.",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Rajkot",
-        "addressRegion": "Gujarat",
-        "addressCountry": "IN"
-      },
-      "areaServed": [
-        { "@type": "Country", "name": "India" },
-        { "@type": "Continent", "name": "Europe" },
-        { "@type": "Continent", "name": "Africa" },
-        { "@type": "Place", "name": "Middle East" }
-      ],
-      "knowsAbout": [
-        "OEM Fasteners",
-        "Automotive Screws",
-        "Industrial Bolts",
-        "Precision Fasteners",
-        "Surface Coating",
-        "Heat Treatment"
-      ]
-    })}
-  </script>
-  <script type="application/ld+json">
-{JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  "@id": "https://durablefastener.com/oem#webpage",
-  "url": "https://durablefastener.com/oem",
-  "name": "OEM Fastener Manufacturer in India",
-  "about": {
-    "@id": "https://durablefastener.com/#organization"
-  }
-})}
-</script>
-</Helmet>
+        <title>OEM Fastener Manufacturer | Custom Automotive Bolts India - Durable Fastener</title>
+        <meta name="description" content="India's leading OEM platform for custom industrial fasteners." />
+      </Helmet>
 
       {/* 1. HERO */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
@@ -530,7 +427,7 @@ const OEMPlatform: React.FC = () => {
             <div className="md:col-span-5 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
                <div className="flex justify-between items-start mb-6">
                  <div>
-                    <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest mb-1 block">Raw Material</span>
+                    <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Raw Material</span>
                     <h4 className="text-3xl text-white font-bold font-mono">{specs.material || "Steel & SS"}</h4>
                  </div>
                  <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
@@ -570,7 +467,7 @@ const OEMPlatform: React.FC = () => {
             {/* DIAMETER */}
             <div className="md:col-span-3 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all relative overflow-hidden">
                <div>
-                  <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest mb-1 block">Cross Section</span>
+                  <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Cross Section</span>
                   <h4 className="text-3xl text-white font-bold font-mono">{specs.diameter || "M2 - M8"}</h4>
                </div>
                <div className="relative h-32 w-full flex items-center justify-center mt-4">
@@ -592,7 +489,7 @@ const OEMPlatform: React.FC = () => {
             <div className="md:col-span-4 bg-[#0A0A0C] border border-white/10 rounded-xl p-8 flex flex-col justify-between group hover:border-blue-500/30 transition-all">
                <div className="flex justify-between items-start">
                   <div>
-                     <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest mb-1 block">Linear Scale</span>
+                     <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest mb-1 block">Linear Scale</span>
                      <h4 className="text-3xl text-white font-bold font-mono">{specs.length || "4mm - 125mm"}</h4>
                   </div>
                   <Ruler className="text-slate-600 group-hover:text-blue-500 transition-colors" />
@@ -617,7 +514,7 @@ const OEMPlatform: React.FC = () => {
             {/* THREADS */}
             <div className="md:col-span-5 bg-[#0A0A0C] p-6 group hover:bg-[#0F1115] transition-colors border-t md:border-t-0 border-white/10 relative overflow-hidden">
                <div className="flex items-start justify-between mb-6 relative z-10">
-                 <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest">Threading Spec</span>
+                 <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Threading Spec</span>
                  <Settings className="text-blue-500/50 group-hover:rotate-90 transition-transform duration-700" size={20} />
                </div>
                
@@ -627,17 +524,11 @@ const OEMPlatform: React.FC = () => {
                  {liveThreading.length > 0 ? (
                     liveThreading.map((item: any, i: number) => {
                       const { name, img } = getCleanData(item);
-                      // ✅ FIX: Pass img through cleanImageUrl before rendering
-                      const imageUrl = cleanImageUrl(img);
                       return (
                         <div key={i} className="bg-white/5 border border-white/10 rounded-lg py-4 px-1 hover:border-blue-500/50 hover:bg-white/10 transition-all group/thread cursor-default relative flex flex-col items-center gap-3">
                            <div className="h-24 w-full flex items-center justify-center overflow-hidden">
-                              {imageUrl ? (
-                                <img 
-                                  src={imageUrl} 
-                                  alt={name} 
-                                  className="h-full w-auto object-contain drop-shadow-lg opacity-80 group-hover/thread:opacity-100 transition-opacity" 
-                                />
+                              {img ? (
+                                <img src={img} alt={name} className="h-full w-auto object-contain drop-shadow-lg opacity-80 group-hover/thread:opacity-100 transition-opacity" />
                               ) : (
                                 <Settings className="text-slate-700 h-10 w-10" />
                               )}
@@ -660,10 +551,10 @@ const OEMPlatform: React.FC = () => {
                
                <div className="flex flex-col h-full justify-between relative z-10">
                  <div className="flex items-center justify-between mb-6">
-                   <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest">Surface Engineering</span>
+                   <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest">Surface Engineering</span>
                    <div className="text-right">
                      <span className="text-[10px] text-slate-500 font-mono block">SST LIFE (SALT SPRAY)</span>
-                     <span className="text-emerald-400 font-bold font-mono text-lg text-shadow-glow">48-120 HRS</span>
+                     <span className="text-emerald-400 font-bold font-mono text-lg text-shadow-glow">72 - 1000 HRS</span>
                    </div>
                  </div>
 
@@ -740,11 +631,9 @@ const OEMPlatform: React.FC = () => {
                   <h4 className="text-xl font-bold text-white tracking-widest uppercase">Head Styles</h4>
                 </div>
               </ScrollReveal>
-              <div className="grid grid-cols-3 gap-8">
+              <div className="grid grid-cols-2 gap-8">
                 {liveHeadStyles.map((item: any, i: number) => {
                   const { name, img } = getCleanData(item);
-                  // ✅ FIX: Pass img through cleanImageUrl before rendering
-                  const imageUrl = cleanImageUrl(img);
                   const info = getStandard(name, 'head');
                   return (
                     <ScrollReveal key={i} delay={i * 0.1}>
@@ -755,15 +644,7 @@ const OEMPlatform: React.FC = () => {
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
                             <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
                               <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
-                                {imageUrl ? (
-                                  <img 
-                                    src={imageUrl} 
-                                    alt={name} 
-                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(59,130,246,0.3)] transition-all duration-300" 
-                                  />
-                                ) : (
-                                  <Component size={48} className="text-slate-700" />
-                                )}
+                                {img ? <img src={img} alt={name} className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(59,130,246,0.3)] transition-all duration-300" /> : <Component size={48} className="text-slate-700" />}
                               </motion.div>
                             </div>
                             <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
@@ -789,11 +670,9 @@ const OEMPlatform: React.FC = () => {
                   <h4 className="text-xl font-bold text-white tracking-widest uppercase">Drive Systems</h4>
                 </div>
               </ScrollReveal>
-              <div className="grid grid-cols-3 gap-8">
+              <div className="grid grid-cols-2 gap-8">
                 {liveDriveSystems.map((item: any, i: number) => {
                   const { name, img } = getCleanData(item);
-                  // ✅ FIX: Pass img through cleanImageUrl before rendering
-                  const imageUrl = cleanImageUrl(img);
                   const info = getStandard(name, 'drive');
                   return (
                     <ScrollReveal key={i} delay={i * 0.1}>
@@ -804,15 +683,7 @@ const OEMPlatform: React.FC = () => {
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 group-hover:scale-150 transition-all duration-700"></div>
                             <div className="relative z-20 w-32 h-32 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110" style={{ transform: "translateZ(40px)" }}>
                                <motion.div animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
-                                {imageUrl ? (
-                                  <img 
-                                    src={imageUrl} 
-                                    alt={name} 
-                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" 
-                                  />
-                                ) : (
-                                  <Microscope size={48} className="text-slate-700" />
-                                )}
+                                {img ? <img src={img} alt={name} className="w-full h-full object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] transition-all duration-300" /> : <Microscope size={48} className="text-slate-700" />}
                               </motion.div>
                             </div>
                             <div className="absolute bottom-0 inset-x-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center">
@@ -833,7 +704,9 @@ const OEMPlatform: React.FC = () => {
         </div>
      </section>
 
-     {/* 4. QUALITY STANDARDS */}
+     {/* =========================================
+         4. QUALITY STANDARDS (DYNAMICALLY LOADED)
+     ========================================= */}
      <section className="py-32 px-6 bg-[#050505] relative border-t border-white/5">
         <div className="max-w-7xl mx-auto relative z-10">
           
@@ -850,7 +723,7 @@ const OEMPlatform: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
-            {/* CARD 1: RAW MATERIAL */}
+            {/* CARD 1: RAW MATERIAL (Blue Theme) */}
             <ScrollReveal delay={0.1}>
               <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-blue-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
                 <div className="flex items-center gap-5 mb-8">
@@ -873,7 +746,7 @@ const OEMPlatform: React.FC = () => {
               </div>
             </ScrollReveal>
 
-            {/* CARD 2: HEAT TREATMENT */}
+            {/* CARD 2: HEAT TREATMENT (Amber Theme) */}
             <ScrollReveal delay={0.2}>
               <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-amber-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
                 <div className="flex items-center gap-5 mb-8">
@@ -896,7 +769,7 @@ const OEMPlatform: React.FC = () => {
               </div>
             </ScrollReveal>
 
-            {/* CARD 3: SURFACE FINISH */}
+            {/* CARD 3: SURFACE FINISH (Emerald Theme) */}
             <ScrollReveal delay={0.3}>
               <div className="group h-full bg-[#0A0A0C] border border-white/10 rounded-2xl p-8 hover:border-emerald-500/50 hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden">
                 <div className="flex items-center gap-5 mb-8">
@@ -923,7 +796,7 @@ const OEMPlatform: React.FC = () => {
         </div>
      </section>
      
-     {/* 5. THE GOLDEN SAMPLE */}
+     {/* 7. THE GOLDEN SAMPLE */}
      <ProtocolVisualization 
         theme="amber" 
         icon={CustomScrew} 
@@ -932,7 +805,7 @@ const OEMPlatform: React.FC = () => {
         steps={["Drawing Approval", "Lab Testing", "Sample Dispatch", "Mass Production"]}
      />
 
-     {/* 6. FOOTER CTA */}
+     {/* 8. FOOTER CTA */}
      <section className="py-24 bg-white text-black relative">
        <div className="max-w-4xl mx-auto px-6 text-center">
           <ScrollReveal>
