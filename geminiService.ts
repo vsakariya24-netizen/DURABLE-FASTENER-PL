@@ -46,4 +46,5 @@ export const getChatResponse = async (userQuery: string, history: any[]) => {
     throw error;
   }
 };
+export default getChatResponse;
 // REMOVED: export default AIFinder (This belongs in AIFinder.tsx only)
