@@ -1,144 +1,122 @@
-import React, { useState, useEffect } from 'react';
-// Added a simple error state to handle API failures
-import { getProductRecommendations, RecommendationResult } from '../services/geminiService';
-import { PRODUCTS } from '../constants';
-import * as ReactRouterDOM from 'react-router-dom';
-import { Sparkles, ArrowRight, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+// src/pages/AIFinder.tsx
+import React, { useState, useRef, useEffect } from 'react';
+import { getChatResponse } from '../services/geminiService';
+import { Send, Bot, Loader2, AlertCircle } from 'lucide-react';
 
-const { Link } = ReactRouterDOM;
-
-const AIFinder: React.FC = () => {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<RecommendationResult[]>([]);
+const AIFinder = () => {
+  const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [searched, setSearched] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  const handleChat = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!input.trim() || loading) return;
 
+    const userText = input;
+    setInput('');
+    setErrorMessage(null);
+
+    const newHistory = [...messages, { role: 'user' as const, text: userText }];
+    setMessages(newHistory);
     setLoading(true);
-    setError(null);
-    setSearched(true);
 
     try {
-     const recs = await getProductRecommendations(query, PRODUCTS);
-      setResults(recs);
-    } catch (err) {
-      setError("I'm having trouble connecting to the catalog. Please try again.");
+      const aiResponse = await getChatResponse(userText, messages);
+      setMessages([...newHistory, { role: 'model' as const, text: aiResponse }]);
+    } catch (error: any) {
+      console.error("Chat Error:", error);
+      setErrorMessage("Connection Error: Please check your connection.");
     } finally {
       setLoading(false);
     }
   };
 
-  // User-Friendly: Pre-filled suggestions relevant to your specific exports
-  const suggestions = [
-    "SDS Screws for heavy steel structures",
-    "Self-tapping screws for Sri Lanka solar projects",
-    "Rust-proof fasteners for outdoor furniture",
-    "High-torque bolts for machinery"
-  ];
+  const formatText = (text: string) => {
+    return text.split('\n').map((line, i) => (
+      <span key={i}>
+        {line.split('**').map((part, index) =>
+          index % 2 === 1 ? <strong key={index} className="text-orange-600 font-bold">{part}</strong> : part
+        )}
+        <br />
+      </span>
+    ));
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header Section */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center p-3 bg-brand-yellow/20 text-orange-600 rounded-full mb-4">
-            <Sparkles size={32} />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">CLASSONE AI Finder</h1>
-          <p className="text-gray-600 text-lg">
-            Tell us about your project, and we'll find the right Durable Fastener product.
-          </p>
+    <div className="flex flex-col min-h-[600px] w-full max-w-5xl mx-auto bg-white">
+      
+      {/* 1. Welcoming Header (Matches Screenshot) */}
+      <div className="flex flex-col items-center justify-center py-32 px-4">
+        <div className="mb-4 text-gray-200">
+          <Bot size={64} strokeWidth={1} />
         </div>
+        <h2 className="text-gray-400 text-xl md:text-2xl text-center font-light tracking-wide">
+          Ask about SDS, Chipboard, or Drywall screws!
+        </h2>
+      </div>
 
-        {/* Search Box */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-10 border border-gray-100">
-          <form onSubmit={handleSearch}>
-            <textarea
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. I need a wafer head screw for thin metal sheets that doesn't slip..."
-              className="w-full border-2 border-gray-200 rounded-xl p-4 text-gray-900 text-lg focus:border-orange-500 focus:ring-0 transition-all resize-none min-h-[120px]"
-            />
-            <div className="mt-4 flex flex-wrap gap-2 items-center justify-between">
-               <div className="flex flex-wrap gap-2">
-                 {suggestions.map((s, i) => (
-                   <button 
-                    key={i} 
-                    type="button" 
-                    onClick={() => setQuery(s)} 
-                    className="text-xs bg-gray-100 hover:bg-orange-100 hover:text-orange-700 text-gray-600 px-3 py-1 rounded-full transition-all"
-                   >
-                     {s}
-                   </button>
-                 ))}
-               </div>
-               <button 
-                type="submit" 
-                disabled={loading || !query.trim()}
-                className="bg-orange-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-orange-700 transition-all flex items-center gap-2 disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                {loading ? 'Consulting Catalog...' : 'Find Fastener'}
-              </button>
+      {/* 2. Chat Messages Display */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-20 space-y-6 pb-10">
+        {messages.map((m, i) => (
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${
+              m.role === 'user' 
+                ? 'bg-orange-500 text-white rounded-tr-none' 
+                : 'bg-gray-50 border border-gray-100 text-gray-800 rounded-tl-none'
+            }`}>
+              {formatText(m.text)}
             </div>
-          </form>
-        </div>
+          </div>
+        ))}
 
-        {/* Results Section */}
-        {searched && (
-          <div className="space-y-6">
-            {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-center gap-2">
-                <AlertCircle size={20} /> {error}
-              </div>
-            )}
-
-            {!loading && !error && results.length === 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center text-blue-800">
-                No exact match found for this application. Try describing the material or environment.
-              </div>
-            )}
-
-            <div className="grid gap-6">
-              {results.map((res) => {
-                const product = PRODUCTS.find(p => p.id === res.productId);
-                if (!product) return null;
-
-                return (
-                  <div key={res.productId} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
-                    <div className="w-full md:w-56 h-48 bg-gray-200 flex-shrink-0">
-                      <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="p-6 flex-1 flex flex-col">
-                      <div className="flex justify-between items-start mb-2">
-                         <h3 className="text-xl font-bold text-gray-900">{product.name}</h3>
-                         <span className="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full">
-                           {res.matchScore}% Confidence
-                         </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-4 font-medium uppercase tracking-wider">{product.category}</p>
-                      
-                      <div className="bg-gray-50 border-l-4 border-orange-500 p-3 rounded-r-lg mb-4">
-                        <p className="text-sm text-gray-700 italic">
-                          "{res.rationale}"
-                        </p>
-                      </div>
-
-                      <Link to={`/product/${product.slug}`} className="mt-auto inline-flex items-center text-orange-600 font-bold hover:gap-3 transition-all">
-                         View Technical Specs <ArrowRight size={18} className="ml-2" />
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl animate-pulse">
+              <Loader2 className="animate-spin text-orange-500" size={20} />
             </div>
           </div>
         )}
+
+        {errorMessage && (
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-2 text-xs mx-auto max-w-md">
+            <AlertCircle size={16} /> {errorMessage}
+          </div>
+        )}
+        <div ref={scrollRef} />
+      </div>
+
+      {/* 3. The Pill-Shaped Input Bar (Matches Screenshot) */}
+      <div className="sticky bottom-0 bg-white pb-10 pt-4 px-4 md:px-20">
+        <form onSubmit={handleChat} className="relative max-w-3xl mx-auto">
+          <div className="flex items-center border border-gray-200 rounded-xl bg-white shadow-sm hover:border-gray-300 focus-within:border-orange-400 focus-within:ring-1 focus-within:ring-orange-400 transition-all p-1.5 pl-6">
+            <input
+              className="flex-1 py-3 outline-none text-gray-700 text-base bg-transparent placeholder-gray-300"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about our screw range..."
+            />
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+              className={`p-3 rounded-lg transition-all ${
+                input.trim() 
+                  ? 'bg-orange-600 text-white hover:bg-orange-700 shadow-md' 
+                  : 'bg-gray-100 text-gray-300'
+              }`}
+            >
+              <Send size={20} />
+            </button>
+          </div>
+          <p className="text-[10px] text-center text-gray-300 mt-4 uppercase tracking-[0.2em] font-medium">
+            Powered by Classone AI expert
+          </p>
+        </form>
       </div>
     </div>
   );
