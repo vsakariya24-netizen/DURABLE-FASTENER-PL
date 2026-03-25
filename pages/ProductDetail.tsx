@@ -524,6 +524,7 @@ if (!product)
       <Helmet>
         {/* Page title */}
         <title>{product.name} Manufacturer | Durable Fastener Rajkot</title>
+        <link rel="canonical" href={`https://durablefastener.com/product/${slug}`} />
 
         {/* Meta description */}
         <meta
