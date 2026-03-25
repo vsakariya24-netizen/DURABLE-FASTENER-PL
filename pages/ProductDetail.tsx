@@ -473,18 +473,26 @@ const ProductDetail: React.FC = () => {
         <Loader2 className="animate-spin text-yellow-500" size={48} />
       </div>
     );
-
-  if (!product)
-    return (
-      <div className={`min-h-screen flex flex-col items-center justify-center ${THEME.bg}`}>
-        <h2 className="text-3xl font-bold mb-4 text-neutral-900" style={fontHeading}>
-          Product Not Found
-        </h2>
-        <Link to="/products" className={THEME.accentText}>
-          Back to Catalog
+if (!product)
+  return (
+    <div className={`min-h-screen flex flex-col items-center justify-center ${THEME.bg} p-10 text-center`}>
+      <h2 className="text-4xl font-bold mb-4 text-neutral-900" style={fontHeading}>
+        Screw Specification Not Found
+      </h2>
+      <p className="text-neutral-600 mb-8 max-w-md">
+        The specific fastener you are looking for may have been moved or is currently out of stock. 
+        Please browse our full catalog of industrial fasteners.
+      </p>
+      <div className="flex gap-4">
+        <Link to="/products" className="bg-yellow-500 px-6 py-3 rounded-lg font-bold uppercase">
+          View All Products
+        </Link>
+        <Link to="/Contact" className="bg-neutral-900 text-white px-6 py-3 rounded-lg font-bold uppercase">
+          Inquire for Custom Order
         </Link>
       </div>
-    );
+    </div>
+  );
 
   // ── Computed display values ────────────────────────────────────────────────
   const currentImage     = displayImages[selectedImageIndex];
