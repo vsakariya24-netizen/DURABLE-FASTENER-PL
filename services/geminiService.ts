@@ -4,7 +4,7 @@ import { CLASSONE_PRODUCTS } from "../data/products";
 import { CLASSONE_DATA } from"../pages/knowledgeBase";
 
 // 1. Double check your key at https://aistudio.google.com/
-const API_KEY ="AIzaSyDed4DoJusZEVnKw6y24b25lYCrK-hhV3E"; 
+const API_KEY = "AIzaSyDed4DoJusZEVnKw6y24b25lYCrK-hhV3E"; 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const getChatResponse = async (userQuery: string, history: any[]) => {
@@ -46,4 +46,5 @@ export const getChatResponse = async (userQuery: string, history: any[]) => {
     throw error;
   }
 };
+export default getChatResponse;
 // REMOVED: export default AIFinder (This belongs in AIFinder.tsx only)
