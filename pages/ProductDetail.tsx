@@ -473,6 +473,7 @@ const ProductDetail: React.FC = () => {
         <Loader2 className="animate-spin text-yellow-500" size={48} />
       </div>
     );
+
 if (!product)
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center ${THEME.bg} p-10 text-center`}>
@@ -524,15 +525,13 @@ if (!product)
       <Helmet>
         {/* Page title */}
         <title>{product.name} Manufacturer | Durable Fastener Rajkot</title>
-        <link rel="canonical" href={`https://durablefastener.com/product/${slug}`} />
-        <meta name="description" content={product.short_description} />
-
+<link rel="canonical" href={`https://durablefastener.com/product/${slug}`} />
         {/* Meta description */}
         <meta
           name="description"
           content={`Buy ${product.name} directly from factory. ISO certified ${product.category || 'Fastener'} manufacturer in Rajkot, Gujarat. Check specifications and bulk pricing.`}
         />
-
+<meta name="description" content={product.short_description} />
         {/* 1. FAQ Schema ── kept for AI Overviews & ChatGPT parsing */}
         {faqSchemaJson && (
           <script type="application/ld+json">{faqSchemaJson}</script>

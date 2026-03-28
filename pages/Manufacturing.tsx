@@ -4,12 +4,40 @@ import {
   Factory, Anvil, Flame, Layers, Microscope, Truck, 
   ShieldCheck, CheckCircle2, Package, Settings, 
   Activity, ArrowRight, ArrowDown, ArrowLeft, FileCheck, Scale, Play, Video,
-  Globe,Instagram
+  Globe, Instagram, X
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
+import { motion } from 'framer-motion';
+const formatMediaUrl = (url: string): string => {
+  if (!url || typeof url !== 'string') return '';
+  return url; // Uses the full public URL from your Supabase storage
+};
+// =========================================
+// 0. SMART ASSET URL HELPER (R2 Redirect)
+// =========================================
+const cleanImageUrl = (url: string): string => {
+  if (!url || typeof url !== 'string') return '';
+  
+  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+  
+  // If already R2, return as-is
+  if (url.startsWith(R2_BASE)) return url;
+  
+  // If it's a full URL (Supabase/External), extract filename and point to R2
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    const fileName = url.split('/').pop(); 
+    return `${R2_BASE}/${fileName}`;
+  }
+  
+  // Relative path → prepend R2
+  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
+  return `${R2_BASE}/${cleanPath}`;
+};
 
-// --- REUSABLE ANIMATION COMPONENT ---
+// =========================================
+// 1. REUSABLE ANIMATION COMPONENT
+// =========================================
 const RevealOnScroll: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ 
   children, 
   delay = 0, 
@@ -30,10 +58,7 @@ const RevealOnScroll: React.FC<{ children: React.ReactNode; delay?: number; clas
     );
 
     if (ref.current) observer.observe(ref.current);
-
-    return () => {
-      if (ref.current) observer.unobserve(ref.current);
-    };
+    return () => { if (ref.current) observer.unobserve(ref.current); };
   }, []);
 
   return (
@@ -49,10 +74,13 @@ const RevealOnScroll: React.FC<{ children: React.ReactNode; delay?: number; clas
   );
 };
 
-// --- MAIN PAGE COMPONENT ---
+// =========================================
+// 2. MAIN MANUFACTURING PAGE
+// =========================================
 const Manufacturing: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [instaPosts, setInstaPosts] = useState<any[]>([]);
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
 
   useEffect(() => {
     const loadContent = async () => {
@@ -67,6 +95,7 @@ const Manufacturing: React.FC = () => {
     };
 
     const fetchInstagram = async () => {
+      // Note: In production, store this token in an environment variable or backend
       const token = 'IGAARZAzYtC0PBBZAGFWMm5tcFZAaN2hHZAGxFYmVjVEhFQkpldEZAfX005R1p2NnVZAbUt6WGl3dFQ2c0YydElzbTZAtT2kyRTl5eUpuNXFjWUpSLVlvN1lGbkRhbjQzTDBuVlpfMTY2bHB3eHpTX0dMbXJlRFZAGZAVJ4eXpNbXdLN0VGSQZDZD'; 
       try {
         const res = await fetch(`https://graph.instagram.com/me/media?fields=id,caption,media_url,permalink,media_type&limit=8&access_token=${token}`);
@@ -119,88 +148,94 @@ const Manufacturing: React.FC = () => {
       </Helmet>
 
       {/* ================= 1. HERO SECTION ================= */}
-      <div className="relative py-24 md:py-48 bg-slate-900 overflow-hidden px-4">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1565193566173-7a641a980755?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent"></div>
-        <div className="relative z-10 max-w-7xl mx-auto">
-            <div className="max-w-4xl">
-              <RevealOnScroll>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] md:text-sm font-bold mb-6 uppercase tracking-widest">
-                    <Globe size={14} /> Global Supply Chain Hub
-                </div>
-              </RevealOnScroll>
-              <RevealOnScroll delay={100}>
-                <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-white mb-6 leading-tight tracking-tight">
-                    {data?.hero_title || <>PRODUCTION <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-slate-300">EXCELLENCE</span></>}
-                </h1>
-              </RevealOnScroll>
-              <RevealOnScroll delay={200}>
-                <p className="text-lg md:text-2xl text-slate-300 mb-10 font-medium border-l-4 border-blue-600 pl-4 md:pl-8 max-w-2xl">
-                    {data?.hero_subtitle || "High-precision manufacturing ecosystem with Total Quality Supervision."}
-                </p>
-              </RevealOnScroll>
+      <section className="relative py-32 md:py-56 bg-slate-900 overflow-hidden px-4 flex items-center justify-center min-h-[80vh]">
+        {data?.hero_video_url && (
+          <video 
+            key={data.hero_video_url} 
+            autoPlay loop muted playsInline 
+            className="absolute inset-0 w-full h-full object-cover opacity-50"
+            src={formatMediaUrl(data.hero_video_url)}
+          />
+        )}
+        
+        {/* Centered Dark Overlay */}
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"></div>
+        
+        <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center">
+          <RevealOnScroll>
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-600/20 border border-blue-500/40 text-blue-400 text-xs font-black mb-8 uppercase tracking-[0.2em]">
+              <Globe size={14} /> Global Supply Chain Hub
             </div>
+
+            {/* Main Title */}
+            <h1 className="text-5xl sm:text-7xl md:text-9xl font-black text-white mb-8 leading-[0.9] tracking-tighter uppercase">
+              {data?.hero_title || "PRODUCTION EXCELLENCE"}
+            </h1>
+
+            {/* Subtitle (Border removed and centered) */}
+            <p className="text-lg md:text-2xl text-slate-200 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
+              {data?.hero_subtitle || "High-precision manufacturing ecosystem with Total Quality Supervision."}
+            </p>
+
+            {/* Visual Accent */}
+            <div className="w-24 h-1.5 bg-blue-600 mx-auto rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)]"></div>
+          </RevealOnScroll>
         </div>
-      </div>
+      </section>
+
       {/* ================= 2. MANUFACTURING OVERVIEW ================= */}
-      <section className="py-24 px-6 bg-slate-50">
+   <section className="py-24 px-6 bg-slate-50">
         <RevealOnScroll>
-           <div className="max-w-4xl mx-auto text-center">
-               <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-8 tracking-tight">
-                 {data?.overview_title || "Built for Scale & Precision"}
-               </h2>
-               <p className="text-xl md:text-2xl text-slate-600 leading-9 font-normal">
-                 {data ? (
-                   <span 
-                     className="[&>strong]:text-blue-600 [&>strong]:font-bold [&>u]:text-slate-900 [&>u]:font-bold [&>u]:no-underline [&>u]:border-b-2 [&>u]:border-blue-700"
-                     dangerouslySetInnerHTML={{ __html: data.overview_desc }} 
-                   />
-                 ) : ( "Loading factory details..." )}
-               </p>
-           </div>
+            <div className="max-w-4xl mx-auto text-center">
+                <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-8 tracking-tight">
+                  {data?.overview_title || "Built for Scale & Precision"}
+                </h2>
+                <div 
+                  className="text-xl md:text-2xl text-slate-600 leading-relaxed font-normal [&>strong]:text-blue-600 [&>strong]:font-bold"
+                  dangerouslySetInnerHTML={{ __html: data?.overview_desc }} 
+                />
+            </div>
         </RevealOnScroll>
       </section>
 
       {/* ================= 3. VIRTUAL FACTORY TOUR ================= */}
-      <section className="py-24 bg-white border-y border-slate-200">
-         <div className="max-w-7xl mx-auto px-6">
-            <RevealOnScroll>
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-                   <div>
-                      <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-3 tracking-tight">Production Floor</h2>
-                      <p className="text-lg text-slate-500">See our high-speed headers in action.</p>
-                   </div>
-                  
+     <section className="py-24 bg-white border-y border-slate-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <RevealOnScroll><h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-12">Production Floor</h2></RevealOnScroll>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { title: data?.video1_title, sub: data?.video1_sub, media: data?.video1_img },
+              { title: data?.video2_title, sub: data?.video2_sub, media: data?.video2_img },
+              { title: data?.video3_title, sub: data?.video3_sub, media: data?.video3_img }
+            ].map((item, index) => (
+              <RevealOnScroll key={index} delay={index * 150}>
+                <div 
+                  onClick={() => item.media && setActiveVideo(formatMediaUrl(item.media))} 
+                  className="group relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-xl cursor-pointer border-4 border-white transition-transform hover:scale-[1.02]"
+                >
+                  {item.media?.match(/\.(mp4|webm|mov)$/i) ? (
+                    <video src={formatMediaUrl(item.media)} className="absolute inset-0 w-full h-full object-cover opacity-70" muted loop autoPlay playsInline />
+                  ) : (
+                    <img src={formatMediaUrl(item.media)} className="absolute inset-0 w-full h-full object-cover opacity-70" alt={item.title} />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <Play fill="currentColor" size={28} />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-slate-900 to-transparent">
+                    <p className="text-white font-bold text-xl">{item.title}</p>
+                    <p className="text-sm text-blue-300">{item.sub}</p>
+                  </div>
                 </div>
-            </RevealOnScroll>
-            <div className="grid md:grid-cols-3 gap-8">
-                {[
-                  { title: data?.video1_title || "Cold Heading Line", sub: data?.video1_sub || "180 PPM Speed", img: data?.video1_img || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop" },
-                  { title: data?.video2_title || "Thread Rolling", sub: data?.video2_sub || "Precision Dies",  img: data?.video2_img || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=2070&auto=format&fit=crop" },
-                  { title: data?.video3_title || "Optical Sorting", sub: data?.video3_sub || "Zero Defect Check",  img: data?.video3_img || "https://plus.unsplash.com/premium_photo-1661962692059-55d5a4319814?q=80&w=2070&auto=format&fit=crop" }
-                ].map((item, index) => (
-                  <RevealOnScroll key={index} delay={index * 150} className="h-full">
-                      <div className="group relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-xl cursor-pointer h-full border-4 border-white">
-                          <div className="absolute inset-0 bg-cover bg-center opacity-70 group-hover:scale-105 transition-transform duration-700" style={{ backgroundImage: `url(${item.img})` }}></div>
-                          <div className="absolute inset-0 bg-slate-900/30 group-hover:bg-transparent transition-all"></div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                             <div className="w-16 h-16 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center pl-1 border border-white group-hover:bg-blue-600 group-hover:border-blue-600 transition-all shadow-xl">
-                                <Play fill="currentColor" className="text-blue-600 group-hover:text-white" size={28} />
-                             </div>
-                          </div>
-                         
-                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent p-6 pt-12">
-                             <p className="text-white font-bold text-xl">{item.title}</p>
-                             <p className="text-sm text-blue-300 font-medium">{item.sub}</p>
-                          </div>
-                      </div>
-                  </RevealOnScroll>
-                ))}
-            </div>
-         </div>
+              </RevealOnScroll>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* ================= 4. COMPLETE MANUFACTURING FLOW (NEW DESIGN) ================= */}
+      {/* ================= 4. COMPLETE MANUFACTURING FLOW ================= */}
       <section className="py-24 bg-white overflow-hidden">
          <div className="max-w-7xl mx-auto px-6">
             <RevealOnScroll>
@@ -211,48 +246,34 @@ const Manufacturing: React.FC = () => {
                 </div>
             </RevealOnScroll>
 
-            {/* Grid Layout: Snake Design with BLUE VISUALS */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-12 gap-y-20 relative">
                 {steps.map((step, i) => (
                   <div key={i} className={`relative ${getGridPosition(i)}`}>
                       <RevealOnScroll delay={i * 100} className="h-full z-10 relative">
-                          {/* UPDATED CARD DESIGN: White bg, Blue Border, Rounded Corners */}
                           <div className="bg-white border-2 border-blue-100 p-8 rounded-3xl relative group hover:border-blue-400 hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] transition-all duration-300 h-full flex flex-col items-center text-center z-20">
-                             
-                             {/* Number Design: Large, Blue, Top Right */}
                              <span className="absolute top-5 right-6 text-4xl font-black text-blue-200 group-hover:text-blue-500 transition-colors">
                                {step.id}
                              </span>
-
-                             {/* Icon Design: Blue text, subtle background */}
                              <div className="p-4 bg-blue-50 rounded-2xl text-blue-600 mb-6 group-hover:scale-110 transition-transform">
                                 <step.icon size={36} strokeWidth={1.5} />
                              </div>
-
                              <h4 className="text-slate-900 font-bold text-lg leading-snug">{step.title}</h4>
                           </div>
                       </RevealOnScroll>
 
-                      {/* === CONNECTORS (Styled Blue Arrows with QC Bubbles) === */}
-                      
-                      {/* 1. Right Arrows (Steps 1, 2, 3) */}
+                      {/* DESKTOP CONNECTORS */}
                       {[0, 1, 2].includes(i) && (
                         <div className="hidden md:flex absolute -right-12 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-12">
-                          {/* QC Bubble */}
                           <div className="absolute -top-3 bg-blue-500 text-white text-[10px] font-bold rounded-full w-7 h-7 flex items-center justify-center shadow-md z-20 border-2 border-white">QC</div>
                           <ArrowRight size={44} strokeWidth={1} className="text-blue-300" />
                         </div>
                       )}
-
-                      {/* 2. Down Arrow (Step 4 -> Step 5) */}
                       {i === 3 && (
                         <div className="hidden md:flex flex-col items-center absolute -bottom-16 left-1/2 -translate-x-1/2 z-10 h-16 justify-center">
                           <div className="absolute top-2 left-4 bg-blue-500 text-white text-[10px] font-bold rounded-full w-7 h-7 flex items-center justify-center shadow-md z-20 border-2 border-white">QC</div>
                           <ArrowDown size={44} strokeWidth={1} className="text-blue-300" />
                         </div>
                       )}
-
-                      {/* 3. Left Arrows (Steps 5, 6, 7) */}
                       {[4, 5, 6].includes(i) && (
                         <div className="hidden md:flex absolute -left-12 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-12">
                           <div className="absolute -top-3 bg-blue-500 text-white text-[10px] font-bold rounded-full w-7 h-7 flex items-center justify-center shadow-md z-20 border-2 border-white">QC</div>
@@ -260,7 +281,7 @@ const Manufacturing: React.FC = () => {
                         </div>
                       )}
 
-                      {/* === MOBILE CONNECTORS === */}
+                      {/* MOBILE CONNECTORS */}
                       {i !== steps.length - 1 && (
                         <div className="md:hidden absolute -bottom-14 left-1/2 -translate-x-1/2 text-blue-300 flex flex-col items-center z-0">
                            <div className="bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full mb-1">QC Check</div>
@@ -273,8 +294,19 @@ const Manufacturing: React.FC = () => {
          </div>
       </section>
 
+      {/* ================= 5. VIDEO MODAL ================= */}
+     {activeVideo && (
+        <div className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center p-4 md:p-10 backdrop-blur-md" onClick={() => setActiveVideo(null)}>
+          <button onClick={() => setActiveVideo(null)} className="absolute top-6 right-6 text-white hover:text-blue-500 transition-colors z-[1001]">
+            <X size={48} strokeWidth={3} />
+          </button>
+          <div className="w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.3)] relative" onClick={(e) => e.stopPropagation()}>
+            <video src={activeVideo} className="w-full h-full object-contain" controls autoPlay />
+          </div>
+        </div>
+      )}
       {/* ================= 6. RAW MATERIAL ================= */}
-    <section className="py-16 md:py-24 px-4 md:px-6 bg-slate-50">
+      <section className="py-16 md:py-24 px-4 md:px-6 bg-slate-50">
           <RevealOnScroll>
               <div className="max-w-7xl mx-auto bg-slate-900 rounded-3xl md:rounded-[2.5rem] overflow-hidden border border-slate-800">
                 <div className="grid md:grid-cols-2">
@@ -293,7 +325,7 @@ const Manufacturing: React.FC = () => {
                       </ul>
                    </div>
                    <div className="relative h-64 md:h-auto">
-                       <img src="/public/factoryimage.jpg" alt="Raw material" className="absolute inset-0 w-full h-full object-cover opacity-60"/>
+                       <img src={cleanImageUrl('RAW.jpeg')} alt="Raw material" className="absolute inset-0 w-full h-full object-cover opacity-60"/>
                    </div>
                 </div>
               </div>
@@ -323,7 +355,7 @@ const Manufacturing: React.FC = () => {
                        <h3 className="text-3xl font-black text-slate-900 mb-4">Surface Coating & Finishing</h3>
                        <p className="text-lg text-slate-600 mb-8 leading-relaxed">Advanced plating lines delivering aesthetic finish and high corrosion resistance.</p>
                        <ul className="space-y-3 text-slate-700 font-semibold">
-                          <li className="flex gap-3"><span className="text-blue-600">✔</span> Zinc(blue,yellow,black)</li>
+                          <li className="flex gap-3"><span className="text-blue-600">✔</span> Zinc (blue, yellow, black)</li>
                           <li className="flex gap-3"><span className="text-blue-600">✔</span> Black Phosphate & Oil</li>
                        </ul>
                    </div>
@@ -352,7 +384,6 @@ const Manufacturing: React.FC = () => {
                </div>
             </div>
 
-            {/* CAPACITY GRID FIX */}
             <div className="bg-slate-900 p-6 sm:p-10 rounded-3xl md:rounded-[2.5rem] shadow-2xl">
                <RevealOnScroll><h2 className="text-3xl md:text-4xl font-black text-white mb-8 md:mb-10">Production Capacity</h2></RevealOnScroll>
                <div className="grid grid-cols-2 gap-3 md:gap-6">
@@ -373,7 +404,9 @@ const Manufacturing: React.FC = () => {
             </div>
          </div>
       </section>
-<section className="py-24 bg-white border-t border-slate-100">
+
+      {/* ================= 9. INSTAGRAM FEED ================= */}
+      <section className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
           <RevealOnScroll>
             <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-6">
@@ -383,26 +416,16 @@ const Manufacturing: React.FC = () => {
                 </h2>
                 <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Our Social Media Journey</h3>
               </div>
-              <a 
-                href="https://instagram.com/durablefastener" 
-                target="_blank" 
-                className="group flex items-center gap-3 bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all shadow-lg"
-              >
+              <a href="https://instagram.com/durablefastener" target="_blank" className="group flex items-center gap-3 bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all shadow-lg">
                 Follow @durablefastener <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
           </RevealOnScroll>
 
-          {/* Insta Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {instaPosts.length > 0 ? instaPosts.map((post, index) => (
               <RevealOnScroll key={post.id} delay={index * 100}>
-                <a 
-                  href={post.permalink} 
-                  target="_blank" 
-                  className="group relative block aspect-square bg-slate-100 rounded-[2rem] overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all shadow-sm hover:shadow-2xl"
-                >
-                  {/* Image or Video Handler */}
+                <a href={post.permalink} target="_blank" className="group relative block aspect-square bg-slate-100 rounded-[2rem] overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all shadow-sm">
                   {post.media_type === 'VIDEO' ? (
                     <video className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" muted loop onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()}>
                       <source src={post.media_url} type="video/mp4" />
@@ -410,24 +433,17 @@ const Manufacturing: React.FC = () => {
                   ) : (
                     <img src={post.media_url} alt="Factory Update" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   )}
-
-                  {/* Icon Overlay for Video */}
                   {post.media_type === 'VIDEO' && (
                     <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md p-2 rounded-full text-white">
                       <Play size={16} fill="white" />
                     </div>
                   )}
-
-                  {/* Caption on Hover */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
-                    <p className="text-white text-xs font-medium line-clamp-2">
-                      {post.caption || "View on Instagram"}
-                    </p>
+                    <p className="text-white text-xs font-medium line-clamp-2">{post.caption || "View on Instagram"}</p>
                   </div>
                 </a>
               </RevealOnScroll>
             )) : (
-              // Loading Placeholders (Skeleton)
               [...Array(4)].map((_, i) => (
                 <div key={i} className="aspect-square bg-slate-100 rounded-[2rem] animate-pulse"></div>
               ))
@@ -435,7 +451,8 @@ const Manufacturing: React.FC = () => {
           </div>
         </div>
       </section>
-      {/* ================= 9. USP & CTA ================= */}
+
+      {/* ================= 10. USP & CTA ================= */}
       <section className="py-24 px-6 bg-slate-50 text-center border-t border-slate-200">
          <div className="max-w-5xl mx-auto">
             <RevealOnScroll><h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-12">Why Durable Fasteners?</h2></RevealOnScroll>
@@ -457,23 +474,17 @@ const Manufacturing: React.FC = () => {
             <RevealOnScroll delay={300}>
                 <div className="flex flex-col sm:flex-row justify-center gap-6">
                    <Link to="/contact" className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-12 py-6 rounded-2xl shadow-xl shadow-blue-600/20 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3">
-                     Start OEM Manufacturing <ArrowRight />
+                      Start OEM Manufacturing <ArrowRight />
                    </Link>
                    <button className="bg-white border-2 border-slate-200 hover:border-slate-900 text-slate-900 text-xl font-bold px-12 py-6 rounded-2xl transition-all hover:-translate-y-1">
-                     Request Capability Sheet
+                      Request Capability Sheet
                    </button>
                 </div>
             </RevealOnScroll>
          </div>
       </section>
-    
     </div>
-    
   );
 };
 
 export default Manufacturing;
-
-function setInstaPosts(data: any) {
-  throw new Error('Function not implemented.');
-}
