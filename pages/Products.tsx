@@ -269,18 +269,55 @@ useEffect(() => {
     <div className="bg-[#dbdbdc] min-h-screen pt-20">
       
       <Helmet>
-        <title>
-          {activeFilter.name === 'All Products' 
-            ? 'Top Screw Manufacturer in Rajkot | Industrial Fasteners India' 
-            : `${activeFilter.name} Manufacturers in India | Durable Fastener`}
-        </title>
-        <link rel="canonical" href={`https://durablefastener.com/products/${toSlug(activeFilter.name)}`} />
-        <meta 
-          name="description" 
-          content={`Leading ${activeFilter.name} manufacturer in Rajkot. Specializing in high-quality fasteners.`} 
-        />
-      </Helmet>
+       <title>
+    {activeFilter.name === 'All Products'
+      ? 'Top Screw Manufacturer in Rajkot | Industrial Fasteners India'
+      : `${activeFilter.name} Manufacturers in India | Durable Fastener`}
+  </title>
+         <link
+    rel="canonical"
+    href={
+      activeFilter.name === 'All Products'
+        ? 'https://durablefastener.com/products'
+        : `https://durablefastener.com/products/${toSlug(activeFilter.name)}`
+    }
+  />
+         <meta
+    name="description"
+    content={
+      activeFilter.name === 'All Products'
+        ? 'Leading Industrial Fastener manufacturer in Rajkot, Gujarat. Screws, bolts, anchors and fittings for construction, furniture and engineering industries.'
+        : `Leading ${activeFilter.name} manufacturer in Rajkot. High-quality industrial fasteners for bulk orders. ISO certified factory in Gujarat, India.`
+    }
+  />
 
+<script type="application/ld+json">{JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": activeFilter.name === 'All Products' ? 'Industrial Fasteners Catalog' : activeFilter.name,
+    "url": activeFilter.name === 'All Products'
+      ? 'https://durablefastener.com/products'
+      : `https://durablefastener.com/products/${toSlug(activeFilter.name)}`,
+    "provider": {
+      "@type": "Organization",
+      "name": "Durable Fastener Pvt. Ltd.",
+      "url": "https://durablefastener.com"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://durablefastener.com" },
+        { "@type": "ListItem", "position": 2, "name": "Products", "item": "https://durablefastener.com/products" },
+        ...(activeFilter.name !== 'All Products' ? [{
+          "@type": "ListItem",
+          "position": 3,
+          "name": activeFilter.name,
+          "item": `https://durablefastener.com/products/${toSlug(activeFilter.name)}`
+        }] : [])
+      ]
+    }
+  })}</script>
+</Helmet>
       {/* HERO */}
       <section className="relative h-[30vh] flex items-center justify-center bg-[#0a0a0a] overflow-hidden">
         <div className="absolute inset-0 opacity-20">
