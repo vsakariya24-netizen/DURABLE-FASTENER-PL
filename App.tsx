@@ -26,7 +26,7 @@ import Careers from './pages/Careers';
 import BlogDetail from './pages/BlogDetail';
 import AdminLifeGallery from './pages/Admin/AdminLifeGallery';
 import ManageOEM from './pages/Admin/ManageOEM'; // Import the new file
-
+import AdminAbout from './pages/Admin/AdminAbout'; // Make sure the path matches where you saved the file
 // Admin Components
 import AdminLogin from './pages/Admin/Login';
 import AdminLayout from './components/AdminLayout';
@@ -119,7 +119,7 @@ const App: React.FC = () => {
               {/* --- Admin Login --- */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="life-gallery" element={<AdminLifeGallery />} />
-              
+              <Route path="/admin/edit-about" element={<AdminAbout />} />
               {/* --- Secure Admin Panel --- */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminLayout />}>

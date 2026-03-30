@@ -98,19 +98,34 @@ export default {
 
     // ✅ Baaki sab → Supabase proxy
     const newHeaders = new Headers(request.headers);
+    newHeaders.delete("Host");
     newHeaders.set("Origin", SUPABASE_URL);
     newHeaders.set("Host", "wterhjmgsgyqgbwviomo.supabase.co");
 
-    let body = null;
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      body = await request.clone().arrayBuffer();
+    
+   let body = null;
+    // Only try to read the body if the request actually has one
+    const hasBody = !["GET", "HEAD", "OPTIONS"].includes(request.method);
+    
+    if (hasBody) {
+      const contentType = request.headers.get("content-type");
+      if (contentType) {
+        // We use arrayBuffer to ensure binary data (like images) stays intact
+        body = await request.clone().arrayBuffer();
+        // If the body is empty after all, set it back to null
+        if (body.byteLength === 0) body = null;
+      }
     }
 
     const modifiedRequest = new Request(
       SUPABASE_URL + url.pathname + url.search,
-      { method: request.method, headers: newHeaders, body, redirect: "follow" }
+      { 
+        method: request.method, 
+        headers: newHeaders, 
+        body: body, // Will be null for GET/HEAD/Empty DELETE
+        redirect: "follow" 
+      }
     );
-
     try {
       const response = await fetch(modifiedRequest);
       const newResponseHeaders = new Headers(response.headers);
