@@ -488,7 +488,7 @@ if (!product)
         <Link to="/products" className="bg-yellow-500 px-6 py-3 rounded-lg font-bold uppercase">
           View All Products
         </Link>
-        <Link to="/Contact" className="bg-neutral-900 text-white px-6 py-3 rounded-lg font-bold uppercase">
+        <Link to="/contact" className="bg-neutral-900 text-white px-6 py-3 rounded-lg font-bold uppercase">
           Inquire for Custom Order
         </Link>
       </div>
@@ -522,27 +522,17 @@ if (!product)
           NOTE: For Google to index schema you MUST serve this HTML from the
           server (SSR / Next.js) or use a pre-renderer for Googlebot.
           ==================================================================== */}
-      <Helmet>
-        {/* Page title */}
-        <title>{product.name} Manufacturer | Durable Fastener Rajkot</title>
-<link rel="canonical" href={`https://durablefastener.com/product/${slug}`} />
-        {/* Meta description */}
-        <meta
-          name="description"
-          content={`Buy ${product.name} directly from factory. ISO certified ${product.category || 'Fastener'} manufacturer in Rajkot, Gujarat. Check specifications and bulk pricing.`}
-        />
-<meta name="description" content={product.short_description} />
-        {/* 1. FAQ Schema ── kept for AI Overviews & ChatGPT parsing */}
-        {faqSchemaJson && (
-          <script type="application/ld+json">{faqSchemaJson}</script>
-        )}
-
-        {/* 2. Breadcrumb Schema ── shows navigation path in SERP */}
-        <script type="application/ld+json">{breadcrumbSchemaJson}</script>
-
-        {/* 3. Product Schema ── Google Shopping + Knowledge Panel */}
-        <script type="application/ld+json">{productSchemaJson}</script>
-      </Helmet>
+<Helmet>
+  <title>{product.name} Manufacturer | Durable Fastener Rajkot</title>
+  <link rel="canonical" href={`https://durablefastener.com/product/${slug}`} />
+  <meta
+    name="description"
+    content={`Buy ${product.name} directly from factory. ISO certified ${product.category || 'Fastener'} manufacturer in Rajkot, Gujarat. Check specifications and bulk pricing.`}
+  />
+  {faqSchemaJson && <script type="application/ld+json">{faqSchemaJson}</script>}
+  <script type="application/ld+json">{breadcrumbSchemaJson}</script>
+  <script type="application/ld+json">{productSchemaJson}</script>
+</Helmet>
 
       {/* ── Breadcrumb Nav Bar ── */}
       <div className="fixed top-[80px] md:top-[170px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md">
@@ -844,7 +834,7 @@ if (!product)
             {/* CTA buttons */}
             <div className="grid grid-cols-2 gap-4 pt-4">
               <a
-                href="/Contact"
+                href="/contact"
                 className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:-translate-y-0.5"
                 style={fontHeading}
               >
@@ -1197,7 +1187,7 @@ if (!product)
                 </div>
               </div>
               <Link
-                to="/Contact"
+                to="/contact"
                 className="group bg-yellow-500 hover:bg-yellow-400 text-neutral-900 px-8 py-4 rounded-xl font-bold uppercase tracking-widest flex items-center gap-3 transition-all"
               >
                 Get Expert Advice
