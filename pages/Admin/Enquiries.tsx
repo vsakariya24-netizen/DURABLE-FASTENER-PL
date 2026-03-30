@@ -5,7 +5,7 @@ import {
   MessageSquare, Phone, Eye, FileText, Image as ImageIcon, ExternalLink 
 } from 'lucide-react';
 
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzR2Tv85F-MNNePk32-FuWH4zE14LQtCt_O2Wxk5dKktqUmJpFq7kzWUqReYH2ih9xC/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwNkC7toeRA5-rJP5Pn74lJPI8b0qEXEjrAt0_jW09TXRmNUd6mRK62IoGTUWPbCwd5/exec';
 
 // --- INTERFACE ---
 interface Enquiry {
@@ -74,33 +74,33 @@ const Enquiries: React.FC = () => {
 
   // --- NEW: Handle Delete Function ---
  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this enquiry? This cannot be undone.")) {
-      return;
-    }
+  if (!window.confirm("Are you sure?")) return;
 
-    setDeletingId(id);
-    try {
-      // We ask Supabase to delete and tell us how many rows were affected
-      const { error, count } = await supabase
-        .from('enquiries')
-        .delete({ count: 'exact' }) 
-        .eq('id', id);
+  setDeletingId(id);
+  console.log("Attempting to delete ID:", id); // DEBUG LOG
 
-      if (error) throw error;
+  try {
+    const { error, count } = await supabase
+      .from('enquiries')
+      .delete({ count: 'exact' })
+      .eq('id', id);
 
-      // If count is 0, it means the database ignored us (RLS issue)
-      // Note: count might be null in some configurations, but this helps debug
-      
+    if (error) {
+      console.error("Supabase Error:", error);
+      alert(`Database Error: ${error.message}`);
+    } else if (count === 0) {
+      alert("No row deleted. Check your RLS policies (Select/Delete).");
+    } else {
       setEnquiries(prev => prev.filter(enq => enq.id !== id));
-      
-    } catch (err: any) {
-      alert("Failed to delete: " + err.message);
-      // If it failed, refresh the list to show the item again
-      fetchEnquiries();
-    } finally {
-      setDeletingId(null);
     }
-  };
+  } catch (err) {
+    // This is where "Failed to Fetch" is caught
+    console.error("Network/Fetch Error:", err); 
+    alert("Network Error: Could not reach Supabase. Check if your project is paused or an Ad-blocker is active.");
+  } finally {
+    setDeletingId(null);
+  }
+};
 
   const syncToSheet = async (enquiry: Enquiry) => {
   setSyncingId(enquiry.id);

@@ -9,7 +9,7 @@ import {
 import { Helmet } from 'react-helmet-async';
 
 // REPLACE THIS with your new Web App URL from the script above
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzR2Tv85F-MNNePk32-FuWH4zE14LQtCt_O2Wxk5dKktqUmJpFq7kzWUqReYH2ih9xC/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwNkC7toeRA5-rJP5Pn74lJPI8b0qEXEjrAt0_jW09TXRmNUd6mRK62IoGTUWPbCwd5/exec';
 
 // YOUR SPECIFIC PROJECT URL
 const SUPABASE_PROJECT_URL = 'https://wterhjmgsgyqgbwviomo.supabase.co'; 
