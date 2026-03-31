@@ -16,7 +16,6 @@ type CategoryStructure = {
   sub_categories: { id: string; name: string }[];
 };
 
-
 type FaqItem = { question: string; answer: string };
 type SpecItem = { key: string; value: string };
 
@@ -131,13 +130,7 @@ const AddProduct: React.FC = () => {
     certifications: [] as CertItem[],
     faqs: [] as FaqItem[]
   });
-const addFaq = () => setFormData(p => ({ ...p, faqs: [...p.faqs, { question: '', answer: '' }] }));
-const removeFaq = (idx: number) => setFormData(p => ({ ...p, faqs: p.faqs.filter((_, i) => i !== idx) }));
-const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
-  const newFaqs = [...formData.faqs];
-  newFaqs[idx][field] = val;
-  setFormData(p => ({ ...p, faqs: newFaqs }));
-};
+
   const [dynamicCoreSpecs, setDynamicCoreSpecs] = useState<SpecItem[]>([
     { key: 'Head Type', value: '' },
     { key: 'Drive Type', value: '' },
@@ -194,7 +187,7 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
               sub.includes('fitting') || sub.includes('channel')
           );
 
-          // ... (Applications loading logic - same as before) ...
+          // Applications loading logic
           let loadedApps: AppItem[] = [];
           if (Array.isArray(product.applications)) {
               loadedApps = product.applications.map((app: any) => {
@@ -203,7 +196,7 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
               });
           }
 
-          // ... (Material loading logic - same as before) ...
+          // Material loading logic
           let parsedRows: MaterialRow[] = [{ name: '', grades: '' }];
           if (product.material) {
               const smartSplitRegex = /\s*\|\s*(?![^()]*\))/g;
@@ -217,7 +210,7 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
           }
           setMaterialRows(parsedRows.length > 0 ? parsedRows : [{ name: '', grades: '' }]);
 
-          // ... (Size Images logic - same as before) ...
+          // Size Images logic
           if (product.size_images && Array.isArray(product.size_images)) {
               const formattedSizeImages = product.size_images.map((si: any) => ({
                   labels: si.labels || '',
@@ -228,7 +221,7 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
               setSizeImages(formattedSizeImages);
           }
 
-          // ... (Specs logic - same as before) ...
+          // Specs logic
           const specs = Array.isArray(product.specifications) ? product.specifications : [];
           setExpertData({ seo_keywords: specs.find((s:any) => s.key === 'seo_keywords')?.value || '' });
           setFittingExtras({
@@ -304,7 +297,6 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
           
           if (variantData && variantData.length > 0) {
             
-            // YAHAN CHANGE KIYA HAI: 'isFittingCategory' state ki jagah 'productIsFitting' variable use kiya hai
             if (productIsFitting) {
                 const finishImagesMap = product.finish_images || {};
                 const grouped: Record<string, VariantFinish[]> = {};
@@ -374,6 +366,7 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
       fetchProduct();
     }
   }, [id, isEditMode]);
+
   // --- SYNC MATERIAL ---
   useEffect(() => {
     const combinedMaterials = materialRows
@@ -399,7 +392,7 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
   
   const handleFittingChange = (e: any) => setFittingExtras(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // --- FITTING LOGIC (Omitted for brevity, but stays same) ---
+  // --- FITTING LOGIC ---
   const addVariantGroup = () => setVariantGroups(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), sizeLabel: '', finishes: [{ id: Math.random().toString(36).substr(2, 9), name: '', type: '', image: '', loading: false }] }]);
   const removeVariantGroup = (idx: number) => setVariantGroups(prev => prev.filter((_, i) => i !== idx));
   const updateGroupSize = (idx: number, val: string) => setVariantGroups(prev => { const n = [...prev]; n[idx] = { ...n[idx], sizeLabel: val }; return n; });
@@ -457,6 +450,14 @@ const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
   };
 
   // --- OTHER HANDLERS ---
+  const addFaq = () => setFormData(p => ({ ...p, faqs: [...p.faqs, { question: '', answer: '' }] }));
+  const removeFaq = (idx: number) => setFormData(p => ({ ...p, faqs: p.faqs.filter((_, i) => i !== idx) }));
+  const updateFaq = (idx: number, field: 'question' | 'answer', val: string) => {
+    const newFaqs = [...formData.faqs];
+    newFaqs[idx][field] = val;
+    setFormData(p => ({ ...p, faqs: newFaqs }));
+  };
+
   const addSizeImage = () => setSizeImages([...sizeImages, { labels: '', name: '', image: '', loading: false }]);
   const removeSizeImage = (idx: number) => setSizeImages(sizeImages.filter((_, i) => i !== idx));
   const updateSizeImageText = (idx: number, field: 'labels' | 'name', val: string) => {
@@ -528,7 +529,7 @@ const uploadFile = async (file: File, folder: string) => {
   formData.append('folder', `product-images/${folder}`);
 
   const response = await fetch(
-    `https://api.cloudinary.com/v1_1/dgvaymupuS/image/upload`, // 👈 replace cloud name
+    `https://api.cloudinary.com/v1_1/dgvaymupuS/image/upload`, // 👈 dgvaymupuS is the hardcoded cloud name
     { method: 'POST', body: formData }
   );
 
@@ -570,7 +571,7 @@ const uploadFile = async (file: File, folder: string) => {
     if (isFittingCategory) {
         rawList = variantGroups.map(g => g.sizeLabel.trim());
     } else {
-        // mm ke liye unit lagayein, gauge ke liye '#' prefix lagayein
+        // unit and prefix logic
         rawList = fastenerSizes.map(s => {
           const val = s.diameter.trim();
           if(!val) return '';
@@ -588,7 +589,7 @@ const uploadFile = async (file: File, folder: string) => {
 
     const finalSlug = formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     
-    // 1. Build Finish & Type Maps for the main product metadata
+    // Build Finish & Type Maps logic
     const finishImageMap: Record<string, string> = {};
     if (isFittingCategory) {
         variantGroups.forEach(group => {
@@ -668,22 +669,19 @@ const uploadFile = async (file: File, folder: string) => {
                 }
             });
         } else {
-            // --- FASTENER LOGIC (THIS WAS MISSING) ---
+            // --- FASTENER LOGIC ---
             fastenerSizes.forEach(sizeObj => {
                 // Check if diameter or length exists
                 if (sizeObj.diameter || sizeObj.length) {
-                    
-                    // If you have multiple finishes, create a row for each finish per size
-                    // If no finishes, create at least one row with 'Plain' or 'Standard'
                     const finishesToLoop = fastenerFinishes.length > 0 ? fastenerFinishes : [{ name: 'Standard', image: '' }];
                     
                     finishesToLoop.forEach(f => {
                         variantsToInsert.push({
                             product_id: productId,
                             diameter: sizeObj.diameter,
-                            diameter_unit: sizeObj.diameterUnit, // Ensure this matches your DB column name
+                            diameter_unit: sizeObj.diameterUnit,
                             length: sizeObj.length,
-                            unit: sizeObj.unit, // Ensure this matches your DB column name
+                            unit: sizeObj.unit,
                             finish: f.name || 'Standard',
                             image: f.image || ''
                         });
@@ -739,12 +737,16 @@ const uploadFile = async (file: File, folder: string) => {
           <textarea name="long_description" value={formData.long_description} onChange={handleChange} placeholder="Long Description" className="w-full px-4 py-2 border rounded-lg" rows={4} />
         </div>
 
-        {/* 2. CERTIFICATIONS */}
+        {/* ========================================================================= */}
+        {/* 2. CERTIFICATIONS SECTION (UPDATED WITH LIVE PREVIEW) */}
+        {/* ========================================================================= */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-4 border-b pb-2">
                 <h3 className="font-bold text-gray-900 flex items-center gap-2"><ShieldCheck size={18} className="text-emerald-600" /> Certifications</h3>
                 <button type="button" onClick={addCert} className="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded hover:bg-emerald-200 flex items-center gap-1"><Plus size={14} /> Add Badge</button>
             </div>
+            
+            {/* Input fields */}
             <div className="space-y-3">
                 {formData.certifications.map((cert, idx) => (
                     <div key={idx} className="flex gap-4 items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
@@ -757,6 +759,39 @@ const uploadFile = async (file: File, folder: string) => {
                     </div>
                 ))}
             </div>
+
+            {/* LIVE PREVIEW SECTION */}
+            {formData.certifications.length > 0 && (
+                <div className="mt-8 border-t border-gray-200 pt-6">
+                    <label className="block text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <Activity size={14} className="text-emerald-500"/> Live Preview (How it looks to users)
+                    </label>
+                    
+                    <div className="p-4 bg-gray-100 rounded-lg border border-gray-200 flex flex-wrap gap-4">
+                        
+                        {/* THE EXACT DESIGN BLOCK FROM PRODUCTDETAIL.TSX */}
+                        {formData.certifications.map((cert: CertItem, idx: number) => (
+                            <div 
+                                key={idx} 
+                                className="bg-neutral-900 rounded-md py-2 px-3 flex items-center gap-3 border border-neutral-800 shadow-2xl hover:scale-105 transition-transform duration-300 cursor-default"
+                            >
+                                <div className="p-1 rounded-full border-2 border-emerald-500/30 shrink-0">
+                                    <ShieldCheck className="text-emerald-500" size={24} strokeWidth={2.5} />
+                                </div>
+                                <div className="flex flex-col">
+                                    {/* Design fallbacks handled automatically for empty strings */}
+                                    <span className="text-white font-black text-sm leading-none">
+                                        {cert.title || 'Draft Title'}
+                                    </span>
+                                    <span className="text-emerald-500 text-[9px] font-bold tracking-[0.25em] uppercase mt-1.5 font-mono leading-none">
+                                        {cert.subtitle || 'Draft Subtitle'}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
 
         {/* 3. CORE SPECS + MATERIAL */}
@@ -859,56 +894,54 @@ const uploadFile = async (file: File, folder: string) => {
                   ) : (
                       <table className="w-full min-w-[600px] border-collapse text-sm">
                         <thead><tr className="bg-gray-100 text-left"><th className="p-3 border-b">Feature Name</th><th className="p-3 border-b">Symbol</th>{uniqueDiameters.map(dia => (<th key={dia} className="p-3 border-b text-blue-600">{dia}</th>))}<th className="p-3 border-b"></th></tr></thead>
-                       <tbody>
-  {formData.dimensional_specifications.map((dim, idx) => (
-    <tr key={idx} className="border-b">
-      <td className="p-2">
-        <input
-          value={dim.label}
-          onChange={(e) => updateDim(idx, 'label', e.target.value)}
-          className="w-full border rounded p-1"
-        />
-      </td>
-      <td className="p-2">
-        <input
-          value={dim.symbol}
-          onChange={(e) => updateDim(idx, 'symbol', e.target.value)}
-          className="w-full border rounded p-1 text-center"
-        />
-      </td>
-      
-      {/* --- UPDATE THIS PART --- */}
-      {uniqueDiameters.map((dia) => {
-        // Step 1: Raw key nikalein (e.g., "3.5mm" se "3.5")
-        const rawKey = dia.replace('mm', '').replace('#', '');
-        
-        // Step 2: Value check karein (pehle "3.5mm" try kare, fir "3.5")
-        const displayValue = dim.values[dia] || dim.values[rawKey] || '';
+                        <tbody>
+                          {formData.dimensional_specifications.map((dim, idx) => (
+                            <tr key={idx} className="border-b">
+                              <td className="p-2">
+                                <input
+                                  value={dim.label}
+                                  onChange={(e) => updateDim(idx, 'label', e.target.value)}
+                                  className="w-full border rounded p-1"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  value={dim.symbol}
+                                  onChange={(e) => updateDim(idx, 'symbol', e.target.value)}
+                                  className="w-full border rounded p-1 text-center"
+                                />
+                              </td>
+                              
+                              {uniqueDiameters.map((dia) => {
+                                // Raw key logic
+                                const rawKey = dia.replace('mm', '').replace('#', '');
+                                
+                                // Value check logic
+                                const displayValue = dim.values[dia] || dim.values[rawKey] || '';
 
-        return (
-          <td key={dia} className="p-2">
-            <input
-              value={displayValue} 
-              onChange={(e) => updateDim(idx, 'values', e.target.value, dia)}
-              className="w-full border rounded p-1 text-center"
-            />
-          </td>
-        );
-      })}
-      {/* ------------------------ */}
+                                return (
+                                  <td key={dia} className="p-2">
+                                    <input
+                                      value={displayValue} 
+                                      onChange={(e) => updateDim(idx, 'values', e.target.value, dia)}
+                                      className="w-full border rounded p-1 text-center"
+                                    />
+                                  </td>
+                                );
+                              })}
 
-      <td className="p-2 text-center">
-        <button
-          type="button"
-          onClick={() => removeDim(idx)}
-          className="text-red-400"
-        >
-          <Trash2 size={16} />
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
+                              <td className="p-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => removeDim(idx)}
+                                  className="text-red-400"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
                       </table>
                   )}
               </div>
@@ -981,7 +1014,6 @@ const uploadFile = async (file: File, folder: string) => {
                 </div>
             </div>
         ) : (
-            /* FITTING STYLE UI (Stays same) */
             <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-200">
                   <div className="flex justify-between items-center mb-6">
                     <div><h3 className="font-bold text-gray-900 flex items-center gap-2"><Layers size={18} className="text-orange-600"/> Variants Configuration</h3></div>
@@ -1017,47 +1049,8 @@ const uploadFile = async (file: File, folder: string) => {
                   </div>
             </div>
         )}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-    <div className="flex justify-between items-center mb-4 border-b pb-2">
-        <h3 className="font-bold text-gray-900 flex items-center gap-2">
-            <Info size={18} className="text-blue-600" /> Product FAQs
-        </h3>
-        <button type="button" onClick={addFaq} className="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded hover:bg-blue-200 flex items-center gap-1">
-            <Plus size={14} /> Add FAQ
-        </button>
-    </div>
-    <div className="space-y-4">
-        {formData.faqs.map((faq, idx) => (
-            <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3 relative">
-                <button type="button" onClick={() => removeFaq(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-600">
-                    <X size={18} />
-                </button>
-                <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Question</label>
-                    <input 
-                        value={faq.question} 
-                        onChange={(e) => updateFaq(idx, 'question', e.target.value)} 
-                        className="w-full px-3 py-2 border rounded text-sm font-semibold" 
-                        placeholder="e.g. Is this screw suitable for coastal environments?"
-                    />
-                </div>
-                <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Answer</label>
-                    <textarea 
-                        value={faq.answer} 
-                        onChange={(e) => updateFaq(idx, 'answer', e.target.value)} 
-                        className="w-full px-3 py-2 border rounded text-sm h-20" 
-                        placeholder="e.g. Yes, our SS304 grade provides excellent corrosion resistance..."
-                    />
-                </div>
-            </div>
-        ))}
-        {formData.faqs.length === 0 && (
-            <div className="text-center py-6 text-gray-400 text-sm italic">No FAQs added for this product yet.</div>
-        )}
-    </div>
-</div>
-          {/* 7. Size Images */}
+
+        {/* 7. Size Images */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
           <h3 className="font-bold mb-6 flex items-center gap-2 text-blue-600">
               <ImageIcon size={18} /> Image Configurator (Frontend Buttons)
@@ -1108,8 +1101,49 @@ const uploadFile = async (file: File, folder: string) => {
            </div>
         </div>
 
+        {/* 10. FAQs */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                    <Info size={18} className="text-blue-600" /> Product FAQs
+                </h3>
+                <button type="button" onClick={addFaq} className="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded hover:bg-blue-200 flex items-center gap-1">
+                    <Plus size={14} /> Add FAQ
+                </button>
+            </div>
+            <div className="space-y-4">
+                {formData.faqs.map((faq, idx) => (
+                    <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3 relative">
+                        <button type="button" onClick={() => removeFaq(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-600">
+                            <X size={18} />
+                        </button>
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Question</label>
+                            <input 
+                                value={faq.question} 
+                                onChange={(e) => updateFaq(idx, 'question', e.target.value)} 
+                                className="w-full px-3 py-2 border rounded text-sm font-semibold" 
+                                placeholder="e.g. Is this screw suitable for coastal environments?"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Answer</label>
+                            <textarea 
+                                value={faq.answer} 
+                                onChange={(e) => updateFaq(idx, 'answer', e.target.value)} 
+                                className="w-full px-3 py-2 border rounded text-sm h-20" 
+                                placeholder="e.g. Yes, our SS304 grade provides excellent corrosion resistance..."
+                            />
+                        </div>
+                    </div>
+                ))}
+                {formData.faqs.length === 0 && (
+                    <div className="text-center py-6 text-gray-400 text-sm italic">No FAQs added for this product yet.</div>
+                )}
+            </div>
+        </div>
 
-        {/* 7. Gallery & Submit (Remains same) */}
+        {/* 11. Gallery */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <h3 className="font-bold mb-4">Product Gallery</h3>
             <div className="flex flex-wrap gap-4">
@@ -1120,6 +1154,7 @@ const uploadFile = async (file: File, folder: string) => {
             </div>
         </div>
 
+        {/* Submit */}
         <div className="flex justify-end pb-10">
             <button type="submit" disabled={loading} className="bg-black text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-all">{loading ? <Loader2 className="animate-spin"/> : <Save size={20}/>} {isEditMode ? 'Update Product' : 'Save Product'}</button>
         </div>
