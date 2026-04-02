@@ -88,7 +88,7 @@ const About: React.FC = () => {
                 "logo": "https://durablefastener.com/durablefastener.png",
                 "founder": {
                   "@type": "Person",
-                  "name": "Khushi Chovatiya"
+                  "name": " "
                 },
                 "location": {
                   "@type": "Place",

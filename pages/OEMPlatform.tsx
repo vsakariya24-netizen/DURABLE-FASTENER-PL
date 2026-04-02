@@ -354,6 +354,10 @@ const OEMPlatform: React.FC = () => {
     </div>
   );
 
+  function setIsopen(arg0: boolean) {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <div className="min-h-screen bg-[#030305] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden">
       <Helmet>
@@ -456,7 +460,7 @@ const OEMPlatform: React.FC = () => {
 </Helmet>
 
       {/* 1. HERO */}
- <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-[#030305]">
+ <section className="relative min-h-[125vh] flex items-center justify-center overflow-hidden bg-[#030305]">
   <div className="absolute inset-0 z-0">
     {content?.hero_video_url ? (
       <img
@@ -752,13 +756,13 @@ const OEMPlatform: React.FC = () => {
 
           <div className="flex justify-between items-center mt-4 opacity-50">
              <div className="flex gap-4">
-               <span className="text-[10px] text-slate-600 font-mono">REF: MFG-2025-A</span>
+               <span className="text-[10px] text-slate-600 font-mono"></span>
              </div>
              <div className="h-px w-32 bg-white/20"></div>
           </div>
 
           <div className="flex justify-end items-center mt-4 opacity-40">
-             <span className="text-[10px] text-slate-500 font-mono mr-2">TOLERANCE SPEC: ISO 4759-1</span>
+             <span className="text-[10px] text-slate-500 font-mono mr-2"></span>
           </div>
 
         </div>
@@ -980,9 +984,9 @@ const OEMPlatform: React.FC = () => {
             <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8">READY TO <span className="text-blue-600">SCALE?</span></h2>
           </ScrollReveal>
           <ScrollReveal delay={0.2}>
-            <a href="mailto:info@durablefastener.com" className="px-10 py-5 bg-black text-white font-bold rounded-sm hover:scale-105 transition-transform inline-flex items-center gap-3 text-lg shadow-2xl">
-               <Phone size={22} /> BOOK ENGINEERING CALL
-            </a>
+            <Link to="/contact" onClick={() => setIsopen(false)} className="px-10 py-5 bg-black text-white font-bold rounded-sm hover:scale-105 transition-transform inline-flex items-center gap-3 text-lg shadow-2xl">
+               BOOK ENGINEERING CALL
+            </Link>
           </ScrollReveal>
        </div>
      </section>

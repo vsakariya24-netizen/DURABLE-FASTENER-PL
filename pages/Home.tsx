@@ -349,7 +349,7 @@ const Home: React.FC = () => {
   fittings:  ''
 });
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
-
+const [productDivisions, setProductDivisions] = useState<any[]>([]);
   useEffect(() => {
     const fetchContent = async () => {
       const { data } = await supabase.from('site_content').select('*').single();
@@ -358,6 +358,8 @@ const Home: React.FC = () => {
         if (data.hero_images?.length > 0) {
           setHeroImages(data.hero_images.map((url: string) => cleanImageUrl(url)));
         }
+
+
 
         setHeroText({
           line1: data.hero_title_1 || "WHERE DESIRE",
@@ -377,6 +379,34 @@ setCategoryImages({
   fittings:  cleanImageUrl(data.cat_fittings  || '')
 });
       }
+
+const { data: categoriesData } = await supabase
+    .from('categories')
+    .select('id, name')
+    .order('name');
+
+  // 2. Fetch all products to group them
+  const { data: allProducts } = await supabase
+    .from('products')
+    .select('name, category')
+    .order('position', { ascending: true });
+
+  if (categoriesData && allProducts) {
+    const grouped = categoriesData.map(cat => {
+      // Filter products that belong to this category
+      const productsInCat = allProducts.filter(p => p.category === cat.name);
+      
+      return {
+        name: cat.name,
+        count: productsInCat.length,
+        // Only take first 10 names for the UI list
+        products: productsInCat.map(p => p.name),
+        slug: cat.name.toLowerCase().trim().replace(/[\s/]+/g, '-')
+      };
+    }).filter(div => div.count > 0); // Only show divisions that have products
+
+    setProductDivisions(grouped);
+  }
 
       // ✅ Route blog images through R2
       
@@ -532,160 +562,81 @@ setCategoryImages({
   </div>
 
   {/* 2-Column Cards */}
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-    {/* ── FASTENERS CARD ── */}
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.7, delay: 0, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative rounded-[2rem] overflow-hidden border border-white/5 bg-neutral-900 flex flex-col"
-    >
-      {/* Image */}
-      <div className="relative h-[260px] md:h-[300px] overflow-hidden flex-shrink-0">
-        {categoryImages.fasteners ? (
-          <img
-            src={categoryImages.fasteners}
-            alt="Fasteners"
-            className="w-full h-full object-cover grayscale-[0.3] brightness-75 transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105 group-hover:brightness-85"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center">
-            <span className="text-white/10 text-8xl font-black">01</span>
+  {/* 2-Column Cards (Dynamic) */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {productDivisions.map((division, index) => {
+    // Helper to pick the right R2 image based on category name
+    const isFastener = division.name.toLowerCase().includes('fastener') || division.name.toLowerCase().includes('screw');
+    const cardImage = isFastener ? categoryImages.fasteners : categoryImages.fittings;
+    return (
+      <motion.div
+        key={division.name}
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.7, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+        className="group relative rounded-[2rem] overflow-hidden border border-white/5 bg-neutral-900 flex flex-col"
+      >
+        {/* Image Area */}
+        <div className="relative h-[260px] md:h-[300px] overflow-hidden flex-shrink-0">
+          {cardImage ? (
+            <img
+              src={cardImage}
+              alt={division.name}
+              className="w-full h-full object-cover grayscale-[0.3] brightness-75 transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105 group-hover:brightness-85"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center">
+              <span className="text-white/10 text-8xl font-black">0{index + 1}</span>
+            </div>
+          )}
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-neutral-900 to-transparent" />
+          <div className="absolute top-5 left-5 bg-black/60 backdrop-blur-sm border border-yellow-500/30 text-yellow-500 text-[9px] font-black uppercase tracking-[0.25em] px-3 py-1.5 rounded-full">
+            {division.name} Segment
           </div>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-neutral-900 to-transparent" />
-        {/* Segment badge */}
-        <div className="absolute top-5 left-5 bg-black/60 backdrop-blur-sm border border-yellow-500/30 text-yellow-500 text-[9px] font-black uppercase tracking-[0.25em] px-3 py-1.5 rounded-full">
-          Fasteners Segment
-        </div>
-        {/* Count badge */}
-        <div className="absolute top-5 right-5 bg-black/60 backdrop-blur-sm border border-white/10 text-white/70 text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
-          9 Products
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-col flex-1 px-8 pt-4 pb-8">
-        <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-white uppercase mb-2 group-hover:text-yellow-400 transition-colors duration-300">
-          Fasteners
-        </h3>
-        <p className="text-neutral-500 text-sm leading-relaxed mb-6 italic">
-          Precision-engineered fastening solutions for construction, woodwork, drywall & structural applications.
-        </p>
-
-        <div className="w-full h-px bg-white/8 mb-5" />
-        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-500 mb-4">Products in this division</p>
-
-        <div className="grid grid-cols-2 gap-x-4 flex-1">
-          {[
-            'Carriage Bolt', 'Chipboard Screw',
-            'M.S. Sheet Metal Self Tapping', 'Machine Screw',
-            'Nylon Frame Fixing Anchors', 'POP Drywall (Gypsum) Screw',
-            'S.S. Self Tapping Screw', 'Self Drilling Screw (SDS)',
-            'Wire Nails'
-          ].map((product, i) => (
-            <div key={i} className="flex items-start gap-2.5 py-2.5 border-b border-white/5">
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500/40 flex-shrink-0 group-hover:bg-yellow-500 transition-colors" />
-              <span className="text-[12px] text-neutral-400 leading-snug hover:text-white transition-colors">
-                {product}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/8">
-          <span className="text-xs text-neutral-600 font-mono">9 types available</span>
-          <Link
-            to="/products"
-            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 hover:text-white transition-colors group/cta"
-          >
-            Explore Division
-            <div className="w-6 h-6 rounded-full border border-yellow-500 flex items-center justify-center group-hover/cta:bg-yellow-500 transition-all">
-              <ArrowRight size={10} className="text-yellow-500 group-hover/cta:text-black" />
-            </div>
-          </Link>
-        </div>
-      </div>
-    </motion.div>
-
-    {/* ── FITTINGS CARD ── */}
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.7, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative rounded-[2rem] overflow-hidden border border-white/5 bg-neutral-900 flex flex-col"
-    >
-      {/* Image */}
-      <div className="relative h-[260px] md:h-[300px] overflow-hidden flex-shrink-0">
-        {categoryImages.fittings ? (
-          <img
-            src={categoryImages.fittings}
-            alt="Fittings"
-            className="w-full h-full object-cover grayscale-[0.3] brightness-75 transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105 group-hover:brightness-85"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center">
-            <span className="text-white/10 text-8xl font-black">02</span>
+          <div className="absolute top-5 right-5 bg-black/60 backdrop-blur-sm border border-white/10 text-white/70 text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
+            {division.count} Products
           </div>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-neutral-900 to-transparent" />
-        {/* Segment badge */}
-        <div className="absolute top-5 left-5 bg-black/60 backdrop-blur-sm border border-yellow-500/30 text-yellow-500 text-[9px] font-black uppercase tracking-[0.25em] px-3 py-1.5 rounded-full">
-          Fittings
-        </div>
-        {/* Count badge */}
-        <div className="absolute top-5 right-5 bg-black/60 backdrop-blur-sm border border-white/10 text-white/70 text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
-          8 Products
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-col flex-1 px-8 pt-4 pb-8">
-        <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-white uppercase mb-2 group-hover:text-yellow-400 transition-colors duration-300">
-          Fittings
-        </h3>
-        <p className="text-neutral-500 text-sm leading-relaxed mb-6 italic">
-          Smart door and furniture fitting solutions built for durability, smooth operation & long-lasting performance.
-        </p>
-
-        <div className="w-full h-px bg-white/8 mb-5" />
-        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-500 mb-4">Products in this division</p>
-
-        <div className="grid grid-cols-2 gap-x-4 flex-1">
-          {[
-            'Auto Hinges', 'Buffers',
-            'Caster Wheels', 'Door Catcher',
-            'Door Magnet', 'Door Silencers',
-            'Slim Magnet', 'Wall Grip'
-          ].map((product, i) => (
-            <div key={i} className="flex items-start gap-2.5 py-2.5 border-b border-white/5">
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500/40 flex-shrink-0 group-hover:bg-yellow-500 transition-colors" />
-              <span className="text-[12px] text-neutral-400 leading-snug hover:text-white transition-colors">
-                {product}
-              </span>
-            </div>
-          ))}
         </div>
 
-        <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/8">
-          <span className="text-xs text-neutral-600 font-mono">8 types available</span>
-          <Link
-            to="/products"
-            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 hover:text-white transition-colors group/cta"
-          >
-            Explore Division
-            <div className="w-6 h-6 rounded-full border border-yellow-500 flex items-center justify-center group-hover/cta:bg-yellow-500 transition-all">
-              <ArrowRight size={10} className="text-yellow-500 group-hover/cta:text-black" />
-            </div>
-          </Link>
-        </div>
-      </div>
-    </motion.div>
+        {/* Content Area */}
+        <div className="flex flex-col flex-1 px-8 pt-4 pb-8">
+          <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-white uppercase mb-2 group-hover:text-yellow-400 transition-colors duration-300">
+            {division.name}
+          </h3>
+          
+          <div className="w-full h-px bg-white/8 mb-5" />
+          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-500 mb-4">Products in this division</p>
 
-  </div>
+          <div className="grid grid-cols-2 gap-x-4 flex-1">
+            {/* Show only first 10 products to keep UI clean */}
+            {division.products.slice(0, 10).map((productName: string, i: number) => (
+              <div key={i} className="flex items-start gap-2.5 py-2.5 border-b border-white/5">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500/40 flex-shrink-0 group-hover:bg-yellow-500 transition-colors" />
+                <span className="text-[12px] text-neutral-400 leading-snug hover:text-white transition-colors truncate">
+                  {productName}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/8">
+            <span className="text-xs text-neutral-600 font-mono">{division.count} types available</span>
+            <Link
+              to={`/products/${division.name.toLowerCase().replace(/\s+/g, '-')}`}
+              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 hover:text-white transition-colors group/cta"
+            >
+              Explore Division
+              <div className="w-6 h-6 rounded-full border border-yellow-500 flex items-center justify-center group-hover/cta:bg-yellow-500 transition-all">
+                <ArrowRight size={10} className="text-yellow-500 group-hover/cta:text-black" />
+              </div>
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+    );
+  })}
+</div>
 
   {/* Mobile CTA */}
   <div className="flex md:hidden justify-center mt-10">

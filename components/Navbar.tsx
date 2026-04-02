@@ -68,13 +68,13 @@ const Navbar = () => {
                 On laptops (xl), it will remain hidden and show the hamburger instead.
             */}
             <div className="hidden 2xl:flex flex-1 justify-center items-center gap-2">
-              <Link to="/" className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${isActive('/') ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+              <Link to="/" className={`px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${isActive('/') ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
                  <Home size={18} /> <span className="whitespace-nowrap">Home</span>
               </Link>
 
               {/* Products Dropdown */}
               <div className="relative group px-1">
-                <Link to="/products" className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${isActive('/products') ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+                <Link to="/products" className={`px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${isActive('/products') ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
                   <Package size={18} /> <span className="whitespace-nowrap">Products</span> <ChevronDown size={14} />
                 </Link>
                 
@@ -94,7 +94,7 @@ const Navbar = () => {
               </div>
 
               {navItems.map((item) => (
-                 <Link key={item.name} to={item.path} className={`px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 ${isActive(item.path) ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+                 <Link key={item.name} to={item.path} className={`px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${isActive(item.path) ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
                    {item.icon} <span className="whitespace-nowrap">{item.name}</span>
                  </Link>
               ))}
@@ -103,14 +103,14 @@ const Navbar = () => {
             {/* ACTION BUTTONS & MOBILE HAMBURGER 
                 ADDED: flex-shrink-0 to ensure these buttons NEVER get cut off 
             */}
-            <div className="flex items-center space-x-2 xs:space-x-4 flex-shrink-0">
+            <div className="flex items-center space-x-1 xs:space-x-3 flex-shrink-0">
                {/* AI Finder */}
-               <Link to="/ai-finder" className="hidden md:flex items-center gap-2 px-5 py-3 rounded-full text-xs font-bold uppercase text-white bg-slate-900 hover:bg-black whitespace-nowrap">
+               <Link to="/ai-finder" className="hidden md:flex items-center gap-2 px-4 py-3 rounded-full text-xs font-bold uppercase text-white bg-slate-900 hover:bg-black whitespace-nowrap">
                  <Sparkles size={14} className="text-yellow-400" /> <span>AI Finder</span>
                </Link>
                
                {/* Quote Button */}
-               <Link to="/contact" className="hidden sm:flex items-center gap-2 bg-[#fbbf24] text-black px-6 py-3 rounded-full text-xs font-bold uppercase hover:bg-yellow-300 whitespace-nowrap">
+               <Link to="/contact" className="hidden sm:flex items-center gap-2 bg-[#fbbf24] text-black px-5 py-3 rounded-full text-xs font-bold uppercase hover:bg-yellow-300 whitespace-nowrap">
                  <span>Quote</span> <ArrowRight size={14} />
                </Link>
 
