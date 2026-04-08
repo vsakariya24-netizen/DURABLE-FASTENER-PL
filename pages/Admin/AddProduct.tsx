@@ -401,13 +401,32 @@ const AddProduct: React.FC = () => {
   const updateFinishName = (groupIdx: number, finishIdx: number, val: string) => setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes[finishIdx].name = val; return n; });
   const updateFinishType = (groupIdx: number, finishIdx: number, val: string) => setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes[finishIdx].type = val; return n; });
   const handleFinishImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, groupIdx: number, finishIdx: number) => {
-    if (!e.target.files?.[0]) return;
-    setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes[finishIdx].loading = true; return n; });
-    try {
-      const url = await uploadFile(e.target.files![0], 'finishes');
-      setVariantGroups(prev => { const n = [...prev]; n[groupIdx].finishes[finishIdx].image = url; n[groupIdx].finishes[finishIdx].loading = false; return n; });
-    } catch(err) { alert('Upload failed'); }
-  };
+  if (!e.target.files?.[0]) return;
+  
+  // Set loading state for the specific item
+  setVariantGroups(prev => {
+    const n = [...prev];
+    n[groupIdx].finishes[finishIdx].loading = true;
+    return n;
+  });
+
+  try {
+    const url = await uploadFile(e.target.files[0], 'finishes');
+    setVariantGroups(prev => {
+      const n = [...prev];
+      n[groupIdx].finishes[finishIdx].image = url;
+      n[groupIdx].finishes[finishIdx].loading = false;
+      return n;
+    });
+  } catch (err: any) {
+    alert(`Finish image error: ${err.message}`);
+    setVariantGroups(prev => {
+      const n = [...prev];
+      n[groupIdx].finishes[finishIdx].loading = false;
+      return n;
+    });
+  }
+};
 
   // --- FASTENER VARIANT LOGIC ---
   const addFastenerSize = () => setFastenerSizes([...fastenerSizes, { diameter: '', diameterUnit: 'mm', length: '', unit: 'mm' }]);
@@ -522,22 +541,27 @@ const AddProduct: React.FC = () => {
   };
 
 const uploadFile = async (file: File, folder: string) => {
-  // ✅ Upload directly to Cloudinary
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', 'durable-fastener'); // your preset name
-  formData.append('folder', `product-images/${folder}`);
+  // 1. Create a clean filename
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Math.random()}.${fileExt}`;
+  const filePath = `${folder}/${fileName}`;
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/dgvaymupuS/image/upload`, // 👈 dgvaymupuS is the hardcoded cloud name
-    { method: 'POST', body: formData }
-  );
+  // 2. Upload to Supabase Storage (Bucket name is usually 'product-images')
+  const { data, error } = await supabase.storage
+    .from('product-images') 
+    .upload(filePath, file);
 
-  const data = await response.json();
-  if (data.error) throw new Error(data.error.message);
+  if (error) {
+    console.error("Upload Error:", error);
+    throw new Error(error.message);
+  }
 
-  // ✅ Return optimized Cloudinary URL
-  return data.secure_url;
+  // 3. Get the Public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(filePath);
+
+  return publicUrl;
 };
 
   const handleAppImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
@@ -548,12 +572,18 @@ const uploadFile = async (file: File, folder: string) => {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
-    setUploading(true);
-    try { const url = await uploadFile(e.target.files[0], 'gallery'); setFormData(prev => ({ ...prev, images: [url, ...prev.images] })); } catch(err) { alert('Upload failed'); }
+  if (!e.target.files?.[0]) return;
+  setUploading(true);
+  try {
+    const url = await uploadFile(e.target.files[0], 'gallery');
+    setFormData(prev => ({ ...prev, images: [url, ...prev.images] }));
+  } catch (err: any) {
+    // Show the SPECIFIC error (e.g., "Invalid token" or "File too large")
+    alert(`Upload failed: ${err.message}`);
+  } finally {
     setUploading(false);
-  };
-
+  }
+};
   const handleTechDrawingUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     setUploading(true);
@@ -583,99 +613,142 @@ const uploadFile = async (file: File, folder: string) => {
 
 
   // --- SUBMIT FUNCTION ---
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    const finalSlug = formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    
-    // Build Finish & Type Maps logic
-    const finishImageMap: Record<string, string> = {};
-    if (isFittingCategory) {
-        variantGroups.forEach(group => {
-            group.finishes.forEach(finish => {
-                if(finish.name.trim() !== '' && finish.image !== '') finishImageMap[finish.name.trim()] = finish.image; 
-            });
-        });
-    } else {
-        fastenerFinishes.forEach(f => {
-            if(f.name.trim() !== '' && f.image !== '') finishImageMap[f.name.trim()] = f.image;
-        });
-    }
+  // 1. Generate Slug if missing
+  const finalSlug = formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-    const typeImageMap: Record<string, string> = {};
-    if (!isFittingCategory) {
-        fastenerTypes.forEach(t => {
-            if(t.name.trim() !== '' && t.image !== '') typeImageMap[t.name.trim()] = t.image;
-        });
-    }
+  // 2. Prepare Image Maps for JSONB columns
+  const finishImageMap: Record<string, string> = {};
+  const typeImageMap: Record<string, string> = {};
 
-    const cleanedSizeImages = sizeImages.filter(si => si.labels.trim() !== '' || si.image !== '').map(({ loading, ...rest }) => rest);
+  if (isFittingCategory) {
+    variantGroups.forEach(group => {
+      group.finishes.forEach(f => {
+        if (f.name.trim() && f.image) finishImageMap[f.name.trim()] = f.image;
+      });
+    });
+  } else {
+    fastenerFinishes.forEach(f => {
+      if (f.name.trim() && f.image) finishImageMap[f.name.trim()] = f.image;
+    });
+    fastenerTypes.forEach(t => {
+      if (t.name.trim() && t.image) typeImageMap[t.name.trim()] = t.image;
+    });
+  }
 
-    const mergedSpecs = [
-        ...formData.specifications.filter(s => s.key && s.value),
-        ...selectedPerformance.map(key => ({ key, value: 'Standard' })),
-        { key: 'Available Colors', value: fittingExtras.colors },
-        { key: 'General Names', value: fittingExtras.general_names },
-        { key: 'Standard Packing', value: fittingExtras.packing },
-        { key: 'seo_keywords', value: expertData.seo_keywords },
-        ...dynamicCoreSpecs.filter(s => s.key && s.value)
-    ].filter(s => s.value && s.value.trim() !== '');
+  // 3. Construct Payload
+  const payload = {
+    ...formData,
+    slug: finalSlug,
+    finish_images: finishImageMap,
+    type_images: typeImageMap,
+    size_images: sizeImages.filter(si => si.labels.trim() || si.image).map(({ loading, ...rest }) => rest),
+    specifications: [
+      ...formData.specifications.filter(s => s.key && s.value),
+      ...selectedPerformance.map(key => ({ key, value: 'Standard' })),
+      { key: 'Available Colors', value: fittingExtras.colors },
+      { key: 'General Names', value: fittingExtras.general_names },
+      { key: 'Standard Packing', value: fittingExtras.packing },
+      { key: 'seo_keywords', value: expertData.seo_keywords },
+      ...dynamicCoreSpecs.filter(s => s.key && s.value)
+    ].filter(s => s.value && s.value.trim() !== ''),
+    applications: formData.applications.filter(a => a.name.trim() !== '').map(({ loading, ...rest }) => rest),
+    faqs: formData.faqs.filter(f => f.question.trim() !== ''),
+  };
 
-    const payload = {
-      ...formData,
-      slug: finalSlug,
-      finish_images: finishImageMap,
-      type_images: typeImageMap,
-      size_images: cleanedSizeImages, 
-      specifications: mergedSpecs,
-      applications: formData.applications.filter(a => a.name.trim() !== '').map(({loading, ...rest}) => rest),
-      faqs: formData.faqs.filter(f => f.question.trim() !== ''),
-    };
-
-    try {
+  try {
     let productId = id;
 
+    // --- STEP A: UPSERT PRODUCT ---
     if (isEditMode) {
-      const { error } = await supabase.from('products').update(payload).eq('id', id);
-      if (error) throw error;
+      const { error: updateErr } = await supabase.from('products').update(payload).eq('id', id);
+      if (updateErr) throw updateErr;
     } else {
-      // 1. Insert without .select() to avoid the "prefer" header CORS error
-      const { error: insertErr } = await supabase.from('products').insert([payload]);
-      if (insertErr) throw insertErr;
-
-      // 2. Fetch the newly created product ID using the slug
-      const { data: newProd, error: fetchErr } = await supabase
+      // Use .select('id') and handle potential CORS by ensuring headers are allowed
+      // If CORS persists, your "Fetch by Slug" method is the only safe fallback
+      const { data, error: insertErr } = await supabase
         .from('products')
+        .insert([payload])
         .select('id')
-        .eq('slug', finalSlug)
         .single();
-      
-      if (fetchErr) throw fetchErr;
-      productId = newProd.id;
+
+      if (insertErr) {
+        // Fallback for strict CORS environments
+        if (insertErr.message.includes('fetch')) {
+          await supabase.from('products').insert([payload]);
+          const { data: fallbackData } = await supabase.from('products').select('id').eq('slug', finalSlug).single();
+          productId = fallbackData?.id;
+        } else {
+          throw insertErr;
+        }
+      } else {
+        productId = data.id;
+      }
     }
 
-    if (productId) {
-      // Proceed with your variant insertion logic as normal...
-      await supabase.from('product_variants').delete().eq('product_id', productId);
-      // ... (rest of variant code)
+    if (!productId) throw new Error("Failed to retrieve Product ID");
+
+    // --- STEP B: SYNC VARIANTS ---
+    // First, clear old variants
+    await supabase.from('product_variants').delete().eq('product_id', productId);
+
+    const variantRows: any[] = [];
+
+    if (isFittingCategory) {
+      // Fittings: Map groups directly
+      variantGroups.forEach(group => {
+        group.finishes.forEach(f => {
+          variantRows.push({
+            product_id: productId,
+            diameter: group.sizeLabel, // We store size label in diameter column for fittings
+            finish: f.name,
+            type: f.type,
+            image: f.image
+          });
+        });
+      });
+    } else {
+      // Fasteners: Generate Cross-Join (Size x Finish x Type)
+      fastenerSizes.forEach(size => {
+        fastenerFinishes.forEach(finish => {
+          // If you have multiple types (Full Thread/Half Thread), add another loop here
+          const baseType = fastenerTypes[0]?.name || ''; 
+          variantRows.push({
+            product_id: productId,
+            diameter: size.diameter,
+            diameter_unit: size.diameterUnit,
+            length: size.length,
+            unit: size.unit,
+            finish: finish.name,
+            type: baseType,
+            image: finish.image // Usually fastener variant images are tied to finish
+          });
+        });
+      });
     }
 
-    navigate('/admin/products');
+    if (variantRows.length > 0) {
+      const { error: varErr } = await supabase.from('product_variants').insert(variantRows);
+      if (varErr) throw varErr;
+    }
+
+    navigate('/dfpladmin access/products');
   } catch (error: any) {
     console.error("Submission Error:", error);
-    alert(`Error: ${error.message}. Check if your Cloudinary preset is 'Unsigned'.`);
+    alert(`Submission Failed: ${error.message}`);
   } finally {
     setLoading(false);
   }
 };
-
   const activeSubCategories = categories.find(c => c.name === formData.category)?.sub_categories || [];
 
   return (
     <div className="max-w-7xl mx-auto pb-20">
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={() => navigate('/admin/products')} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><ArrowLeft size={20} /></button>
+        <button onClick={() => navigate('/dfpladmin access/products')} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><ArrowLeft size={20} /></button>
         <h1 className="text-2xl font-bold text-gray-900">{isEditMode ? 'Edit Product' : 'Add New Product'}</h1>
       </div>
 

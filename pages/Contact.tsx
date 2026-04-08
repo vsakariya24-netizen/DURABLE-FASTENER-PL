@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { 
   Mail, Phone, MapPin, Send, Loader2, 
   Globe, CheckCircle2, X, Paperclip, 
@@ -170,10 +170,17 @@ try {
     }
   };
 
-  const cardSlideUp = {
-    hidden: { opacity: 0, y: 40 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-  };
+ const cardSlideUp: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: 0.6, 
+      ease: "easeOut" // TypeScript now knows this is a valid Framer easing string
+    } 
+  }
+};
 
   return (
     <div className="bg-gray-50 min-h-screen font-sans relative">

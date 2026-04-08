@@ -26,7 +26,7 @@ const AdminLogin: React.FC = () => {
       setLoading(false);
     } else {
       // 2. If success, go to Dashboard
-      navigate('/admin/dashboard');
+      navigate('/dfpladmin access/dashboard');
     }
   };
 

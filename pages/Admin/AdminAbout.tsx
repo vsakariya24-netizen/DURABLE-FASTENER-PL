@@ -42,7 +42,7 @@ const AdminAbout: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
-        <Link to="/admin" className="text-gray-500 hover:text-black flex items-center gap-2">
+        <Link to="/dfpladmin access" className="text-gray-500 hover:text-black flex items-center gap-2">
           <ArrowLeft size={20} /> Back to Dashboard
         </Link>
         <button 

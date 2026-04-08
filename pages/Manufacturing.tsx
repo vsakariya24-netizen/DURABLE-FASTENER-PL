@@ -476,9 +476,14 @@ const Manufacturing: React.FC = () => {
                    <Link to="/contact" className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-12 py-6 rounded-2xl shadow-xl shadow-blue-600/20 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3">
                       Start OEM Manufacturing <ArrowRight />
                    </Link>
-                   <button className="bg-white border-2 border-slate-200 hover:border-slate-900 text-slate-900 text-xl font-bold px-12 py-6 rounded-2xl transition-all hover:-translate-y-1">
-                      Request Capability Sheet
-                   </button>
+                   <a
+                       href="https://wa.me/918758700709?text=Hi%20Durable%20Fastener,%20I%20want%20to%20request%20your%20Capability%20Sheet."
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-white border-2 border-slate-200 hover:border-slate-900 text-slate-900 text-xl font-bold px-12 py-6 rounded-2xl transition-all hover:-translate-y-1 flex items-center justify-center"
+                    >
+                       Request Capability Sheet
+                   </a>
                 </div>
             </RevealOnScroll>
          </div>

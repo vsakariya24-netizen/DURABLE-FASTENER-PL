@@ -391,6 +391,7 @@ const { data: categoriesData } = await supabase
     .select('name, category')
     .order('position', { ascending: true });
 
+    
   if (categoriesData && allProducts) {
     const grouped = categoriesData.map(cat => {
       // Filter products that belong to this category
@@ -610,7 +611,7 @@ const { data: categoriesData } = await supabase
 
           <div className="grid grid-cols-2 gap-x-4 flex-1">
             {/* Show only first 10 products to keep UI clean */}
-            {division.products.slice(0, 10).map((productName: string, i: number) => (
+           {division.products.map((productName: string, i: number) => (
               <div key={i} className="flex items-start gap-2.5 py-2.5 border-b border-white/5">
                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500/40 flex-shrink-0 group-hover:bg-yellow-500 transition-colors" />
                 <span className="text-[12px] text-neutral-400 leading-snug hover:text-white transition-colors truncate">

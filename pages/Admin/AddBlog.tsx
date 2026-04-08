@@ -522,7 +522,7 @@ const AddBlog = () => {
         : await supabase.from('blogs').insert([payload]);
 
       if (error) throw error;
-      navigate('/admin/blogs');
+      navigate('/dfpladmin access/blogs');
     } catch (err: any) { 
       alert(err.message); 
     } finally { 
@@ -537,7 +537,7 @@ const AddBlog = () => {
       <form onSubmit={handleSubmit}>
         {/* TOPBAR */}
         <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e4e4e7', padding: '10px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <Link to="/admin/blogs" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#71717a', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <Link to="/dfpladmin access/blogs" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#71717a', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             <ArrowLeft size={12}/> Back
           </Link>
           <div style={{ display: 'flex', gap: 7 }}>

@@ -151,7 +151,7 @@ const ManageCategories: React.FC = () => {
       
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Link to="/admin" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+        <Link to="/dfpladmin access" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
           <ArrowLeft size={20} />
         </Link>
         <div>

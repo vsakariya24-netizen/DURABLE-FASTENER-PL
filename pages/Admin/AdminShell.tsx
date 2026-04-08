@@ -10,15 +10,15 @@ const AdminShell: React.FC = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/admin/login');
+    navigate('/dfpladmin access/login');
   };
 
   const navItems = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Products', path: '/admin/products', icon: Package },
-    { name: 'Enquiries', path: '/admin/enquiries', icon: MessageSquare },
+    { name: 'Dashboard', path: '/dfpladmin access/dashboard', icon: LayoutDashboard },
+    { name: 'Products', path: '/dfpladmin access/products', icon: Package },
+    { name: 'Enquiries', path: '/dfpladmin access/enquiries', icon: MessageSquare },
     // 👇 NEW ITEM ADDED HERE
-    { name: 'Post Article', path: '/admin/add-blog', icon: FileText },
+    { name: 'Post Article', path: '/dfpladmin access/add-blog', icon: FileText },
   ];
 
   return (

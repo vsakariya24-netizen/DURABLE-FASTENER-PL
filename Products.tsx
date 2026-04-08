@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
@@ -8,30 +8,75 @@ import {
   ArrowRight, LayoutGrid, ShoppingBag, Sparkles
 } from 'lucide-react';
 
-// --- SCHEMA GENERATOR ---
-const generateSchema = (categoryName: string, products: any[]) => {
-  return {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": `${categoryName} - Industrial Fasteners Catalogue`,
-    "description": `Browse our premium collection of ${categoryName}.`,
-    "mainEntity": {
-      "@type": "ItemList",
-      "numberOfItems": products.length,
-      "itemListElement": products.slice(0, 10).map((p, i) => ({
-        "@type": "ListItem",
-        "position": i + 1,
-        "url": `https://durablefastener.com/product/${p.slug}`,
-        "name": p.name
-      }))
+// ============================================================
+// ✅ CACHE HELPER — Saves data in localStorage with expiry
+// ============================================================
+const CACHE_TTL_LONG  = 60 * 60 * 1000;  // 1 hour  — for categories (rarely change)
+const CACHE_TTL_SHORT = 10 * 60 * 1000;  // 10 mins — for products
+
+function getCached<T>(key: string): T | null {
+  try {
+    const raw  = localStorage.getItem(`sb_${key}`);
+    const time = localStorage.getItem(`sb_${key}_time`);
+    if (!raw || !time) return null;
+
+    const age = Date.now() - Number(time);
+    const ttl = key.startsWith('categories') ? CACHE_TTL_LONG : CACHE_TTL_SHORT;
+
+    if (age > ttl) {
+      // Cache expired — remove it
+      localStorage.removeItem(`sb_${key}`);
+      localStorage.removeItem(`sb_${key}_time`);
+      return null;
     }
-  };
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function setCache(key: string, data: any) {
+  try {
+    localStorage.setItem(`sb_${key}`, JSON.stringify(data));
+    localStorage.setItem(`sb_${key}_time`, String(Date.now()));
+  } catch (e) {
+    console.warn('Cache write failed:', e);
+  }
+}
+// ============================================================
+
+// --- HELPER: Slugify ---
+const toSlug = (text: string) => {
+  if (!text) return '';
+  return text.toLowerCase().trim().replace(/[\s/]+/g, '-');
+};
+
+// --- HELPER: Un-Slugify ---
+const fromSlug = (slug: string) => {
+  if (!slug) return '';
+  return slug.replace(/-/g, ' ').toLowerCase();
 };
 
 const Products: React.FC = () => {
-const { category: urlCategory, subcategory: urlSubCategory } = useParams();
+  const { category: urlCategory, subcategory: urlSubCategory } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+const cleanImageUrl = (url: string) => {
+  if (!url) return '';
+
+  // 1. If it's already a full URL (Cloudinary, S3, etc.), just return it
+  if (url.startsWith('http')) {
+    return url;
+  }
+
+  // 2. If it's just a path or filename, attach your R2 base
+  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
   
+  // Remove leading slash if it exists to avoid double slashes //
+  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
+
+  return `${R2_BASE}/${cleanPath}`;
+};
   // STATE
   const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; name: string }>({ 
     type: 'ALL', 
@@ -39,17 +84,38 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
     name: 'All Products' 
   });
 
-  const [expandedCats, setExpandedCats] = useState<string[]>([]);
-  const [categoryTree, setCategoryTree] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedCats, setExpandedCats]   = useState<string[]>([]);
+  const [categoryTree, setCategoryTree]   = useState<any[]>([]);
+  const [products, setProducts]           = useState<any[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [searchTerm, setSearchTerm]       = useState('');
 
   // -------------------------------------------
-  // STEP 1: LOAD CATEGORIES (Run Once)
+  // STEP 0: LEGACY REDIRECT
+  // -------------------------------------------
+  useEffect(() => {
+    const queryCat = searchParams.get('category');
+    if (queryCat && !urlCategory) {
+      navigate(`/products/${toSlug(queryCat)}`, { replace: true });
+    }
+  }, [searchParams, urlCategory, navigate]);
+
+
+  // -------------------------------------------
+  // STEP 1: LOAD CATEGORIES  ✅ WITH CACHE
   // -------------------------------------------
   useEffect(() => {
     const fetchCategories = async () => {
+      // 1️⃣ Try cache first
+      const cached = getCached<any[]>('categories_tree');
+      if (cached) {
+        console.log('✅ Categories loaded from cache');
+        setCategoryTree(cached);
+        return; // ← No Supabase query needed!
+      }
+
+      // 2️⃣ Cache miss → fetch from Supabase
+      console.log('🔄 Fetching categories from Supabase...');
       const [cats, subs] = await Promise.all([
         supabase.from('categories').select('*').order('name'),
         supabase.from('sub_categories').select('*').order('name')
@@ -60,91 +126,116 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
         sub_categories: subs.data?.filter(s => s.category_id === cat.id) || []
       })) || [];
 
+      // 3️⃣ Save to cache for next time
+      setCache('categories_tree', tree);
       setCategoryTree(tree);
     };
+
     fetchCategories();
   }, []);
 
   // -------------------------------------------
-  // STEP 2: SET FILTER FROM URL (Run when URL or Tree changes)
+  // STEP 2: SET FILTER FROM URL (SMART MATCHING)
   // -------------------------------------------
   useEffect(() => {
     if (categoryTree.length === 0) return;
 
-    // OLD Logic (Query Params) - REMOVE
-    /*
-    const catParam = searchParams.get('category');
-    const subParam = searchParams.get('sub');
-    */
+    if (urlCategory) {
+      const cleanUrlCat = fromSlug(urlCategory);
 
-    // NEW Logic (Clean URL Params)
-    // URL mein jo dash (-) hai usko space mein convert karein compare karne ke liye
-    const catParam = urlCategory ? urlCategory.replace(/-/g, ' ') : null;
-    const subParam = urlSubCategory ? urlSubCategory.replace(/-/g, ' ') : null;
+      let matchedCat = categoryTree.find(c => c.name.toLowerCase().trim() === cleanUrlCat);
+      if (!matchedCat) {
+        matchedCat = categoryTree.find(c => 
+          c.name.toLowerCase().includes(cleanUrlCat) || 
+          cleanUrlCat.includes(c.name.toLowerCase())
+        );
+      }
 
-    if (catParam) {
-      // Find matching category (Case Insensitive)
-      const matchedCat = categoryTree.find(c => c.name.toLowerCase() === catParam.toLowerCase());
-      
       if (matchedCat) {
-        let newFilter = { type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name };
-        let shouldExpand = matchedCat.id;
+        const correctCatSlug = toSlug(matchedCat.name);
+        let matchedSub = null;
+        let correctSubSlug = "";
 
-        // Check Sub-Category
-        if (subParam) {
-           const matchedSub = matchedCat.sub_categories.find((s: any) => s.name.toLowerCase() === subParam.toLowerCase());
-           if (matchedSub) {
-             newFilter = { type: 'SUB_CATEGORY', value: matchedSub.id, name: matchedSub.name };
-           }
+        if (urlSubCategory) {
+          const cleanUrlSub = fromSlug(urlSubCategory);
+          matchedSub = matchedCat.sub_categories.find((s: any) => 
+            s.name.toLowerCase().trim() === cleanUrlSub ||
+            s.name.toLowerCase().includes(cleanUrlSub)
+          );
+          if (matchedSub) correctSubSlug = toSlug(matchedSub.name);
+        }
+
+        const isCatMismatch = urlCategory !== correctCatSlug;
+        const isSubMismatch = urlSubCategory && matchedSub && urlSubCategory !== correctSubSlug;
+
+        if (isCatMismatch || isSubMismatch) {
+          const targetPath = matchedSub 
+            ? `/products/${correctCatSlug}/${correctSubSlug}` 
+            : `/products/${correctCatSlug}`;
+          navigate(targetPath, { replace: true });
+          return;
+        }
+
+        let newFilter = { type: 'CATEGORY', value: matchedCat.name, name: matchedCat.name };
+        if (matchedSub) {
+          newFilter = { type: 'SUB_CATEGORY', value: matchedSub.id, name: matchedSub.name };
         }
 
         setActiveFilter(newFilter);
-        setExpandedCats(prev => prev.includes(shouldExpand) ? prev : [...prev, shouldExpand]);
+        setExpandedCats(prev => prev.includes(matchedCat.id) ? prev : [...prev, matchedCat.id]);
+        
+      } else {
+        console.warn("Category mismatch:", urlCategory);
+        setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
       }
     } else {
-       setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
+      setActiveFilter({ type: 'ALL', value: '', name: 'All Products' });
     }
-    
-    // Dependency array update karein
-  }, [urlCategory, urlSubCategory, categoryTree]);
+  }, [urlCategory, urlSubCategory, categoryTree, navigate]);
+
+
   // -------------------------------------------
-  // STEP 3: FETCH PRODUCTS (Run when Filter Changes)
+  // STEP 3: FETCH PRODUCTS  ✅ WITH CACHE
   // -------------------------------------------
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        let query = supabase.from('products').select('*').order('name');
+ // -------------------------------------------
+// STEP 3: FETCH PRODUCTS 
+// -------------------------------------------
+useEffect(() => {
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      // ✅ Naya cache version (v2) use karein taaki purana data clear ho jaye
+      const cacheKey = `products_v2_${activeFilter.type}_${activeFilter.value}_${searchTerm}`;
 
-        // Apply Server-Side Filters (Using ilike for Case Insensitivity)
-        if (activeFilter.type === 'CATEGORY') {
-          query = query.ilike('category', activeFilter.value); // ilike = Ignore Case
-        } else if (activeFilter.type === 'SUB_CATEGORY') {
-          query = query.eq('sub_category', activeFilter.value); // UUID is exact
-        }
+      let query = supabase
+        .from('products')
+        .select('*')
+        .order('position', { ascending: true });
 
-        // Apply Search (if typed)
-        if (searchTerm) {
-          query = query.ilike('name', `%${searchTerm}%`);
-        }
-
-        const { data, error } = await query;
-        if (data) setProducts(data);
-        
-      } finally {
-        setLoading(false);
+      // 🎯 YE LINES FILTERING KE LIYE ZARURI HAIN:
+      if (activeFilter.type === 'CATEGORY') {
+        query = query.ilike('category', activeFilter.value); 
+      } else if (activeFilter.type === 'SUB_CATEGORY') {
+        query = query.eq('sub_category', activeFilter.value); 
       }
-    };
 
-    // Debounce search slightly to prevent too many requests
-    const timeoutId = setTimeout(() => {
-      fetchProducts();
-    }, 300);
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
 
-    return () => clearTimeout(timeoutId);
-  }, [activeFilter, searchTerm]);
+      const { data } = await query;
+      if (data) {
+        setProducts(data);
+        // setCache(cacheKey, data); // Check karne ke baad uncomment karein
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
+  const timeoutId = setTimeout(fetchProducts, 300);
+  return () => clearTimeout(timeoutId);
+}, [activeFilter, searchTerm]);
   // -------------------------------------------
   // UI HANDLERS
   // -------------------------------------------
@@ -154,27 +245,15 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
     );
   };
 
-  // Helper function to create URL slug (spaces -> hyphens)
-  const toSlug = (text: string) => text.toLowerCase().replace(/ /g, '-');
-
   const handleMainCategoryClick = (catName: string) => {
-    // OLD: setSearchParams({ category: catName.toLowerCase() });
-    
-    // NEW: Navigate to /products/category-name
     navigate(`/products/${toSlug(catName)}`);
   };
 
   const handleSubCategoryClick = (catName: string, subId: string, subName: string) => {
-    // OLD: setSearchParams({ category: catName.toLowerCase(), sub: subName.toLowerCase() });
-    
-    // NEW: Navigate to /products/category-name/sub-name
     navigate(`/products/${toSlug(catName)}/${toSlug(subName)}`);
   };
 
   const resetFilter = () => {
-    // OLD: setSearchParams({});
-    
-    // NEW: Back to main products page
     navigate('/products');
     setSearchTerm('');
   };
@@ -191,10 +270,57 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
 
   return (
     <div className="bg-[#dbdbdc] min-h-screen pt-20">
+      
       <Helmet>
-        <title>{`${activeFilter.name} | Durable Fasteners Pvt Ltd`}</title>
-      </Helmet>
+       <title>
+    {activeFilter.name === 'All Products'
+      ? 'Top Screw Manufacturer in Rajkot | Industrial Fasteners India'
+      : `${activeFilter.name} Manufacturers in India | Durable Fastener`}
+  </title>
+         <link
+    rel="canonical"
+    href={
+      activeFilter.name === 'All Products'
+        ? 'https://durablefastener.com/products'
+        : `https://durablefastener.com/products/${toSlug(activeFilter.name)}`
+    }
+  />
+         <meta
+    name="description"
+    content={
+      activeFilter.name === 'All Products'
+        ? 'Leading Industrial Fastener manufacturer in Rajkot, Gujarat. Screws, bolts, anchors and fittings for construction, furniture and engineering industries.'
+        : `Leading ${activeFilter.name} manufacturer in Rajkot. High-quality industrial fasteners for bulk orders. ISO certified factory in Gujarat, India.`
+    }
+  />
 
+<script type="application/ld+json">{JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": activeFilter.name === 'All Products' ? 'Industrial Fasteners Catalog' : activeFilter.name,
+    "url": activeFilter.name === 'All Products'
+      ? 'https://durablefastener.com/products'
+      : `https://durablefastener.com/products/${toSlug(activeFilter.name)}`,
+    "provider": {
+      "@type": "Organization",
+      "name": "Durable Fastener Pvt. Ltd.",
+      "url": "https://durablefastener.com"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://durablefastener.com" },
+        { "@type": "ListItem", "position": 2, "name": "Products", "item": "https://durablefastener.com/products" },
+        ...(activeFilter.name !== 'All Products' ? [{
+          "@type": "ListItem",
+          "position": 3,
+          "name": activeFilter.name,
+          "item": `https://durablefastener.com/products/${toSlug(activeFilter.name)}`
+        }] : [])
+      ]
+    }
+  })}</script>
+</Helmet>
       {/* HERO */}
       <section className="relative h-[30vh] flex items-center justify-center bg-[#0a0a0a] overflow-hidden">
         <div className="absolute inset-0 opacity-20">
@@ -220,7 +346,7 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
           {/* SIDEBAR */}
           <aside className="lg:w-[300px] shrink-0">
             <div className="sticky top-32 space-y-6">
-              {/* Search Input */}
+              {/* Search */}
               <div className="relative">
                 <input
                   type="text"
@@ -250,10 +376,10 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
                   </button>
 
                   {categoryTree.map((cat) => {
-                      const isActiveCat = activeFilter.value === cat.name || (activeFilter.type === 'SUB_CATEGORY' && expandedCats.includes(cat.id));
-                      const isExpanded = expandedCats.includes(cat.id);
+                    const isActiveCat = activeFilter.value === cat.name || (activeFilter.type === 'SUB_CATEGORY' && expandedCats.includes(cat.id));
+                    const isExpanded = expandedCats.includes(cat.id);
 
-                      return (
+                    return (
                       <div key={cat.id} className="space-y-1">
                         <div className={`flex items-center justify-between group rounded-lg px-3 py-2 transition-colors ${isActiveCat ? 'bg-yellow-50' : 'hover:bg-zinc-50'}`}>
                            <button 
@@ -296,7 +422,7 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
                           )}
                         </AnimatePresence>
                       </div>
-                      );
+                    );
                   })}
                 </div>
               </div>
@@ -305,29 +431,29 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
 
           {/* MAIN GRID */}
           <main className="flex-1">
-            <div className="flex items-center justify-between mb-8">
-              <p className="text-zinc-500 font-medium text-sm">
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-zinc-500 font-medium text-xs">
                 Showing <strong className="text-black">{products.length}</strong> results
               </p>
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="h-[350px] bg-zinc-100 animate-pulse rounded-3xl" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
+                  <div key={i} className="h-[250px] bg-white/50 animate-pulse rounded-2xl" />
                 ))}
               </div>
             ) : products.length === 0 ? (
-               <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200">
-                  <h3 className="text-xl font-bold text-zinc-400">No products found</h3>
-                  <button onClick={resetFilter} className="mt-4 text-sm text-blue-600 font-bold underline">Clear Filters</button>
-               </div>
+              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200">
+                <h3 className="text-xl font-bold text-zinc-400">No products found</h3>
+                <button onClick={resetFilter} className="mt-4 text-sm text-blue-600 font-bold underline">Clear Filters</button>
+              </div>
             ) : (
               <motion.div 
                 variants={containerVars}
                 initial="hidden"
                 animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
               >
                 <AnimatePresence mode='wait'>
                   {products.map((product) => (
@@ -335,40 +461,36 @@ const { category: urlCategory, subcategory: urlSubCategory } = useParams();
                       layout
                       variants={itemVars}
                       key={product.id}
-                      className="group bg-white rounded-[1.5rem] border border-zinc-200 overflow-hidden hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-300 flex flex-col"
+                      className="group bg-white rounded-xl border border-zinc-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
                     >
-                       <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
-                          <div className="relative aspect-[1.1/1] bg-[#f2f2f2] flex items-center justify-center p-6">
-                            {product.images && product.images[0] ? (
-                              <img 
-                                src={product.images[0]} 
-                                alt={product.name}
-                                loading="lazy"
-                                className="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-500 ease-out"
-                              />
-                            ) : (
-                              <div className="text-zinc-300 font-bold">No Image</div>
-                            )}
-                          </div>
-
-                          <div className="p-5 flex flex-col flex-grow bg-white relative z-10">
-                            <span className="inline-block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">
-                              {product.category}
+                      <Link to={`/product/${product.slug}`} className="flex flex-col h-full">
+                        <div className="relative aspect-square bg-[#f8f8f8] flex items-center justify-center p-4 md:p-0 overflow-hidden">
+                          {product.images && product.images[0] ? (
+                            <img 
+  src={cleanImageUrl(product.images[0])} 
+  alt={product.name}
+  loading="lazy"
+  className="max-w-full max-h-full w-auto h-auto object-contain group-hover:scale-110 transition-transform duration-500"
+/>
+                          ) : (
+                            <div className="text-zinc-300 text-[10px] font-bold uppercase">No Image</div>
+                          )}
+                        </div>
+                        <div className="p-3 flex flex-col flex-grow bg-white">
+                          <span className="inline-block text-[9px] font-bold text-yellow-600 uppercase tracking-wider mb-1">
+                            {product.category}
+                          </span>
+                          <h3 className="text-xs md:text-sm font-bold text-zinc-900 leading-snug group-hover:text-yellow-600 transition-colors line-clamp-2 mb-2">
+                            {product.name}
+                          </h3>
+                          <div className="mt-auto flex items-center justify-between border-t border-zinc-50 pt-2">
+                            <span className="text-[10px] font-semibold text-green-600 flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> In Stock
                             </span>
-                            <h3 className="text-lg font-bold text-zinc-900 leading-tight group-hover:text-yellow-600 transition-colors line-clamp-2 mb-4">
-                              {product.name}
-                            </h3>
-                            
-                            <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
-                              <span className="text-xs font-medium text-green-600 flex items-center gap-1.5">
-                                <ShoppingBag size={12} fill="currentColor" /> In Stock
-                              </span>
-                              <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                <ArrowRight size={14} />
-                              </div>
-                            </div>
+                            <ArrowRight size={12} className="text-zinc-300 group-hover:text-yellow-600 group-hover:translate-x-1 transition-all" />
                           </div>
-                       </Link>
+                        </div>
+                      </Link>
                     </motion.div>
                   ))}
                 </AnimatePresence>

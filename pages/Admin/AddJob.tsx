@@ -286,7 +286,7 @@ const AddJob: React.FC = () => {
       const { data, error } = await supabase.from('jobs').select('*').eq('id', jobId).single();
       
       if (error || !data) {
-        navigate('/admin/jobs');
+        navigate('/dfpladmin access/jobs');
         return;
       }
 
@@ -470,7 +470,7 @@ const AddJob: React.FC = () => {
       console.error(error);
       alert('Error: ' + error.message);
     } else {
-      navigate('/admin/jobs');
+      navigate('/dfpladmin access/jobs');
     }
     setLoading(false);
   };
@@ -489,7 +489,7 @@ const AddJob: React.FC = () => {
         />
       )}
 
-      <Link to="/admin/jobs" className="flex items-center gap-2 text-gray-500 mb-6 hover:text-black transition-colors">
+      <Link to="/dfpladmin access/jobs" className="flex items-center gap-2 text-gray-500 mb-6 hover:text-black transition-colors">
         <ArrowLeft size={18} /> Back to Jobs List
       </Link>
       
