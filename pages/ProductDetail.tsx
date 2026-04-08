@@ -9,7 +9,7 @@ import {
   ShieldCheck, Tag, Settings,
   HelpCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import MagicZoomClone from '../components/MagicZoomClone';
 import { Helmet } from 'react-helmet-async';
 
@@ -60,7 +60,7 @@ const containerVar = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
 };
-const itemVar = {
+const itemVar: Variants ={
   hidden: { opacity: 0, y: 15 },
   visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 60, damping: 20 } },
 };
@@ -68,10 +68,15 @@ const itemVar = {
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPER
 // ─────────────────────────────────────────────────────────────────────────────
-const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev"; // Define this at the top level
 
 const cleanImageUrl = (url: string): string => {
   if (!url) return '';
+  
+  // ✅ FIX: If the image is from Supabase (starts with http), return it directly
+  if (url.startsWith('http')) return url;
+
+  // If it's just a filename (old data), attach the R2 base
   const fileName = url.split('/').pop();
   return `${R2_BASE}/${fileName}`;
 };
@@ -279,7 +284,7 @@ const ProductDetail: React.FC = () => {
   const [activeImageOverride, setActiveImageOverride] = useState<string | null>(null);
   const [isMobile, setIsMobile]         = useState(false);
   const [fullScreenAppImage, setFullScreenAppImage] = useState<string | null>(null);
-
+const [activeAppIndex, setActiveAppIndex] = useState(0);
   // ── Effects ────────────────────────────────────────────────────────────────
 
   // Detect mobile
@@ -547,7 +552,7 @@ if (!product)
             </span>
           </nav>
         </div>
-      </div>
+      </div>  
 
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
 
@@ -792,6 +797,8 @@ if (!product)
                           ? grade.toLowerCase().startsWith('grade')
                             ? 'Grade ' + grade.substring(5).trim()
                             : 'Grade ' + grade
+
+            
                           : 'Standard';
                         return (
                           <div key={idx} className="bg-white border border-neutral-200 rounded-xl p-5 flex flex-col hover:shadow-md transition-shadow">
@@ -800,9 +807,10 @@ if (!product)
                               <span className="text-base font-bold text-neutral-900">{name}</span>
                             </div>
                             <div className="mt-auto">
-                              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Grade:</span>
+                              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1"></span>
                               <span className="text-sm font-semibold text-neutral-800">{grade}</span>
                             </div>
+                            
                           </div>
                         );
                       })}
@@ -1058,52 +1066,69 @@ if (!product)
 
             <div className="relative flex flex-col lg:flex-row gap-12 items-start">
               <div className="w-full lg:w-1/3 space-y-4 sticky top-[250px] z-20">
-                {product.applications.map((app: any, idx: number) => {
-                  const appName = typeof app === 'string' ? app : app.name;
-                  return (
-                    <motion.div
-                      key={idx}
-                      onMouseEnter={() => setSelectedImageIndex(idx)}
-                      className={`group flex items-center gap-6 p-6 rounded-xl border transition-all duration-500 cursor-pointer ${
-                        selectedImageIndex === idx
-                          ? 'bg-neutral-900 border-neutral-900 shadow-2xl translate-x-4'
-                          : 'bg-white border-neutral-200 hover:border-yellow-500'
-                      }`}
-                    >
-                      <span className={`font-mono text-lg font-bold ${selectedImageIndex === idx ? 'text-yellow-500' : 'text-neutral-300'}`}>
-                        0{idx + 1}
-                      </span>
-                      <div className="flex-1">
-                        <h4
-                          className={`text-xl font-bold uppercase tracking-tight transition-colors ${
-                            selectedImageIndex === idx ? 'text-white' : 'text-neutral-800'
-                          }`}
-                          style={fontHeading}
-                        >
-                          {appName}
-                        </h4>
-                        {selectedImageIndex === idx && (
-                          <motion.p
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="text-neutral-400 text-xs mt-2 uppercase tracking-widest font-bold"
-                          >
-                            View Technical Case
-                          </motion.p>
-                        )}
-                      </div>
-                      <ChevronRight className={selectedImageIndex === idx ? 'text-yellow-500' : 'text-neutral-200'} />
-                    </motion.div>
-                  );
-                })}
+             {product.applications.map((app: any, idx: number) => {
+  const appName = typeof app === 'string' ? app : app.name;
+  
+  // Create a constant for the active state to keep code clean
+  const isActive = activeAppIndex === idx;
+
+  return (
+    <motion.div
+      key={idx}
+      onMouseEnter={() => setActiveAppIndex(idx)} 
+      className={`group flex items-center gap-6 p-6 rounded-xl border transition-all duration-500 cursor-pointer ${
+        isActive
+          ? 'bg-neutral-900 border-neutral-900 shadow-2xl translate-x-4'
+          : 'bg-white border-neutral-200 hover:border-yellow-500'
+      }`}
+    >
+      {/* 1. Fix Number Color */}
+      <span className={`font-mono text-lg font-bold transition-colors duration-300 ${
+        isActive ? 'text-yellow-500' : 'text-neutral-300'
+      }`}>
+        0{idx + 1}
+      </span>
+      
+      <div className="flex-1">
+        {/* 2. Fix Title Color (Critical Fix) */}
+        <h4
+          className={`text-xl font-bold uppercase tracking-tight transition-colors duration-300 ${
+            isActive ? 'text-white' : 'text-neutral-900'
+          }`}
+          style={fontHeading}
+        >
+          {appName}
+        </h4>
+        
+        {/* 3. Fix Sub-text Visibility */}
+        {isActive && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="text-neutral-400 text-xs mt-2 uppercase tracking-widest font-bold"
+          >
+            View Technical Case
+          </motion.p>
+        )}
+      </div>
+      
+      {/* 4. Fix Arrow Icon Color */}
+      <ChevronRight className={`transition-colors duration-300 ${
+        isActive ? 'text-yellow-500' : 'text-neutral-300'
+      }`} />
+    </motion.div>
+  );
+})}
               </div>
 
-              <div className="w-full lg:w-2/3 aspect-[4/3] lg:aspect-square relative">
-                <AnimatePresence mode="wait">
-                  {product.applications.map((app: any, idx: number) => {
-                    if (selectedImageIndex !== idx) return null;
-                    const appImage = typeof app === 'object' ? app.image : null;
-                    return (
+             <div className="w-full lg:w-2/3 aspect-[4/3] lg:aspect-square relative">
+  <AnimatePresence mode="wait">
+    {product.applications.map((app: any, idx: number) => {
+      // CHANGE THIS: Compare idx with activeAppIndex
+      if (activeAppIndex !== idx) return null; 
+      
+      const appImage = typeof app === 'object' ? app.image : null;
+      return (
                       <motion.div
                         key={idx}
                         initial={{ opacity: 0, scale: 1.1, rotateY: 10 }}
