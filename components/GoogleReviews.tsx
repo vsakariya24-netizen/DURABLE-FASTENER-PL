@@ -1,15 +1,31 @@
 import React, { useState, useEffect, useRef } from "react";
 
+// ✅ Review type define
+type Review = {
+  author_name: string;
+  profile_photo_url: string;
+  relative_time_description: string;
+  rating: number;
+  text: string;
+  author_url?: string;
+};
+
 export default function GoogleReviews() {
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(4.9);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  //const scrollRef = useRef<HTMLDivElement>(null);
+ 
+
+  const [currentSlide, setCurrentSlide] = useState(0); // 🔥 NEW
+   const scrollRef = useRef<HTMLDivElement>(null);
 
   const GOOGLE_PAGE_URL =
     "https://search.google.com/local/writereview?placeid=ChIJr-Xe6gXLWTkR_HMq1UxmLzE";
+
+    const reviewsPerSlide = 4; // 🔥 IMPORTANT
 
   useEffect(() => {
     const CACHE_KEY = "google_reviews_v2";
@@ -70,13 +86,48 @@ console.log("Filtered Reviews for Website:", filteredReviews);
       });
   }, []);
 
+  //const scroll = (direction: "left" | "right") => {
+    //if (scrollRef.current) {
+      //const { scrollLeft, clientWidth } = scrollRef.current;
+      //const scrollTo = direction === "left" ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      //scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
+    //}
+  //};
+  // 🔥 TOTAL DOTS
+  const totalSlides = Math.ceil(reviews.length / reviewsPerSlide);
+
+  // 🔥 SCROLL FUNCTION UPDATE
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       const { scrollLeft, clientWidth } = scrollRef.current;
-      const scrollTo = direction === "left" ? scrollLeft - clientWidth : scrollLeft + clientWidth;
-      scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
+
+      const newIndex =
+        direction === "left"
+          ? Math.max(currentSlide - 1, 0)
+          : Math.min(currentSlide + 1, totalSlides - 1);
+
+      setCurrentSlide(newIndex);
+
+      scrollRef.current.scrollTo({
+        left: newIndex * clientWidth,
+        behavior: "smooth",
+      });
     }
   };
+
+  // 🔥 DOT CLICK
+   const goToSlide = (index: number) => {
+    if (scrollRef.current) {
+      const { clientWidth } = scrollRef.current;
+      setCurrentSlide(index);
+
+      scrollRef.current.scrollTo({
+        left: index * clientWidth,
+        behavior: "smooth",
+      });
+    }
+  };
+
 
   const renderStars = (count: number) => "★".repeat(Math.round(count));
 console.log("Current Reviews on Screen:", reviews);
@@ -166,9 +217,23 @@ console.log("Current Reviews on Screen:", reviews);
         </div>
 
         {/* DOTS */}
-        <div style={{ textAlign: "center", marginTop: "40px" }}>
-          <span style={{ color: "#333", fontSize: "24px", cursor: "pointer" }}>•</span>
-          <span style={{ color: "#ddd", fontSize: "24px", marginLeft: "8px", cursor: "pointer" }}>• •</span>
+        
+          {/* 🔴 DYNAMIC DOTS */}
+        <div style={{ textAlign: "center", marginTop: "30px" }}>
+          {Array.from({ length: totalSlides }).map((_, i) => (
+            <span
+              key={i}
+              onClick={() => goToSlide(i)}
+              style={{
+                fontSize: "24px",
+                cursor: "pointer",
+                margin: "0 5px",
+                color: i === currentSlide ? "black" : "#ccc",
+              }}
+            >
+              •
+            </span>
+          ))}
         </div>
       </div>
     </section>
