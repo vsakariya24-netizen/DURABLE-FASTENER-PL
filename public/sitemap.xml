@@ -37,6 +37,10 @@
 
   <!-- Example Product Pages (edit/add actual ones) -->
   <url>
+    <loc>https://durablefastener.com/products/fasteners-segment</loc>
+  </url>
+
+  <url>
     <loc>https://durablefastener.com/product/premium-black-phosphate-drywall-screw-gypsum-screw</loc>
   </url>
 
@@ -81,14 +85,16 @@
   <url>
     <loc>https://durablefastener.com/product/nylon-frame-fixing-screw</loc>
   </url>
-<url>
-    <loc>https://durablefastener.com/products/fasteners-segment</loc>
-  </url>
+
   <url>
     <loc>https://durablefastener.com/product/machine-screw</loc>
   </url>
   <url>
     <loc>https://durablefastener.com/product/wire-nails-with-head</loc>
+  </url>
+
+  <url>
+    <loc>https://durablefastener.com/products/fittings</loc>
   </url>
 
   <url>

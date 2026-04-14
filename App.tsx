@@ -1,6 +1,6 @@
 import React from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
-// 1. ADD THIS IMPORT for the SEO Fix
+// 1. ADD THIS IMPORT for the SEO Fix 
 import { HelmetProvider } from 'react-helmet-async'; 
 
 import Navbar from './components/Navbar';
@@ -46,6 +46,7 @@ import AddJob from './pages/Admin/AddJob';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProductProvider } from './contexts/ProductContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import WhatsAppButton from './components/WhatsAppButton';
 
 const { BrowserRouter: Router, Routes, Route, Navigate } = ReactRouterDOM;
 
@@ -152,6 +153,10 @@ const App: React.FC = () => {
               <Route path="*" element={<Navigate to="/" replace />} />
             
             </Routes>
+              
+            {/* ✅ ✅ WHATSAPP BUTTON (GLOBAL) */}
+            <WhatsAppButton />
+
           </Router>
         </ProductProvider>
       </AuthProvider>
