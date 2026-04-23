@@ -386,28 +386,26 @@ const { data: categoriesData } = await supabase
     .order('name');
 
   // 2. Fetch all products to group them
-  const { data: allProducts } = await supabase
-    .from('products')
-    .select('name, category')
-    .order('position', { ascending: true });
-
+const { data: allProducts } = await supabase
+  .from('products')
+  .select('name, category, slug') // ✅ Added 'slug' here
+  .order('position', { ascending: true });
     
   if (categoriesData && allProducts) {
-    const grouped = categoriesData.map(cat => {
-      // Filter products that belong to this category
-      const productsInCat = allProducts.filter(p => p.category === cat.name);
-      
-      return {
-        name: cat.name,
-        count: productsInCat.length,
-        // Only take first 10 names for the UI list
-        products: productsInCat.map(p => p.name),
-        slug: cat.name.toLowerCase().trim().replace(/[\s/]+/g, '-')
-      };
-    }).filter(div => div.count > 0); // Only show divisions that have products
+  const grouped = categoriesData.map(cat => {
+    const productsInCat = allProducts.filter(p => p.category === cat.name);
+    
+    return {
+      name: cat.name,
+      count: productsInCat.length,
+      // ✅ Now we store both name and slug
+      products: productsInCat.map(p => ({ name: p.name, slug: p.slug })), 
+      slug: cat.name.toLowerCase().trim().replace(/[\s/]+/g, '-')
+    };
+  }).filter(div => div.count > 0);
 
-    setProductDivisions(grouped);
-  }
+  setProductDivisions(grouped);
+}
 
       // ✅ Route blog images through R2
       
@@ -609,18 +607,22 @@ const { data: categoriesData } = await supabase
           <div className="w-full h-px bg-white/8 mb-5" />
           <p className="text-[9px] font-black uppercase tracking-[0.3em] text-neutral-500 mb-4">Products in this division</p>
 
-          <div className="grid grid-cols-2 gap-x-4 flex-1">
-            {/* Show only first 10 products to keep UI clean */}
-           {division.products.map((productName: string, i: number) => (
-              <div key={i} className="flex items-start gap-2.5 py-2.5 border-b border-white/5">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500/40 flex-shrink-0 group-hover:bg-yellow-500 transition-colors" />
-                <span className="text-[12px] text-neutral-400 leading-snug hover:text-white transition-colors truncate">
-                  {productName}
-                </span>
-              </div>
-            ))}
-          </div>
-
+ <div className="grid grid-cols-2 gap-x-4 flex-1">
+  {/* Show only first 10 products */}
+  {division.products.slice(0, 10).map((product: { name: string; slug: string }, i: number) => (
+    <div key={i} className="flex items-start gap-2.5 py-2.5 border-b border-white/5">
+      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500/40 flex-shrink-0 group-hover:bg-yellow-500 transition-colors" />
+      
+      {/* ✅ Direct Link to Product Page */}
+      <Link 
+        to={`/product/${product.slug}`} 
+        className="text-[12px] text-neutral-400 leading-snug hover:text-yellow-500 transition-colors truncate block w-full"
+      >
+        {product.name}
+      </Link>
+    </div>
+  ))}
+</div>
           <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/8">
             <span className="text-xs text-neutral-600 font-mono">{division.count} types available</span>
             <Link

@@ -1,3 +1,4 @@
+
    import React, { useState, useMemo, useEffect } from 'react';
    import * as ReactRouterDOM from 'react-router-dom';
    import { supabase } from '../lib/supabase';
@@ -13,11 +14,39 @@
    import MagicZoomClone from '../components/MagicZoomClone';
    import { Helmet } from 'react-helmet-async';
    
-   const { useParams, Link } = ReactRouterDOM;
-   
-   // ─────────────────────────────────────────────────────────────────────────────
-   // THEME
-   // ─────────────────────────────────────────────────────────────────────────────
+const { useParams, Link } = ReactRouterDOM;
+const getMaterialData = (displayMaterial: string) => {
+  if (!displayMaterial) return { ms: '-', ss: '-' };
+
+  const materials = displayMaterial.split('|');
+
+ let ms = null;
+  let ss = null;
+
+  materials.forEach((mat) => {
+    const clean = mat.trim();
+
+    if (clean.toLowerCase().includes('mild')) {
+      ms = clean.match(/\((.*?)\)/)?.[1] || clean;
+    }
+
+    if (clean.toLowerCase().includes('stainless')) {
+      ss = clean.match(/\((.*?)\)/)?.[1] || clean;
+    }
+  });
+
+  return {
+     ms,
+    ss,
+  };
+};
+      const FINISH_TEXTURES: Record<string, string> = {
+  nickel: "linear-gradient(135deg, #d9d9d9, #a6a6a6)",
+  black: "#000000",
+  antique: "linear-gradient(135deg, #6b4b2a, #3e2a14)",
+  zinc: "linear-gradient(135deg, #e0decf, #ab9f92)",
+};
+
    const THEME = {
      bg: "bg-[#dbdbdc]",
      textPrimary: "text-neutral-900",
@@ -36,26 +65,17 @@
        'linear-gradient(rgba(0,0,0,0.04) 1px,transparent 1px),' +
        'linear-gradient(90deg,rgba(0,0,0,0.04) 1px,transparent 1px)',
      backgroundSize: '24px 24px',
-   };
-   
-   // ─────────────────────────────────────────────────────────────────────────────
-   // CONSTANTS
-   // ─────────────────────────────────────────────────────────────────────────────
+   };   
    const PERFORMANCE_KEYS_DISPLAY = [
      "Core Hardness", "Surface Hardness", "Tensile Strength",
      "Shear Strength", "Salt Spray Resistance", "Installation Speed", "Temperature Range",
    ];
-   
    const HIDDEN_SPECS = [
      'hardness', 'sst', 'torque', 'salt', 'box_qty', 'carton_qty',
      'standard', 'seo_keywords', 'tds_url', 'mtc_url',
      'head type', 'head_type', 'drive', 'drive type', 'drive_type', 'type',
      ...PERFORMANCE_KEYS_DISPLAY.map(s => s.toLowerCase()),
-   ];
-   
-   // ─────────────────────────────────────────────────────────────────────────────
-   // ANIMATION VARIANTS
-   // ─────────────────────────────────────────────────────────────────────────────
+   ];   
    const containerVar = {
      hidden: { opacity: 0 },
      visible: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
@@ -64,10 +84,6 @@
      hidden: { opacity: 0, y: 15 },
      visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 60, damping: 20 } },
    };
-   
-   // ─────────────────────────────────────────────────────────────────────────────
-   // HELPER
-   // ─────────────────────────────────────────────────────────────────────────────
    const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev"; // Define this at the top level
    
    const cleanImageUrl = (url: string): string => {
@@ -79,14 +95,7 @@
      // If it's just a filename (old data), attach the R2 base
      const fileName = url.split('/').pop();
      return `${R2_BASE}/${fileName}`;
-   };
-   
-   // ─────────────────────────────────────────────────────────────────────────────
-   // SCHEMA BUILDERS  (pure functions – easy to move to a server route later)
-   // ─────────────────────────────────────────────────────────────────────────────
-   
-   /** FAQPage schema – kept for AI Overviews / ChatGPT even though Google SERP no
-    *  longer shows FAQ rich results for most sites (post-2023 policy change). */
+   };   
    const buildFaqSchema = (faqs: { question: string; answer: string }[]) => {
      if (!faqs?.length) return null;
      return JSON.stringify({
@@ -112,10 +121,6 @@
        ],
      });
    
-   /** Product schema – includes all fields Google uses for Shopping / Knowledge Panel.
-    *  NOTE: `price` is required by Google for Product rich results. We use 0 + a
-    *  priceSpecification note since this is a B2B "contact for price" catalogue.
-    *  Swap in a real price if you store one in Supabase. */
    const buildProductSchema = (
      product: any,
      slug: string,
@@ -170,8 +175,7 @@
          : {}),
    
        // ── Offer ───────────────────────────────────────────────────────
-       // Google REQUIRES price for Product rich results.
-       // For B2B "contact for price" products, use 0 + priceSpecification message.
+       
        "offers": {
          "@type": "Offer",
          "url": `https://durablefastener.com/product/${slug}`,
@@ -194,12 +198,7 @@
          },
        },
      });
-   };
-   
-   // ─────────────────────────────────────────────────────────────────────────────
-   // SUB-COMPONENTS
-   // ─────────────────────────────────────────────────────────────────────────────
-   
+   };   
    interface FaqProps { question: string; answer: string; index: number }
    
    const FaqAccordion: React.FC<FaqProps> = ({ question, answer, index }) => {
@@ -267,9 +266,7 @@
      </div>
    );
    
-   // ─────────────────────────────────────────────────────────────────────────────
-   // MAIN COMPONENT
-   // ─────────────────────────────────────────────────────────────────────────────
+   
    const ProductDetail: React.FC = () => {
      const { slug } = useParams<{ slug: string }>();
    
@@ -506,13 +503,14 @@
      const showDimensions   = product.technical_drawing || product.dimensional_specifications?.length > 0;
      const displayMaterial  = product.material || '';
      const displayHeadType  = product.head_type?.replace(/Buggel/gi, 'Bugle') || '';
+     const materialData     = getMaterialData(displayMaterial);
    
      // ── Schema strings (built once per render, outside JSX) ───────────────────
      // ⚠️  IMPORTANT: These are injected via react-helmet-async which renders them
      //     client-side. For Google to read them reliably you need SSR or a
      //     pre-rendering service (e.g. Prerender.io). The schema logic itself is
      //     correct; the delivery mechanism is the gap to fix.
-     const faqSchemaJson        = buildFaqSchema(product.faqs);
+     const faqSchemaJson        = buildFaqSchema(product.faqs || []);
      const breadcrumbSchemaJson = buildBreadcrumbSchema(product.name, slug!);
      const productSchemaJson    = buildProductSchema(product, slug!, selectedDia, selectedLen, selectedUnit);
    
@@ -594,300 +592,261 @@
              </motion.div>
            </motion.div>
    
-           {/* ── Main Grid ── */}
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
-   
-             {/* LEFT – Image viewer */}
-             <div className="lg:col-span-7 flex flex-col gap-6">
-               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[950px]">
-   
-                 {/* Thumbnails */}
-                 <div className="hidden md:flex flex-col gap-3 overflow-y-auto w-24 py-1 pr-1">
-                   {displayImages.map((img: string, idx: number) => (
-                     <button
-                       key={idx}
-                       onClick={() => setSelectedImageIndex(idx)}
-                       className={`relative w-full aspect-square rounded-xl overflow-hidden transition-all duration-200 ${
-                         selectedImageIndex === idx
-                           ? 'ring-2 ring-yellow-500 opacity-100 scale-100'
-                           : 'opacity-60 hover:opacity-100 scale-90'
-                       }`}
-                     >
-                       <img src={img} className="w-full h-full object-contain bg-transparent" alt="" />
-                     </button>
-                   ))}
-                 </div>
-   
-                 {/* Main image */}
-                 <div className="flex-1 relative flex items-center justify-center h-[400px] md:h-full overflow-visible">
-                   <AnimatePresence mode="wait">
-                     <motion.div
-                       key={currentImage}
-                       initial={{ opacity: 0, scale: 0.9 }}
-                       animate={{ opacity: 1, scale: 1 }}
-                       className="w-full h-full flex items-center justify-center relative z-10 p-8"
-                     >
-                       <MagicZoomClone
-                         src={currentImage}
-                         zoomSrc={currentImage}
-                         alt={product.name}
-                         zoomLevel={2.5}
-                         glassSize={isMobile ? 120 : 200}
-                         className="max-h-full max-w-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] contrast-[1.05] brightness-[1.02]"
-                       />
-                     </motion.div>
-                   </AnimatePresence>
-                 </div>
-               </motion.div>
-             </div>
-   
-             {/* RIGHT – Configurator */}
-             <div className="lg:col-span-5 flex flex-col space-y-8 sticky top-[200px]">
-               <motion.div variants={containerVar} initial="hidden" animate="visible" className="space-y-8">
-   
-                 {/* Config panel */}
-                 <motion.div variants={itemVar} className="bg-white border border-neutral-200 p-8 rounded-2xl shadow-lg">
-   
-                   {/* Diameter */}
-                   <div className="mb-8">
-                     <SectionHeader icon={Ruler} title={diameterTitle} />
-                     <div className="flex flex-wrap gap-3">
-                       {uniqueDiameters.map((dia: any) => {
-                         const isSelected = selectedDia === dia;
-                         return (
-                           <button
-                             key={dia}
-                             onClick={() => setSelectedDia(dia)}
-                             className={`relative px-3 h-12 min-w-[3.5rem] rounded-lg flex items-center justify-center text-lg transition-all duration-200 border-2 ${
-                               isSelected
-                                 ? 'bg-yellow-500 text-neutral-900 border-yellow-500 shadow-md font-bold'
-                                 : 'bg-neutral-50 text-neutral-600 border-neutral-100 hover:border-neutral-300 hover:text-neutral-900 hover:bg-white font-medium'
-                             }`}
-                             style={fontMono}
-                           >
-                             {dia.toString().replace('mm', '').trim()}
-                           </button>
-                         );
-                       })}
-                     </div>
-                   </div>
-   
-                   {/* Length */}
-                   <div className="mb-8">
-                     <div className="flex justify-between items-end mb-4 border-b border-neutral-100 pb-2">
-                       <SectionHeader icon={Maximize2} title={`Select Length (${selectedUnit})`} />
-                       <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
-                         {selectedLen || '--'}
-                         <span className="text-sm text-neutral-400 ml-1 font-sans font-medium">{selectedUnit}</span>
-                       </span>
-                     </div>
-                     <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-5 relative overflow-hidden">
-                       <div
-                         className="absolute inset-0 opacity-[0.05] pointer-events-none"
-                         style={{
-                           backgroundImage: 'linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px)',
-                           backgroundSize: '12px 12px',
-                         }}
-                       />
-                       <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
-                         {availableLengthOptions.length > 0 ? (
-                           availableLengthOptions.map((opt: any, idx: number) => {
-                             const isSelected = selectedLen === opt.value && selectedUnit === opt.unit;
-                             return (
-                               <button
-                                 key={idx}
-                                 onClick={() => { setSelectedLen(opt.value); setSelectedUnit(opt.unit); }}
-                                 className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
-                               >
-                                 <span className={`font-mono transition-all duration-200 whitespace-nowrap block ${
-                                   isSelected
-                                     ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110'
-                                     : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900'
-                                 }`}>
-                                   {parseFloat(opt.value)}
-                                   {opt.unit !== 'mm' && <span className="text-[9px] block text-center">{opt.unit}</span>}
-                                 </span>
-                                 <div className={`w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ${
-                                   isSelected ? 'h-full bg-yellow-500 shadow-md' : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'
-                                 }`} />
-                                 <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10" />
-                               </button>
-                             );
-                           })
-                         ) : (
-                           <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm italic">
-                             Select Diameter to view lengths
-                           </div>
-                         )}
-                       </div>
-                     </div>
-                   </div>
-   
-                   {/* Finish */}
-                   <div className="mb-8">
-                     <SectionHeader icon={Layers} title="Surface Finish" />
-                     {availableFinishes.length > 0 ? (
-                       <div className="flex flex-wrap gap-2">
-                         {availableFinishes.map((finish: any) => (
-                           <button
-                             key={finish}
-                             onClick={() => handleFinishClick(finish)}
-                             className={`px-5 py-2.5 text-[14px] font-medium uppercase tracking-wide border rounded-md transition-all ${
-                               activeImageOverride === (product.finish_images?.[finish]) ||
-                               product.variants?.find((v: any) => v.finish === finish && v.image === activeImageOverride)
-                                 ? 'border-yellow-500 text-neutral-900 bg-yellow-400 shadow-sm font-bold'
-                                 : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-400 hover:bg-white'
-                             }`}
-                             style={fontHeading}
-                           >
-                             {finish}
-                           </button>
-                         ))}
-                       </div>
-                     ) : (
-                       <div className="text-sm text-neutral-400 italic">Select Diameter & Length to see finishes</div>
-                     )}
-                   </div>
-   
-                   {/* Type */}
-                   {availableTypes.length > 0 && (
-                     <div>
-                       <SectionHeader icon={Tag} title="Product Type" />
-                       <div className="flex flex-wrap gap-2">
-                         {availableTypes.map((type: any) => (
-                           <button
-                             key={type}
-                             onClick={() => handleTypeClick(type)}
-                             className={`px-5 py-2.5 text-[14px] font-medium uppercase tracking-wide border rounded-md transition-all ${
-                               selectedType === type
-                                 ? 'border-yellow-500 text-neutral-900 bg-yellow-400 shadow-sm font-bold'
-                                 : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-400 hover:bg-white'
-                             }`}
-                             style={fontHeading}
-                           >
-                             {type}
-                           </button>
-                         ))}
-                       </div>
-                     </div>
-                   )}
-                 </motion.div>
-               </motion.div>
-   
-               {/* Spec Details */}
-               <motion.div variants={itemVar} className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-md">
-                 <div className="bg-neutral-100 px-6 py-4 border-b border-neutral-200 flex items-center gap-2">
-                   <FileCheck size={18} className="text-yellow-600" />
-                   <span className="text-sm font-bold uppercase tracking-widest text-neutral-800" style={fontHeading}>
-                     Specification Details
-                   </span>
-                 </div>
-                 <div className="p-6 flex flex-col gap-0 divide-y divide-neutral-100">
-                   {displayMaterial && (
-                     <div className="pb-8 mb-2">
-                       <h4 className="text-center text-sm font-bold uppercase tracking-widest text-neutral-800 mb-5" style={fontHeading}>
-                         Material Specifications
-                       </h4>
-                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                         {displayMaterial.split(/\|/g).map((mat: string, idx: number) => {
-  let name = '';
-  let grade = '';
+           {/* ── MAIN PRODUCT SECTION (Updated for Image-1 Design Match) ── */}
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
 
-  // ✅ Case 1: Proper format (Material (Grade))
-  if (mat.includes('(')) {
-    const parts = mat.split('(');
-    name = parts[0].trim();
-    grade = parts[1]?.replace(')', '').trim() || '';
-  } 
-  // ✅ Case 2: Only grade (bad admin data)
-  else {
-    name = `Material ${idx + 1}`; // fallback name
-    grade = mat.replace(')', '').trim();
-  }
+  {/* LEFT COLUMN: PRODUCT IMAGE (Occupies 5/12 columns) */}
+  <div className="lg:col-span-4 flex items-center justify-center min-h-[400px] lg:min-h-[1100px]">
+    <div className="w-full max-w-[400px]">
+      <MagicZoomClone
+        src={currentImage}
+        zoomSrc={currentImage}
+        alt={product.name}
+        zoomLevel={4}
+        glassSize={isMobile ? 120 : 180}
+      />
+    </div>
+  </div>
+  {/* RIGHT COLUMN: CONFIG PANEL (Occupies 7/12 columns) */}
+        <div className="lg:col-span-8 space-y-7">
+          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-4"> 
+                      
+            
 
-  // ✅ Remove "Grade" word only (keep case)
-  grade = grade.replace(/grade/i, '').trim();
+             {/* 1. SELECT DIAMETER */}
+     <div className="mb-8">
+                  <SectionHeader icon={Ruler} title={diameterTitle} />
+                  <div className="flex flex-wrap gap-3">
+                    {uniqueDiameters.map((dia: any) => {
+                      const isSelected = selectedDia === dia;
+                      return (
+                        <button
+                          key={dia}
+                          onClick={() => setSelectedDia(dia)}
+                          className={`relative px-3 h-12 min-w-[3.5rem] rounded-lg flex items-center justify-center text-lg transition-all duration-200 border-2 ${
+                            isSelected
+                              ? 'bg-yellow-500 text-neutral-900 border-yellow-500 shadow-md font-bold'
+                              : 'bg-neutral-50 text-neutral-600 border-neutral-100 hover:border-neutral-300 hover:text-neutral-900 hover:bg-white font-medium'
+                          }`}
+                          style={fontMono}
+                        >
+                          {dia.toString().replace('mm', '').trim()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-  return (
-    <div key={idx} className="bg-white border border-neutral-200 rounded-xl p-5 flex flex-col hover:shadow-md transition-shadow">
-      
-      {/* Material Name */}
-      <div className="flex items-center gap-3 mb-3 pb-3 border-b border-neutral-100">
-        <Settings className="text-neutral-400" size={20} />
-        <span className="text-base font-bold text-neutral-900">
-          {name || 'Material'}
-        </span>
-      </div>
+                 {/* 2. SELECT LENGTH (Graph Style) */}
+    <div className="mb-5">
+                  <div className="flex justify-between items-end mb-0 border-b border-neutral-100 pb-2">
+                    <SectionHeader icon={Maximize2} title={`Select Length (${selectedUnit})`} />
+                    <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
+                      {selectedLen || '--'}
+                      <span className="text-sm text-neutral-400 ml-1 font-sans font-medium">{selectedUnit}</span>
+                    </span>
+                  </div>
+                  <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-2 relative overflow-hidden">
+                    <div
+                      className="absolute inset-0 opacity-[0.05] pointer-events-none"
+                      style={{
+                        backgroundImage: 'linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px)',
+                        backgroundSize: '12px 12px',
+                      }}
+                    />
+                    <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
+                      {availableLengthOptions.length > 0 ? (
+                        availableLengthOptions.map((opt: any, idx: number) => {
+                          const isSelected = selectedLen === opt.value && selectedUnit === opt.unit;
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => { setSelectedLen(opt.value); setSelectedUnit(opt.unit); }}
+                              className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
+                            >
+                              <span className={`font-mono transition-all duration-200 whitespace-nowrap block ${
+                                isSelected
+                                  ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110'
+                                  : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900'
+                              }`}>
+                                {parseFloat(opt.value)}
+                                {opt.unit !== 'mm' && <span className="text-[9px] block text-center">{opt.unit}</span>}
+                              </span>
+                              <div className={`w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ${
+                                isSelected ? 'h-full bg-yellow-500 shadow-md' : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'
+                              }`} />
+                              <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10" />
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm italic">
+                          Select Diameter to view lengths
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>   
+      {/* Finish */}
 
-      {/* Grade Section */}
-      <div className="mt-auto">
-        <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-2">
-          Grade
-        </span>
+<div className="mb-4">
+  <SectionHeader icon={Layers} title="Surface Finish" />
 
-        <div className="flex flex-col gap-1">
-          {grade
-            ? grade.split(',').map((g, i) => (
-                <span key={i} className="text-sm font-semibold text-neutral-800">
-                  {g.trim().toUpperCase()}
-                </span>
-              ))
-            : <span className="text-sm text-neutral-400">—</span>
-          }
-        </div>
-      </div>
+  {availableFinishes.length > 0 ? (
+    <div className="flex flex-wrap gap-4">
+      {availableFinishes.map((finish: any) => {
+        const key = finish.toLowerCase().trim();
+        
+        // Check if an icon exists in the database
+        const customIcon = product.finish_icons?.[finish];
+        
+        const isActive =
+          activeImageOverride === (product.finish_images?.[finish]) ||
+          product.variants?.find(
+            (v: any) => v.finish === finish && v.image === activeImageOverride
+          );
+
+        // Fallback color if no icon is uploaded
+        const bgStyle = FINISH_TEXTURES[key] || "#f3f4f6";
+
+        return (
+          <button
+            key={finish}
+            onClick={() => handleFinishClick(finish)}
+            className={`flex flex-col items-center justify-center gap-2 p-1.5 rounded-xl border transition-all duration-300
+              ${isActive
+                ? "ring-2 ring-yellow-500 scale-105 border-yellow-500 bg-white shadow-lg"
+                : "border-neutral-200 bg-neutral-50/50 hover:bg-white hover:scale-105 hover:shadow-md"
+              }
+            `}
+          >
+            {/* ICON CONTAINER */}
+            <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-neutral-100">
+              {customIcon ? (
+                // SHOW UPLOADED ICON
+                <img 
+                  src={customIcon} 
+                  alt={finish} 
+                  className="w-full h-full object-contain p-1" 
+                />
+              ) : (
+                // FALLBACK TO COLOR BOX IF NO ICON
+                <div
+                  className="w-full h-full"
+                  style={{ background: bgStyle }}
+                />
+              )}
+            </div>
+
+            {/* LABEL */}
+            <span className={`text-[10px] font-black uppercase tracking-widest px-1 transition-colors ${
+              isActive ? 'text-neutral-900' : 'text-neutral-400'
+            }`} style={fontHeading}>
+              {finish}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  ) : (
+    <div className="text-sm text-neutral-400 italic font-mono p-4 border border-dashed rounded-lg">
+      Select Diameter & Length to see finishes
+    </div>
+  )}
+</div>
+
+                {/*----------end finish------------------*/}
+                {/* head type*/}
+                 <div className="mb-5 border-b border-neutral-100 ">
+                <SectionHeader icon={FileCheck} title="Specification Details" />
+                <table className="w-full text-sm rounded-2xl border-collapse border border-neutral-200">
+  <tbody>
+    {[
+      { label: 'Head Type', value: displayHeadType },
+      { label: 'Drive', value: product.drive_type },
+      { label: 'Type', value: selectedType },
+
+      ...product.specifications
+        .filter((s: any) => !HIDDEN_SPECS.includes(s.key.toLowerCase()))
+        .map((s: any) => ({
+          label: s.key,
+          value: s.value,
+        })),
+    ].map(
+      (item, idx) =>
+        item.value && (
+          <tr key={idx} className="border">
+            <td className="p-4 border font-medium text-neutral-600 uppercase text-xs tracking-wider w-[30%]">
+              {item.label}
+            </td>
+
+            <td className="p-4 border font-semibold text-neutral-900" colSpan={2}>
+              {item.value}
+            </td>
+          </tr>
+        )
+    )}
+  </tbody>
+</table>
+</div>
+                   {/* -----metrial specification --- */}  
+                   
+            <div className="p-1 flex flex-col gap-0 divide-y divide-neutral-100">
+                {displayMaterial && (
+                  <div className="pb-1 mb-1">
+                    <h4 className="text-center text-sm font-bold uppercase tracking-widest text-neutral-800 mb-5" style={fontHeading}>
+                      Material Specifications
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {displayMaterial.split(/\|/g).map((mat: string, idx: number) => {
+                        const parts = mat.split('(');
+                        const name = parts[0].trim();
+                        let grade = parts.length > 1 ? parts[1].replace(')', '').trim() : '';
+                       grade = grade.replace(/grade/i, '').trim();
+                        return (
+                          <div key={idx} className="bg-white border border-neutral-200 rounded-xl p-5 flex flex-col hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-3 mb-3 pb-3 border-b border-neutral-100">
+                              <Settings className="text-neutral-400" size={20} />
+                              <span className="text-base font-bold text-neutral-900">{name}</span>
+                            </div>
+                            <div className="mt-auto">
+                              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Grade:</span>
+                              <span className="text-sm font-semibold text-neutral-800">{grade}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}                
+              </div>
+                 {/* CTA BUTTONS (Matching Image 1 Footer) */}
+   <div className="grid grid-cols-2 gap-4 pt-4">
+              <a
+                href="/contact"
+                className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:-translate-y-0.5"
+                style={fontHeading}
+              >
+                <ShoppingCart size={20} /> Bulk Quote
+              </a>
+              <a
+                href="/public/Durable Fastener Pvt. Ltd. Catalogue.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="col-span-1 bg-neutral-900 text-white h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-sm hover:-translate-y-0.5"
+                style={fontHeading}
+              >
+                <FileText size={20} /> View Catalogue
+              </a>
+            </div>
 
     </div>
-  );
-})}
-                       </div>
-                     </div>
-                   )}
-   
-                   {[
-                     { label: 'Head Type', value: displayHeadType },
-                     { label: 'Drive', value: product.drive_type },
-                     { label: 'Type', value: selectedType },
-                     ...product.specifications
-                       .filter((s: any) => !HIDDEN_SPECS.includes(s.key.toLowerCase()))
-                       .map((s: any) => ({ label: s.key, value: s.value })),
-                   ].map(
-                     (item, idx) =>
-                       item.value && (
-                         <div key={idx} className="flex flex-row justify-between py-5 items-center">
-                           <span className="text-neutral-500 font-bold uppercase text-xs tracking-wider min-w-[120px]">
-                             {item.label}
-                           </span>
-                           <span className="text-[15px] font-bold text-neutral-900 text-right">{item.value}</span>
-                         </div>
-                       ),
-                   )}
-                 </div>
-               </motion.div>
-   
-               {/* CTA buttons */}
-               <div className="grid grid-cols-2 gap-4 pt-4">
-                 <a
-                   href="/contact"
-                   className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:-translate-y-0.5"
-                   style={fontHeading}
-                 >
-                   <ShoppingCart size={20} /> Bulk Quote
-                 </a>
-                 <a
-                   href="/public/Durable Fastener Pvt. Ltd. Catalogue.pdf"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   className="col-span-1 bg-neutral-900 text-white h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-sm hover:-translate-y-0.5"
-                   style={fontHeading}
-                 >
-                   <FileText size={20} /> View Catalogue
-                 </a>
-               </div>
-             </div>
-           </div>
-         </div>
-   
+  </div>
+
+
+  </div>
+  {/*------end product image -----*/}
+</div>
          {/* ── Technical Vault ── */}
          <div className="bg-[#aaaaab] border-t border-neutral-300 relative z-20 overflow-hidden text-neutral-900">
            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -993,81 +952,105 @@
                    </div>
                  </div>
    
-                 {/* Dimensional table */}
-                 <div className="w-full bg-white border border-t-0 border-neutral-200 rounded-b-2xl overflow-hidden shadow-sm">
-                   <div className="overflow-x-auto">
-                     <table className="w-full text-left border-collapse min-w-[600px]">
-                       <thead>
-                         <tr className="border-b border-neutral-200 bg-neutral-100">
-                           <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>
-                             Feature
-                           </th>
-                           <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>
-                             Symbol
-                           </th>
-                           {uniqueDiameters.map((dia: any) => (
-                             <th
-                               key={dia}
-                               className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${
-                                 selectedDia === dia
-                                   ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500'
-                                   : 'text-neutral-500'
-                               }`}
-                               style={fontHeading}
-                             >
-                               {dia.includes('.') && !dia.includes('mm') && !dia.includes('#') ? `${dia}mm` : dia}
-                             </th>
-                           ))}
-                         </tr>
-                       </thead>
-                       <tbody className="divide-y divide-neutral-100 text-sm font-mono">
-                         {product.dimensional_specifications?.map((dim: any, idx: number) => (
-                           <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
-                             <td
-                               className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]"
-                               style={fontHeading}
-                             >
-                               {dim.label}
-                             </td>
-                             <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">
-                               {dim.symbol || '-'}
-                             </td>
-                             {uniqueDiameters.map((dia: any) => {
-                               let val = '-';
-                               if (dim.values && typeof dim.values === 'object') {
-                                 const raw = dia.toString().replace('mm', '').replace('#', '').trim();
-                                 val =
-                                   String(dim.values[dia] || '') ||
-                                   String(dim.values[raw] || '') ||
-                                   String(
-                                     Object.entries(dim.values as Record<string, any>).find(
-                                       ([k]) => k.replace('mm', '').trim() === raw,
-                                     )?.[1] ?? '',
-                                   ) ||
-                                   '-';
-                               } else if (dia === selectedDia) {
-                                 val = String(dim.value || '-');
-                               }
-                               const isActive = selectedDia === dia;
-                               return (
-                                 <td
-                                   key={dia}
-                                   className={`py-5 text-center transition-all duration-300 font-medium ${
-                                     isActive
-                                       ? 'bg-yellow-50 text-neutral-900 font-bold text-base shadow-[inset_0_0_20px_rgba(234,179,8,0.15)] border-x border-yellow-200'
-                                       : 'text-neutral-500 border-x border-transparent'
-                                   }`}
-                                 >
-                                   {val}
-                                 </td>
-                               );
-                             })}
-                           </tr>
-                         ))}
-                       </tbody>
-                     </table>
-                   </div>
-                 </div>
+                 {/* ── Technical Dimensional Vault ── */}
+<div className="w-full bg-white border border-t-0 border-neutral-200 rounded-b-2xl overflow-hidden shadow-sm">
+  
+  {/* MOBILE VIEW: ALL DIAMETERS STACKED (No Horizontal Scroll) */}
+  <div className="block md:hidden">
+    {uniqueDiameters.map((dia: any) => {
+      const isActive = selectedDia === dia;
+      return (
+        <div key={dia} className={`border-b last:border-0 ${isActive ? 'ring-2 ring-inset ring-yellow-500 bg-yellow-50/30' : ''}`}>
+          {/* Diameter Header */}
+          <div className={`p-3 flex justify-between items-center ${isActive ? 'bg-yellow-500 text-neutral-900' : 'bg-neutral-800 text-white'}`}>
+            <span className="text-xs font-black uppercase tracking-widest" style={fontHeading}>Size Detail</span>
+            <span className="text-xl font-black" style={fontHeading}>{dia.includes('mm') ? dia : `${dia}mm`}</span>
+          </div>
+
+          {/* Specs Grid for this specific diameter */}
+          <div className="grid grid-cols-2 gap-px bg-neutral-100">
+            {product.dimensional_specifications?.map((dim: any, idx: number) => {
+              let val = '-';
+              if (dim.values && typeof dim.values === 'object') {
+                const raw = dia.toString().replace('mm', '').replace('#', '').trim();
+                val = String(dim.values[dia] || dim.values[raw] || 
+                  Object.entries(dim.values).find(([k]) => k.replace('mm', '').trim() === raw)?.[1] || '-');
+              } else if (dia === selectedDia) {
+                val = String(dim.value || '-');
+              }
+
+              return (
+                <div key={idx} className="bg-white p-3 flex flex-col justify-center min-h-[70px]">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-serif italic font-bold text-yellow-600">{dim.symbol || '•'}</span>
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-tighter">{dim.label}</span>
+                  </div>
+                  <div className="text-sm font-mono font-bold text-neutral-900">{val}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+
+  {/* DESKTOP VIEW: Full Comparison Matrix (Same as your Image) */}
+  <div className="hidden md:block overflow-x-auto">
+    <table className="w-full text-left border-collapse min-w-[600px]">
+      <thead>
+        <tr className="border-b border-neutral-200 bg-neutral-100">
+          <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>
+            Feature
+          </th>
+          <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>
+            Symbol
+          </th>
+          {uniqueDiameters.map((dia: any) => (
+            <th
+              key={dia}
+              className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${
+                selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'
+              }`}
+              style={fontHeading}
+            >
+              {dia.includes('.') && !dia.includes('mm') && !dia.includes('#') ? `${dia}mm` : dia}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-neutral-100 text-sm font-mono">
+        {product.dimensional_specifications?.map((dim: any, idx: number) => (
+          <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
+            <td className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]" style={fontHeading}>
+              {dim.label}
+            </td>
+            <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">
+              {dim.symbol || '-'}
+            </td>
+            {uniqueDiameters.map((dia: any) => {
+              let val = '-';
+              if (dim.values && typeof dim.values === 'object') {
+                const raw = dia.toString().replace('mm', '').replace('#', '').trim();
+                val = String(dim.values[dia] || dim.values[raw] || 
+                  Object.entries(dim.values).find(([k]) => k.replace('mm', '').trim() === raw)?.[1] || '-');
+              } else if (dia === selectedDia) {
+                val = String(dim.value || '-');
+              }
+              return (
+                <td key={dia} className={`py-5 text-center transition-all duration-300 font-medium ${
+                  selectedDia === dia ? 'bg-yellow-50 text-neutral-900 font-bold text-base border-x border-yellow-200' : 'text-neutral-500 border-x border-transparent'
+                }`}>
+                  {val}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
                </motion.div>
              )}
            </div>
@@ -1276,7 +1259,6 @@
          </AnimatePresence>
        </div>
      );
-   };
-   
+   };   
    export default ProductDetail;
    

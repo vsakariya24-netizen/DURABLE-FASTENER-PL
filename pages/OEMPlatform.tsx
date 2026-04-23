@@ -643,7 +643,7 @@ const OEMPlatform: React.FC = () => {
                <div className="flex justify-between items-start">
                   <div>
                      <span className="text-blue-500 font-mono text-[20px] uppercase tracking-widest mb-1 block">Linear Scale</span>
-                     <h4 className="text-3xl text-white font-bold font-mono">{specs.length || "4mm - 125mm"}</h4>
+                     <h4 className="text-3xl text-white font-bold font-mono">{specs.length || "4mm - 160mm"}</h4>
                   </div>
                   <Ruler className="text-slate-600 group-hover:text-blue-500 transition-colors" />
                </div>
@@ -654,7 +654,7 @@ const OEMPlatform: React.FC = () => {
                         <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-mono">4mm</span>
                      </div>
                      <div className="absolute right-[10%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-blue-600 transform translate-x-1/2">
-                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-mono">125mm</span>
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-mono">160mm</span>
                      </div>
                   </div>
                   <RulerTicks />
