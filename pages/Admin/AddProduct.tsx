@@ -58,13 +58,7 @@ type FastenerSize = {
   length: string; 
   unit: 'mm' | 'inch'; 
 };
-type FastenerFinish = { 
-  name: string; 
-  image: string;      // This remains for the full product view
-  icon: string;       // NEW: This is for the small Head Icon in the selector
-  loading: boolean; 
-  iconLoading: boolean; // NEW
-};
+type FastenerFinish = { name: string; image: string; loading: boolean };
 type FastenerType = { name: string; image: string; loading: boolean }; 
 
 // --- CONSTANTS ---
@@ -101,9 +95,7 @@ const AddProduct: React.FC = () => {
   const [fastenerSizes, setFastenerSizes] = useState<FastenerSize[]>([
     { diameter: '', diameterUnit: 'mm', length: '', unit: 'mm' }
   ]);
- const [fastenerFinishes, setFastenerFinishes] = useState<FastenerFinish[]>([
-  { name: '', image: '', icon: '', loading: false, iconLoading: false }
-]);
+  const [fastenerFinishes, setFastenerFinishes] = useState<FastenerFinish[]>([{ name: '', image: '', loading: false }]);
   const [fastenerTypes, setFastenerTypes] = useState<FastenerType[]>([{ name: '', image: '', loading: false }]); 
 
   // --- SIZE IMAGES STATE ---
@@ -446,34 +438,11 @@ const AddProduct: React.FC = () => {
     setFastenerSizes(newSizes);
   };
 
-  const addFastenerFinish = () => setFastenerFinishes([...fastenerFinishes, { 
-  name: '', 
-  image: '', 
-  icon: '',           // Added
-  loading: false, 
-  iconLoading: false  // Added
-}]);
+  const addFastenerFinish = () => setFastenerFinishes([...fastenerFinishes, { name: '', image: '', loading: false }]);
   const removeFastenerFinish = (idx: number) => setFastenerFinishes(fastenerFinishes.filter((_, i) => i !== idx));
   const updateFastenerFinishName = (idx: number, val: string) => {
       const newFinishes = [...fastenerFinishes]; newFinishes[idx].name = val; setFastenerFinishes(newFinishes);
   };
-
-  const handleFastenerFinishIconUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-    if (!e.target.files?.[0]) return;
-    const newFinishes = [...fastenerFinishes];
-    newFinishes[idx].iconLoading = true;
-    setFastenerFinishes(newFinishes);
-
-    try {
-        const url = await uploadFile(e.target.files[0], 'finish-icons');
-        newFinishes[idx].icon = url;
-    } catch (err) {
-        alert('Icon upload failed');
-    } finally {
-        newFinishes[idx].iconLoading = false;
-        setFastenerFinishes([...newFinishes]);
-    }
-};
   const handleFastenerFinishUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
       if (!e.target.files?.[0]) return;
       const newFinishes = [...fastenerFinishes]; newFinishes[idx].loading = true; setFastenerFinishes(newFinishes);
@@ -653,7 +622,6 @@ const uploadFile = async (file: File, folder: string) => {
 
   // 2. Prepare Image Maps for JSONB columns
   const finishImageMap: Record<string, string> = {};
-  const finishIconMap: Record<string, string> = {};
   const typeImageMap: Record<string, string> = {};
 
   if (isFittingCategory) {
@@ -665,7 +633,6 @@ const uploadFile = async (file: File, folder: string) => {
   } else {
     fastenerFinishes.forEach(f => {
       if (f.name.trim() && f.image) finishImageMap[f.name.trim()] = f.image;
-      if (f.icon) finishIconMap[f.name.trim()] = f.icon;
     });
     fastenerTypes.forEach(t => {
       if (t.name.trim() && t.image) typeImageMap[t.name.trim()] = t.image;
@@ -677,7 +644,6 @@ const uploadFile = async (file: File, folder: string) => {
     ...formData,
     slug: finalSlug,
     finish_images: finishImageMap,
-    finish_icons: finishIconMap,
     type_images: typeImageMap,
     size_images: sizeImages.filter(si => si.labels.trim() || si.image).map(({ loading, ...rest }) => rest),
     specifications: [
@@ -764,17 +730,12 @@ const uploadFile = async (file: File, folder: string) => {
       });
     }
 
-if (variantRows.length > 0) {
+    if (variantRows.length > 0) {
       const { error: varErr } = await supabase.from('product_variants').insert(variantRows);
       if (varErr) throw varErr;
     }
 
-    // Success Analysis: Optional Alert to confirm data hit the DB
-    console.log("Product and Variants synced successfully.");
-    
-    // REDIRECT: Use the exact hyphenated path or relative path
-    navigate('/dfpladmin-access/products'); 
-
+    navigate('/dfpladmin access/products');
   } catch (error: any) {
     console.error("Submission Error:", error);
     alert(`Submission Failed: ${error.message}`);
@@ -1078,39 +1039,18 @@ if (variantRows.length > 0) {
 
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-gray-900 flex items-center gap-2"><Palette size={18}/> Finishes</h3><button type="button" onClick={addFastenerFinish} className="text-purple-600 text-sm font-bold">+ Add</button></div>
-                  <div className="space-y-3">
-    {fastenerFinishes.map((f, idx) => (
-        <div key={idx} className="flex flex-col gap-2 border p-3 rounded-lg bg-gray-50">
-            <div className="flex items-center gap-3">
-                {/* HEAD ICON UPLOAD (The small icon) */}
-                <div className="flex flex-col items-center gap-1">
-                    <label className="text-[9px] font-bold uppercase text-gray-400">Head Icon</label>
-                    <div className="w-12 h-12 bg-white rounded-lg border-2 border-dashed relative overflow-hidden flex items-center justify-center">
-                        {f.icon ? <img src={f.icon} className="w-full h-full object-contain p-1"/> : <TypeIcon size={16} className="text-gray-300"/>}
-                        {f.iconLoading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={12} className="animate-spin"/></div>}
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFastenerFinishIconUpload(e, idx)} />
+                    <div className="space-y-3">
+                        {fastenerFinishes.map((f, idx) => (
+                            <div key={idx} className="flex items-center gap-3 border p-2 rounded-lg bg-gray-50">
+                                <div className="w-10 h-10 bg-white rounded border relative overflow-hidden flex items-center justify-center">
+                                    {f.image ? <img src={f.image} className="w-full h-full object-cover"/> : <ImageIcon size={16} className="text-gray-300"/>}
+                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFastenerFinishUpload(e, idx)} />
+                                </div>
+                                <input value={f.name} onChange={(e) => updateFastenerFinishName(idx, e.target.value)} placeholder="e.g. Zinc Plate" className="flex-1 px-3 py-2 border rounded text-sm" />
+                                <button type="button" onClick={() => removeFastenerFinish(idx)} className="text-red-400"><Trash2 size={16}/></button>
+                            </div>
+                        ))}
                     </div>
-                </div>
-
-                {/* FULL IMAGE UPLOAD */}
-                <div className="flex flex-col items-center gap-1">
-                    <label className="text-[9px] font-bold uppercase text-gray-400">Product Image</label>
-                    <div className="w-12 h-12 bg-white rounded-lg border relative overflow-hidden flex items-center justify-center">
-                        {f.image ? <img src={f.image} className="w-full h-full object-cover"/> : <ImageIcon size={16} className="text-gray-300"/>}
-                        {f.loading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 size={12} className="animate-spin"/></div>}
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFastenerFinishUpload(e, idx)} />
-                    </div>
-                </div>
-
-                <div className="flex-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Finish Name</label>
-                    <input value={f.name} onChange={(e) => updateFastenerFinishName(idx, e.target.value)} placeholder="e.g. Black Phosphate" className="w-full px-3 py-2 border rounded text-sm" />
-                </div>
-                <button type="button" onClick={() => removeFastenerFinish(idx)} className="text-red-400 self-end mb-2"><Trash2 size={18}/></button>
-            </div>
-        </div>
-    ))}
-</div>
                 </div>
             </div>
         ) : (

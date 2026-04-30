@@ -53,7 +53,7 @@ const BlogList = () => {
           <p className="text-gray-500">Edit or delete existing blog posts.</p>
         </div>
         <Link 
-          to="/dfpladmin access/add-blog" 
+          to="/admin/add-blog" 
           className="bg-zinc-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all flex items-center gap-2"
         >
           <Plus size={20} /> Write New
@@ -118,7 +118,7 @@ const BlogList = () => {
                         <div className="flex items-center justify-end gap-2">
                           {/* Edit Button */}
                           <Link 
-                            to={`/dfpladmin access/edit-blog/${blog.id}`} 
+                            to={`/admin/edit-blog/${blog.id}`} 
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Edit"
                           >

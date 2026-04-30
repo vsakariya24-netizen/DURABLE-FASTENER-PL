@@ -6,7 +6,7 @@ import {
   Briefcase, MapPin, IndianRupee, ChevronDown, Send, 
   Clock, Search, Filter, X, Users, User, ArrowRight, Building2, ArrowLeft
 } from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from "react-helmet";
 // --- HELPERS ---
 const getBadgeStyles = (text: string) => {
   const t = text ? text.toLowerCase() : '';
@@ -363,6 +363,7 @@ const isFiltered = selectedDepts.length > 0;
       ? `${selectedDepts[0]} Jobs at Durable Fastener | Apply Now`
       : 'Careers at Durable Fastener | Manufacturing Jobs in Rajkot'}
   </title>
+    <link rel="canonical" href="https://durablefastener.com/careers" />
   
   <meta 
     name="description" 
@@ -412,6 +413,7 @@ const isFiltered = selectedDepts.length > 0;
     </script>
   )}
 </Helmet>
+<link rel="canonical" href="https://durablefastener.com/careers"></link>
       {/* PROFESSIONAL HEADER */}
       <div className="relative bg-slate-900 pt-32 pb-20 px-4 overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>

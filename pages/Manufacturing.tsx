@@ -145,6 +145,7 @@ const Manufacturing: React.FC = () => {
             h1, h2, h3, h4, p, span { overflow-wrap: break-word; word-wrap: break-word; hyphens: auto; }
           `}
         </style>
+        <link rel="canonical" href="https://durablefastener.com/manufacturing"></link>
       </Helmet>
 
       {/* ================= 1. HERO SECTION ================= */}
@@ -473,7 +474,7 @@ const Manufacturing: React.FC = () => {
             </div>
             <RevealOnScroll delay={300}>
                 <div className="flex flex-col sm:flex-row justify-center gap-6">
-                   <Link to="/contact" className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-12 py-6 rounded-2xl shadow-xl shadow-blue-600/20 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3">
+                   <Link to="/oem-platform" className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-12 py-6 rounded-2xl shadow-xl shadow-blue-600/20 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3">
                       Start OEM Manufacturing <ArrowRight />
                    </Link>
                    <a
@@ -484,6 +485,7 @@ const Manufacturing: React.FC = () => {
                     >
                        Request Capability Sheet
                    </a>
+                   
                 </div>
             </RevealOnScroll>
          </div>
