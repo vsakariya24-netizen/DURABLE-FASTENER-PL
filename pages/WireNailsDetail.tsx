@@ -114,11 +114,7 @@ const WireNailsDetail: React.FC = () => {
                     exit={{ opacity: 0, x: -20 }}
                     className="aspect-square flex items-center justify-center"
                   >
-                    <MagicZoomClone 
-                        src={headType === 'with' ? product.images[0] : product.images[1]} 
-                        alt="Wire Nail Type"
-                        glassSize={250}
-                    />
+   
                   </motion.div>
                </AnimatePresence>
 

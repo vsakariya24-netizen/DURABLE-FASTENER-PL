@@ -64,15 +64,18 @@ const Products: React.FC = () => {
 const cleanImageUrl = (url: string) => {
   if (!url) return '';
 
-  // 1. Aapka Verified Cloudflare R2 Public URL
+  // 1. If it's already a full URL (Cloudinary, S3, etc.), just return it
+  if (url.startsWith('http')) {
+    return url;
+  }
+
+  // 2. If it's just a path or filename, attach your R2 base
   const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+  
+  // Remove leading slash if it exists to avoid double slashes //
+  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
 
-  // 2. Agar database mein pura path hai (e.g. 'applications/screw.jpg'), 
-  // toh hum split karke sirf file name 'screw.jpg' nikalenge
-  const fileName = url.split('/').pop();
-
-  // 3. Direct R2 root se image serve karein
-  return `${R2_BASE}/${fileName}`;
+  return `${R2_BASE}/${cleanPath}`;
 };
   // STATE
   const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; name: string }>({ 
@@ -464,11 +467,11 @@ useEffect(() => {
                         <div className="relative aspect-square bg-[#f8f8f8] flex items-center justify-center p-4 md:p-0 overflow-hidden">
                           {product.images && product.images[0] ? (
                             <img 
-                              src={cleanImageUrl(product.images[0])} 
-                              alt={product.name}
-                              loading="lazy"
-                              className="max-w-full max-h-full w-auto h-auto object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
-                            />
+  src={cleanImageUrl(product.images[0])} 
+  alt={product.name}
+  loading="lazy"
+  className="max-w-full max-h-full w-auto h-auto object-contain group-hover:scale-110 transition-transform duration-500"
+/>
                           ) : (
                             <div className="text-zinc-300 text-[10px] font-bold uppercase">No Image</div>
                           )}

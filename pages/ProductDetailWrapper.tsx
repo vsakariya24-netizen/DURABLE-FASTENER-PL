@@ -14,6 +14,8 @@ const ProductDetailWrapper: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const canonicalUrl = `https://durablefastener.com/product/${slug}`;
+
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);

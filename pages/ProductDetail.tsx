@@ -1,9 +1,3 @@
-   const FINISH_TEXTURES: Record<string, string> = {
-  nickel: "linear-gradient(135deg, #d9d9d9, #a6a6a6)",
-  black: "#000000",
-  antique: "linear-gradient(135deg, #6b4b2a, #3e2a14)",
-  zinc: "linear-gradient(135deg, #e0decf, #ab9f92)",
-};
 
    import React, { useState, useMemo, useEffect } from 'react';
    import * as ReactRouterDOM from 'react-router-dom';
@@ -46,7 +40,13 @@ const getMaterialData = (displayMaterial: string) => {
     ss,
   };
 };
-   
+      const FINISH_TEXTURES: Record<string, string> = {
+  nickel: "linear-gradient(135deg, #d9d9d9, #a6a6a6)",
+  black: "#000000",
+  antique: "linear-gradient(135deg, #6b4b2a, #3e2a14)",
+  zinc: "linear-gradient(135deg, #e0decf, #ab9f92)",
+};
+
    const THEME = {
      bg: "bg-[#dbdbdc]",
      textPrimary: "text-neutral-900",
@@ -693,52 +693,63 @@ const getMaterialData = (displayMaterial: string) => {
   <SectionHeader icon={Layers} title="Surface Finish" />
 
   {availableFinishes.length > 0 ? (
-    <div className="flex flex-wrap gap-3">
-
+    <div className="flex flex-wrap gap-4">
       {availableFinishes.map((finish: any) => {
         const key = finish.toLowerCase().trim();
-
+        
+        // Check if an icon exists in the database
+        const customIcon = product.finish_icons?.[finish];
+        
         const isActive =
           activeImageOverride === (product.finish_images?.[finish]) ||
           product.variants?.find(
             (v: any) => v.finish === finish && v.image === activeImageOverride
           );
 
+        // Fallback color if no icon is uploaded
         const bgStyle = FINISH_TEXTURES[key] || "#f3f4f6";
 
         return (
           <button
             key={finish}
             onClick={() => handleFinishClick(finish)}
-            className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg border transition-all duration-200
+            className={`flex flex-col items-center justify-center gap-2 p-1.5 rounded-xl border transition-all duration-300
               ${isActive
-                ? "ring-2 ring-yellow-500 scale-105 border-yellow-500 shadow-md"
-                : "border-neutral-200 hover:scale-105 hover:shadow-sm"
+                ? "ring-2 ring-yellow-500 scale-105 border-yellow-500 bg-white shadow-lg"
+                : "border-neutral-200 bg-neutral-50/50 hover:bg-white hover:scale-105 hover:shadow-md"
               }
             `}
-            style={fontHeading}
           >
-            
-            {/* COLOR BOX */}
-            <div
-              className="w-16 h-8 rounded-md border"
-              style={{
-                background: bgStyle,
-              }}
-            />
+            {/* ICON CONTAINER */}
+            <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-neutral-100">
+              {customIcon ? (
+                // SHOW UPLOADED ICON
+                <img 
+                  src={customIcon} 
+                  alt={finish} 
+                  className="w-full h-full object-contain p-1" 
+                />
+              ) : (
+                // FALLBACK TO COLOR BOX IF NO ICON
+                <div
+                  className="w-full h-full"
+                  style={{ background: bgStyle }}
+                />
+              )}
+            </div>
 
             {/* LABEL */}
-            <span className="text-[11px] font-semibold text-neutral-700 uppercase tracking-wide">
+            <span className={`text-[10px] font-black uppercase tracking-widest px-1 transition-colors ${
+              isActive ? 'text-neutral-900' : 'text-neutral-400'
+            }`} style={fontHeading}>
               {finish}
             </span>
-
           </button>
         );
       })}
-
     </div>
   ) : (
-    <div className="text-sm text-neutral-400 italic">
+    <div className="text-sm text-neutral-400 italic font-mono p-4 border border-dashed rounded-lg">
       Select Diameter & Length to see finishes
     </div>
   )}
@@ -941,81 +952,105 @@ const getMaterialData = (displayMaterial: string) => {
                    </div>
                  </div>
    
-                 {/* Dimensional table */}
-                 <div className="w-full bg-white border border-t-0 border-neutral-200 rounded-b-2xl overflow-hidden shadow-sm">
-                   <div className="overflow-x-auto">
-                     <table className="w-full text-left border-collapse min-w-[600px]">
-                       <thead>
-                         <tr className="border-b border-neutral-200 bg-neutral-100">
-                           <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>
-                             Feature
-                           </th>
-                           <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>
-                             Symbol
-                           </th>
-                           {uniqueDiameters.map((dia: any) => (
-                             <th
-                               key={dia}
-                               className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${
-                                 selectedDia === dia
-                                   ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500'
-                                   : 'text-neutral-500'
-                               }`}
-                               style={fontHeading}
-                             >
-                               {dia.includes('.') && !dia.includes('mm') && !dia.includes('#') ? `${dia}mm` : dia}
-                             </th>
-                           ))}
-                         </tr>
-                       </thead>
-                       <tbody className="divide-y divide-neutral-100 text-sm font-mono">
-                         {product.dimensional_specifications?.map((dim: any, idx: number) => (
-                           <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
-                             <td
-                               className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]"
-                               style={fontHeading}
-                             >
-                               {dim.label}
-                             </td>
-                             <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">
-                               {dim.symbol || '-'}
-                             </td>
-                             {uniqueDiameters.map((dia: any) => {
-                               let val = '-';
-                               if (dim.values && typeof dim.values === 'object') {
-                                 const raw = dia.toString().replace('mm', '').replace('#', '').trim();
-                                 val =
-                                   String(dim.values[dia] || '') ||
-                                   String(dim.values[raw] || '') ||
-                                   String(
-                                     Object.entries(dim.values as Record<string, any>).find(
-                                       ([k]) => k.replace('mm', '').trim() === raw,
-                                     )?.[1] ?? '',
-                                   ) ||
-                                   '-';
-                               } else if (dia === selectedDia) {
-                                 val = String(dim.value || '-');
-                               }
-                               const isActive = selectedDia === dia;
-                               return (
-                                 <td
-                                   key={dia}
-                                   className={`py-5 text-center transition-all duration-300 font-medium ${
-                                     isActive
-                                       ? 'bg-yellow-50 text-neutral-900 font-bold text-base shadow-[inset_0_0_20px_rgba(234,179,8,0.15)] border-x border-yellow-200'
-                                       : 'text-neutral-500 border-x border-transparent'
-                                   }`}
-                                 >
-                                   {val}
-                                 </td>
-                               );
-                             })}
-                           </tr>
-                         ))}
-                       </tbody>
-                     </table>
-                   </div>
-                 </div>
+                 {/* ── Technical Dimensional Vault ── */}
+<div className="w-full bg-white border border-t-0 border-neutral-200 rounded-b-2xl overflow-hidden shadow-sm">
+  
+  {/* MOBILE VIEW: ALL DIAMETERS STACKED (No Horizontal Scroll) */}
+  <div className="block md:hidden">
+    {uniqueDiameters.map((dia: any) => {
+      const isActive = selectedDia === dia;
+      return (
+        <div key={dia} className={`border-b last:border-0 ${isActive ? 'ring-2 ring-inset ring-yellow-500 bg-yellow-50/30' : ''}`}>
+          {/* Diameter Header */}
+          <div className={`p-3 flex justify-between items-center ${isActive ? 'bg-yellow-500 text-neutral-900' : 'bg-neutral-800 text-white'}`}>
+            <span className="text-xs font-black uppercase tracking-widest" style={fontHeading}>Size Detail</span>
+            <span className="text-xl font-black" style={fontHeading}>{dia.includes('mm') ? dia : `${dia}mm`}</span>
+          </div>
+
+          {/* Specs Grid for this specific diameter */}
+          <div className="grid grid-cols-2 gap-px bg-neutral-100">
+            {product.dimensional_specifications?.map((dim: any, idx: number) => {
+              let val = '-';
+              if (dim.values && typeof dim.values === 'object') {
+                const raw = dia.toString().replace('mm', '').replace('#', '').trim();
+                val = String(dim.values[dia] || dim.values[raw] || 
+                  Object.entries(dim.values).find(([k]) => k.replace('mm', '').trim() === raw)?.[1] || '-');
+              } else if (dia === selectedDia) {
+                val = String(dim.value || '-');
+              }
+
+              return (
+                <div key={idx} className="bg-white p-3 flex flex-col justify-center min-h-[70px]">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-serif italic font-bold text-yellow-600">{dim.symbol || '•'}</span>
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-tighter">{dim.label}</span>
+                  </div>
+                  <div className="text-sm font-mono font-bold text-neutral-900">{val}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+
+  {/* DESKTOP VIEW: Full Comparison Matrix (Same as your Image) */}
+  <div className="hidden md:block overflow-x-auto">
+    <table className="w-full text-left border-collapse min-w-[600px]">
+      <thead>
+        <tr className="border-b border-neutral-200 bg-neutral-100">
+          <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>
+            Feature
+          </th>
+          <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>
+            Symbol
+          </th>
+          {uniqueDiameters.map((dia: any) => (
+            <th
+              key={dia}
+              className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${
+                selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'
+              }`}
+              style={fontHeading}
+            >
+              {dia.includes('.') && !dia.includes('mm') && !dia.includes('#') ? `${dia}mm` : dia}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-neutral-100 text-sm font-mono">
+        {product.dimensional_specifications?.map((dim: any, idx: number) => (
+          <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
+            <td className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]" style={fontHeading}>
+              {dim.label}
+            </td>
+            <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">
+              {dim.symbol || '-'}
+            </td>
+            {uniqueDiameters.map((dia: any) => {
+              let val = '-';
+              if (dim.values && typeof dim.values === 'object') {
+                const raw = dia.toString().replace('mm', '').replace('#', '').trim();
+                val = String(dim.values[dia] || dim.values[raw] || 
+                  Object.entries(dim.values).find(([k]) => k.replace('mm', '').trim() === raw)?.[1] || '-');
+              } else if (dia === selectedDia) {
+                val = String(dim.value || '-');
+              }
+              return (
+                <td key={dia} className={`py-5 text-center transition-all duration-300 font-medium ${
+                  selectedDia === dia ? 'bg-yellow-50 text-neutral-900 font-bold text-base border-x border-yellow-200' : 'text-neutral-500 border-x border-transparent'
+                }`}>
+                  {val}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
                </motion.div>
              )}
            </div>

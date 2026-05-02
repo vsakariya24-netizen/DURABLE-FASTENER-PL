@@ -5,19 +5,20 @@ import {
   Table as TableIcon, Type, Quote, Image as ImageIcon,
   List, Code, Minus, AlertCircle, Eye, EyeOff,
   Zap, Heading1, Heading2, Grid, Link as LinkIcon, Loader2,
-  BookOpen, GripVertical, HelpCircle
+  BookOpen
 } from 'lucide-react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 
 // ─── UTILS ──────────────────────────────────────────────────────────────────
 
+// This function converts "My Blog Title" into "my-blog-title"
 const generateSlug = (text: string) => {
   return text
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^\w\s-]/g, '')     // Remove special characters
+    .replace(/[\s_-]+/g, '-')     // Replace spaces/underscores with hyphens
+    .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
 };
 
 const genId = () => Math.random().toString(36).slice(2, 9);
@@ -28,8 +29,7 @@ type BlockType =
   | 'text' | 'heading2' | 'heading3'
   | 'quote' | 'callout' | 'highlight'
   | 'table' | 'list' | 'code' | 'divider'
-  | 'image' | 'image_row' | 'summary'
-  | 'split' | 'image_text'| 'faq';
+  | 'image' | 'image_row' | 'summary';
 
 interface ImageItem { url: string; caption: string; }
 
@@ -49,10 +49,6 @@ interface Block {
   highlightColor?: string;
   images?: ImageItem[];
   columns?: 2 | 3;
-  splitLayout?: 'left-image' | 'right-image';
-  splitImage?: string;
-  splitContent?: string;
-  faqItems?: { question: string; answer: string; }[];
 }
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
@@ -61,19 +57,16 @@ const PALETTE: { type: BlockType; label: string; icon: React.ReactNode; desc: st
   { type: 'text',      label: 'Paragraph',     icon: <Type size={15}/>,        desc: 'Body text + optional heading', accent: '#6366f1' },
   { type: 'heading2',  label: 'H2 Heading',    icon: <Heading1 size={15}/>,    desc: 'Major section title',          accent: '#7c3aed' },
   { type: 'heading3',  label: 'H3 Heading',    icon: <Heading2 size={15}/>,    desc: 'Sub-section title',            accent: '#a78bfa' },
-  { type: 'list',      label: 'List',          icon: <List size={15}/>,        desc: 'Bullet or numbered list',      accent: '#0891b2' },
-  { type: 'quote',     label: 'Blockquote',    icon: <Quote size={15}/>,       desc: 'Pull quote or attribution',    accent: '#db2777' },
-  { type: 'callout',   label: 'Callout',       icon: <AlertCircle size={15}/>, desc: 'Info / Tip / Warning box',     accent: '#d97706' },
-  { type: 'highlight', label: 'Key Takeaway',  icon: <Zap size={15}/>,         desc: 'Highlighted insight or stat',  accent: '#ea580c' },
-  { type: 'image',     label: 'Single Image',  icon: <ImageIcon size={15}/>,   desc: 'Full-width image + caption',   accent: '#059669' },
+  { type: 'list',      label: 'List',           icon: <List size={15}/>,        desc: 'Bullet or numbered list',      accent: '#0891b2' },
+  { type: 'quote',     label: 'Blockquote',     icon: <Quote size={15}/>,       desc: 'Pull quote or attribution',    accent: '#db2777' },
+  { type: 'callout',   label: 'Callout',        icon: <AlertCircle size={15}/>, desc: 'Info / Tip / Warning box',     accent: '#d97706' },
+  { type: 'highlight', label: 'Key Takeaway',   icon: <Zap size={15}/>,         desc: 'Highlighted insight or stat',  accent: '#ea580c' },
+  { type: 'image',     label: 'Single Image',   icon: <ImageIcon size={15}/>,   desc: 'Full-width image + caption',   accent: '#059669' },
   { type: 'image_row', label: 'Image Row',      icon: <Grid size={15}/>,        desc: '2–3 images side by side',      accent: '#0d9488' },
-  { type: 'table',     label: 'Table',         icon: <TableIcon size={15}/>,   desc: 'Comparison or data table',     accent: '#16a34a' },
-  { type: 'code',      label: 'Code Block',    icon: <Code size={15}/>,        desc: 'Code or command snippet',      accent: '#65a30d' },
-  { type: 'divider',   label: 'Divider',       icon: <Minus size={15}/>,       desc: 'Visual section separator',     accent: '#94a3b8' },
-  { type: 'summary',   label: 'Exec. Summary', icon: <BookOpen size={15}/>,    desc: 'Dark executive summary card',  accent: '#facc15' },
-  { type: 'split',     label: 'Image + Content',icon: <Layout size={15}/>,      desc: 'Side by side layout',          accent: '#2563eb'},
-  { type: 'image_text', label: 'Image + Text',  icon: <Grid size={15}/>,        desc: 'Text left, image right',       accent: '#0ea5e9' },
-  { type: 'faq',        label: 'FAQ Section',   icon: <HelpCircle size={15}/>,  desc: 'Question & Answer list',       accent: '#8b5cf6' },
+  { type: 'table',     label: 'Table',          icon: <TableIcon size={15}/>,   desc: 'Comparison or data table',     accent: '#16a34a' },
+  { type: 'code',      label: 'Code Block',     icon: <Code size={15}/>,        desc: 'Code or command snippet',      accent: '#65a30d' },
+  { type: 'divider',   label: 'Divider',        icon: <Minus size={15}/>,       desc: 'Visual section separator',     accent: '#94a3b8' },
+  { type: 'summary', label: 'Exec. Summary', icon: <BookOpen size={15}/>, desc: 'Dark executive summary card', accent: '#facc15' },
 ];
 
 const CALLOUT_META: Record<string, { bg: string; border: string; icon: string; label: string }> = {
@@ -97,13 +90,7 @@ const makeBlock = (type: BlockType): Block => {
     case 'image_row': return { id, type, columns: 2, images: [{ url: '', caption: '' }, { url: '', caption: '' }] };
     case 'divider':   return { id, type };
     case 'highlight': return { id, type, body: '', highlightColor: '#fef9c3' };
-    case 'split':     return { id, type,   splitLayout: 'left-image',    splitImage: '',     splitContent: ''  };
-    case 'image_text':
-      return { id, type, body: '', imageUrl: '', caption: '' };
-    case 'faq':
-      return { id, type, heading: 'Frequently Asked Questions', faqItems: [{ question: '', answer: '' }] };
     default:          return { id, type, heading: '', body: '' };
-    
   }
 };
 
@@ -123,17 +110,6 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
           </p>
         </div>
       );
-    case 'image':
-      return (
-        <figure style={{ float: 'right', width: '45%', marginLeft: 20, marginBottom: 15, marginTop: 5, textAlign: 'center' }}>
-          {block.imageUrl ? (
-            <img src={block.imageUrl} alt="" style={{ width: '100%', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }} />
-          ) : (
-            <div style={{ background: '#f4f4f5', height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon /></div>
-          )}
-          {block.caption && <figcaption style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic', marginTop: 5 }}>{block.caption}</figcaption>}
-        </figure>
-      );
     case 'heading2':
       return <h2 style={{ fontFamily: pf, fontSize: 27, fontWeight: 800, color: '#111', marginTop: 44, marginBottom: 12, borderBottom: '3px solid #facc15', paddingBottom: 10 }}>{block.body || 'Section Heading'}</h2>;
     case 'heading3':
@@ -146,18 +122,20 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
           {block.heading && <footer style={{ marginTop: 10, fontStyle: 'normal', fontSize: 12, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.1em', textTransform: 'uppercase' }}>— {block.heading}</footer>}
         </blockquote>
       );
-    case 'summary':
-      return (
-        <div style={{ background: '#0f0f11', borderRadius: 24, padding: '40px', margin: '30px 0', position: 'relative', color: '#fff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 24, height: 2, background: '#facc15' }} />
-            <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: '0.2em', color: '#facc15', textTransform: 'uppercase' }}>Executive Summary</span>
-          </div>
-          <p style={{ fontFamily: bf, fontSize: 20, fontStyle: 'italic', lineHeight: 1.6, color: '#d1d5db', margin: 0 }}>
-            {block.body || "A deep dive into manufacturing excellence..."}
-          </p>
-        </div>
-      );
+      case 'summary':
+  return (
+    <div style={{ background: '#0f0f11', borderRadius: 24, padding: '40px', margin: '30px 0', position: 'relative', color: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <div style={{ width: 24, height: 2, background: '#facc15' }} />
+        <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: '0.2em', color: '#facc15', textTransform: 'uppercase' }}>
+          Executive Summary
+        </span>
+      </div>
+      <p style={{ fontFamily: bf, fontSize: 20, fontStyle: 'italic', lineHeight: 1.6, color: '#d1d5db', margin: 0 }}>
+        {block.body || "A deep dive into manufacturing excellence..."}
+      </p>
+    </div>
+  );
     case 'callout': {
       const s = CALLOUT_META[block.calloutVariant || 'info'];
       return (
@@ -225,6 +203,18 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
           <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
         </div>
       );
+
+    case 'image':
+      return (
+        <figure style={{ margin: '26px 0', textAlign: 'center' }}>
+          {block.imageUrl
+            ? <img src={block.imageUrl} alt={block.caption || ''} style={{ maxWidth: '100%', borderRadius: 13, boxShadow: '0 4px 18px rgba(0,0,0,0.09)' }} />
+            : <div style={{ background: '#f4f4f5', borderRadius: 13, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4d4d8' }}><ImageIcon size={28}/></div>
+          }
+          {block.caption && <figcaption style={{ marginTop: 7, fontSize: 12, color: '#9ca3af', fontStyle: 'italic', fontFamily: bf }}>{block.caption}</figcaption>}
+        </figure>
+      );
+
     case 'image_row': {
       const imgs = block.images || [];
       const cols = block.columns || 2;
@@ -244,46 +234,8 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
         </div>
       );
     }
-    case 'split':
-      return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'center', margin: '30px 0' }}>
-          {block.splitLayout === 'left-image' ? (
-            <>
-              <img src={block.splitImage} style={{ width: '100%', borderRadius: 12 }} />
-              <p style={{ lineHeight: 1.8 }}>{block.splitContent}</p>
-            </>
-          ) : (
-            <>
-              <p style={{ lineHeight: 1.8 }}>{block.splitContent}</p>
-              <img src={block.splitImage} style={{ width: '100%', borderRadius: 12 }} />
-            </>
-          )}
-        </div>
-      );
-      //---------------------------------FAQ section ------------------------------
-   case 'faq':
-      return (
-        <div style={{ margin: '36px 0' }}>
-          {block.heading && (
-            <h2 style={{ fontFamily: pf, fontSize: 24, fontWeight: 800, color: '#111', marginBottom: 20, borderBottom: '2px solid #facc15', paddingBottom: 8 }}>
-              {block.heading}
-            </h2>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {(block.faqItems || []).map((item, i) => (
-              <details key={i} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 18px', cursor: 'pointer' }}>
-                <summary style={{ fontWeight: 700, fontFamily: bf, fontSize: 16, color: '#1f2937', outline: 'none' }}>
-                  {item.question || 'Empty Question'}
-                </summary>
-                <p style={{ marginTop: 12, marginBottom: 0, fontFamily: bf, fontSize: 15, color: '#4b5563', lineHeight: 1.7 }}>
-                  {item.answer || 'Empty Answer'}
-                </p>
-              </details>
-            ))}
-          </div>
-        </div>
-      );
-      default: return null;
+
+    default: return null;
   }
 };
 
@@ -297,8 +249,7 @@ const BlockEditor: React.FC<{
   onUpdate: (id: string, patch: Partial<Block>) => void;
   onRemove: (id: string) => void;
   onUpload: (file: File) => Promise<string>;
-  setDraggable: (state: boolean) => void;
-}> = ({ block, index, onUpdate, onRemove, onUpload, setDraggable }) => {
+}> = ({ block, index, onUpdate, onRemove, onUpload }) => {
   const [uploading, setUploading] = useState(false);
   const u = (patch: Partial<Block>) => onUpdate(block.id, patch);
   const meta = PALETTE.find(p => p.type === block.type)!;
@@ -317,19 +268,9 @@ const BlockEditor: React.FC<{
   };
 
   return (
-    <div style={{ background: '#fff', border: '1.5px solid #e4e4e7', borderRadius: 20, padding: '22px 22px 18px', position: 'relative' }} className="hover:border-yellow-400 hover:shadow-sm transition-all group">
+    <div style={{ background: '#fff', border: '1.5px solid #e4e4e7', borderRadius: 20, padding: '22px 22px 18px', position: 'relative' }} className="hover:border-yellow-400 hover:shadow-sm transition-all">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          {/* DRAG HANDLE */}
-          <div 
-            onMouseEnter={() => setDraggable(true)} 
-            onMouseLeave={() => setDraggable(false)}
-            style={{ cursor: 'grab', color: '#d4d4d8', padding: '4px' }} 
-            className="hover:text-zinc-800 hover:bg-zinc-100 rounded"
-          >
-            <GripVertical size={16} />
-          </div>
-          
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#18181b', color: '#facc15', borderRadius: 99, padding: '3px 10px', fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             <span style={{ color: meta.accent }}>{meta.icon}</span> {meta.label}
           </span>
@@ -346,11 +287,10 @@ const BlockEditor: React.FC<{
           <textarea className={txta} rows={5} placeholder="Write your paragraph content here…" value={block.body || ''} onChange={e => u({ body: e.target.value })} />
         </div>
       )}
-
-      {/* --- TABLE BLOCK --- */}
-      {block.type === 'table' && (
+{block.type === 'table' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input className={inp} placeholder="Table Heading (e.g. Technical Specifications)" value={block.heading || ''} onChange={e => u({ heading: e.target.value })} />
+          
           <div style={{ overflowX: 'auto', border: '1.5px solid #e4e4e7', borderRadius: 12 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
@@ -396,13 +336,13 @@ const BlockEditor: React.FC<{
               </tbody>
             </table>
           </div>
+
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" onClick={() => u({ rows: [...(block.rows || []), Array((block.headers || []).length).fill('')] })} style={{ flex: 1, padding: '8px', borderRadius: 8, background: '#f4f4f5', fontSize: 10, fontWeight: 800, border: '1px solid #e4e4e7', cursor: 'pointer' }}>+ ADD ROW</button>
             <button type="button" onClick={() => u({ headers: [...(block.headers || []), 'New'], rows: (block.rows || []).map(r => [...r, '']) })} style={{ flex: 1, padding: '8px', borderRadius: 8, background: '#f4f4f5', fontSize: 10, fontWeight: 800, border: '1px solid #e4e4e7', cursor: 'pointer' }}>+ ADD COLUMN</button>
           </div>
         </div>
       )}
-
       {/* --- EXECUTIVE SUMMARY BLOCK --- */}
       {block.type === 'summary' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -462,6 +402,7 @@ const BlockEditor: React.FC<{
               ))}
             </div>
           </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${block.columns||2}, 1fr)`, gap: 10 }}>
             {(block.images||[]).map((img, i) => (
               <div key={i} className="bg-zinc-50 border border-zinc-200 rounded-xl p-3 flex flex-col gap-2">
@@ -484,94 +425,11 @@ const BlockEditor: React.FC<{
         </div>
       )}
 
-      {/* --- SPLIT IMAGE/TEXT BLOCK --- */}
-      {block.type === 'split' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {['left-image', 'right-image'].map((layout) => (
-              <button key={layout} type="button" onClick={() => u({ splitLayout: layout as any })}
-                className={`px-3 py-1 text-[10px] font-bold rounded ${block.splitLayout === layout ? 'bg-zinc-900 text-yellow-400' : 'bg-zinc-100'}`}>
-                {layout === 'left-image' ? 'Image Left' : 'Image Right'}
-              </button>
-            ))}
-          </div>
-          <input type="file" accept="image/*" onChange={e => handleFileChange(e.target.files?.[0], (url) => u({ splitImage: url }))} />
-          <input className={inp} placeholder="Or paste image URL" value={block.splitImage || ''} onChange={e => u({ splitImage: e.target.value })} />
-          <textarea className={txta} rows={4} placeholder="Write content here..." value={block.splitContent || ''} onChange={e => u({ splitContent: e.target.value })} />
-        </div>
-      )}
-
       {/* --- QUOTE BLOCK --- */}
       {block.type === 'quote' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <textarea className={txta} rows={3} placeholder="Your quote…" value={block.body || ''} onChange={e => u({ body: e.target.value })} />
           <input className={inp} placeholder="Source or attribution (optional)" value={block.heading || ''} onChange={e => u({ heading: e.target.value })} />
-        </div>
-      )}
-      {/* --- FAQ BLOCK --- */}
-      {block.type === 'faq' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <input 
-            className={inp} 
-            placeholder="FAQ Heading (e.g., Frequently Asked Questions)" 
-            value={block.heading || ''} 
-            onChange={e => u({ heading: e.target.value })} 
-          />
-          
-          {(block.faqItems || []).map((item, i) => (
-            <div key={i} style={{ background: '#fafafa', border: '1px solid #e4e4e7', borderRadius: 12, padding: '14px', position: 'relative' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 800, color: '#a1a1aa' }}>QUESTION {i + 1}</span>
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    const newFaq = [...(block.faqItems || [])];
-                    newFaq.splice(i, 1);
-                    u({ faqItems: newFaq });
-                  }} 
-                  style={{ color: '#fca5a5', background: 'none', border: 'none', cursor: 'pointer' }}
-                  className="hover:text-red-500"
-                >
-                  <Trash2 size={14}/>
-                </button>
-              </div>
-              
-              <input 
-                className={inp} 
-                style={{ marginBottom: 10 }}
-                placeholder="Enter question here..." 
-                value={item.question} 
-                onChange={e => {
-                  const newFaq = [...(block.faqItems || [])];
-                  newFaq[i] = { ...newFaq[i], question: e.target.value };
-                  u({ faqItems: newFaq });
-                }} 
-              />
-              
-              <textarea 
-                className={txta} 
-                rows={2} 
-                placeholder="Enter answer here..." 
-                value={item.answer} 
-                onChange={e => {
-                  const newFaq = [...(block.faqItems || [])];
-                  newFaq[i] = { ...newFaq[i], answer: e.target.value };
-                  u({ faqItems: newFaq });
-                }} 
-              />
-            </div>
-          ))}
-          
-          <button 
-            type="button" 
-            onClick={() => {
-              const newFaq = [...(block.faqItems || []), { question: '', answer: '' }];
-              u({ faqItems: newFaq });
-            }} 
-            style={{ padding: '10px', borderRadius: 8, background: '#f4f4f5', fontSize: 10, fontWeight: 800, border: '1px solid #e4e4e7', cursor: 'pointer', color: '#18181b' }}
-          >
-            + ADD NEW QUESTION
-          </button>
         </div>
       )}
     </div>
@@ -610,12 +468,6 @@ const AddBlog = () => {
     author: 'Durable Editorial', image_url: ''
   });
 
-  // Drag and drop state
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [draggableBlockId, setDraggableBlockId] = useState<string | null>(null);
-  const [insertIndex, setInsertIndex] = useState<number | null>(null);
-
   useEffect(() => {
     if (!isEditing) return;
     (async () => {
@@ -639,52 +491,10 @@ const AddBlog = () => {
     return supabase.storage.from('blog-images').getPublicUrl(fileName).data.publicUrl;
   };
 
-  const addBlockAtIndex = (type: BlockType, index?: number) => {
-    if (index === undefined) {
-      setBlocks(p => [...p, makeBlock(type)]);
-    } else {
-      setBlocks(p => {
-        const newBlocks = [...p];
-        newBlocks.splice(index, 0, makeBlock(type));
-        return newBlocks;
-      });
-    }
-    setInsertIndex(null);
-  };
-
+  const addBlock    = (type: BlockType) => setBlocks(p => [...p, makeBlock(type)]);
   const removeBlock = (id: string)      => setBlocks(p => p.filter(b => b.id !== id));
   const updateBlock = (id: string, patch: Partial<Block>) =>
     setBlocks(p => p.map(b => b.id === id ? { ...b, ...patch } : b));
-
-  // ── DRAG AND DROP HANDLERS ──────────────────────────────────────────────────
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    e.dataTransfer.effectAllowed = "move";
-    setDraggedIndex(index);
-  };
-
-  const handleDragEnter = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    setDragOverIndex(index);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-    setDraggableBlockId(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex !== null && draggedIndex !== index) {
-      const newBlocks = [...blocks];
-      const [movedBlock] = newBlocks.splice(draggedIndex, 1);
-      newBlocks.splice(index, 0, movedBlock);
-      setBlocks(newBlocks);
-    }
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-    setDraggableBlockId(null);
-  };
 
   // ── HANDLE SUBMIT ────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -697,11 +507,12 @@ const AddBlog = () => {
         finalImageUrl = await uploadFileToSupabase(imageFile);
       }
 
+      // CRITICAL FIX: Generate the slug from the title
       const slug = generateSlug(formData.title);
 
       const payload = { 
         ...formData, 
-        slug: slug,
+        slug: slug, // Automatically include the generated slug
         image_url: finalImageUrl, 
         content: JSON.stringify(blocks) 
       };
@@ -801,67 +612,15 @@ const AddBlog = () => {
                 <Layout size={13} style={{ color: '#facc15' }}/>
                 <span style={{ fontSize: 9, fontWeight: 800, color: '#18181b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Content Blocks</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {blocks.map((block, index) => (
-                  <React.Fragment key={block.id}>
-                    {/* DRAG WRAPPER */}
-                    <div
-                      draggable={draggableBlockId === block.id}
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDragEnter={(e) => handleDragEnter(e, index)}
-                      onDragEnd={handleDragEnd}
-                      onDrop={(e) => handleDrop(e, index)}
-                      style={{
-                        opacity: draggedIndex === index ? 0.4 : 1,
-                        borderTop: dragOverIndex === index && draggedIndex !== index ? '3px solid #facc15' : '3px solid transparent',
-                        borderRadius: dragOverIndex === index ? '8px 8px 0 0' : '0',
-                        transition: 'all 0.2s',
-                        paddingTop: dragOverIndex === index ? '10px' : '0'
-                      }}
-                    >
-                      <BlockEditor 
-                        block={block} 
-                        index={index} 
-                        onUpdate={updateBlock} 
-                        onRemove={removeBlock} 
-                        onUpload={uploadFileToSupabase}
-                        setDraggable={(state) => setDraggableBlockId(state ? block.id : null)}
-                      />
-                    </div>
-
-                    {/* INSERT IN-BETWEEN BUTTON */}
-                    <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', margin: '4px 0', zIndex: 10 }}>
-                      <div style={{ position: 'absolute', width: '100%', height: '1px', background: '#e4e4e7', top: '50%', zIndex: -1, opacity: 0.5 }} />
-                      <button 
-                        type="button" 
-                        onClick={() => setInsertIndex(insertIndex === index + 1 ? null : index + 1)}
-                        style={{ background: '#f4f4f5', border: '1px solid #d4d4d8', color: '#71717a', borderRadius: 99, padding: '4px 10px', fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', transition: 'all 0.2s' }}
-                        className="hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50"
-                      >
-                        <Plus size={10} /> INSERT BLOCK
-                      </button>
-                    </div>
-
-                    {/* IN-BETWEEN INSERTION PANEL */}
-                    {insertIndex === index + 1 && (
-                      <div style={{ background: '#fafafa', border: '1.5px dashed #d4d4d8', borderRadius: 16, padding: 18, margin: '8px 0 16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                          <span style={{ fontSize: 9, fontWeight: 800, color: '#71717a', letterSpacing: '0.1em' }}>SELECT BLOCK TO INSERT HERE</span>
-                          <button type="button" onClick={() => setInsertIndex(null)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14}/></button>
-                        </div>
-                        <AddBlockPanel onAdd={(type) => addBlockAtIndex(type, index + 1)} />
-                      </div>
-                    )}
-                  </React.Fragment>
+                  <BlockEditor key={block.id} block={block} index={index} onUpdate={updateBlock} onRemove={removeBlock} onUpload={uploadFileToSupabase}/>
                 ))}
               </div>
             </div>
 
-            {/* DEFAULT ADD TO BOTTOM */}
             <div style={{ background: '#fff', border: '1.5px solid #e4e4e7', borderRadius: 16, padding: 18 }}>
-               <p style={{ fontSize: 9, fontWeight: 800, color: '#a1a1aa', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 13px' }}>Add to Bottom</p>
-              <AddBlockPanel onAdd={(type) => addBlockAtIndex(type)} />
+              <AddBlockPanel onAdd={addBlock}/>
             </div>
           </div>
 
