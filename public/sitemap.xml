@@ -1,149 +1,190 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <!-- Home -->
+  
   <url>
     <loc>https://durablefastener.com/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
-
-  <!-- Main Pages -->
   <url>
     <loc>https://durablefastener.com/products</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
-
-  <url>
-    <loc>https://durablefastener.com/oem-platform</loc>
-  </url>
-
   <url>
     <loc>https://durablefastener.com/manufacturing</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
-
   <url>
     <loc>https://durablefastener.com/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
-
   <url>
     <loc>https://durablefastener.com/blog</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
-
-  <url>
-    <loc>https://durablefastener.com/careers</loc>
-  </url>
-
   <url>
     <loc>https://durablefastener.com/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 
-  <!-- Example Product Pages (edit/add actual ones) -->
+  
   <url>
-    <loc>https://durablefastener.com/products/fasteners-segment</loc>
+    <loc>https://durablefastener.com/blog/screw-anatomy-guide-head-types-drive-types-thread-types-screw-point-explained</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/blog/tek-screw-point-chart-point-3-vs-point-5-self-drilling-screws</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/blog/drywall-screw-selection-guide-coarse-vs-fine-thread-for-wood-metal-studs</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/blog/screw-vs-bolt-whats-the-difference</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/blog/drywall-screw-vs-chipboard-screw-major-differences-you-must-know</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/blog/concrete-wall-screw-fixing-guide-types-tools-and-tips</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/blog/black-screw-vs-wood-screw</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
   </url>
 
+  
   <url>
-    <loc>https://durablefastener.com/product/premium-black-phosphate-drywall-screw-gypsum-screw</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/chipboard-screws</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/sds-csk</loc>
+    <loc>https://durablefastener.com/product/door-sliencer</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://durablefastener.com/product/sds-pan</loc>
+    <loc>https://durablefastener.com/product/auto-hings</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/sds-truss</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/sds-hex</loc>
-  </url>
-
   <url>
     <loc>https://durablefastener.com/product/ms-self-tapping-screw</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/ss-self-tapping-screw</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/carriage-bolt</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/nylon-frame-fixing-anchors-csk</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/hex-head-flange-torx-screw</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://durablefastener.com/product/nylon-frame-fixing-screw</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
-
+  <url>
+    <loc>https://durablefastener.com/product/premium-black-phosphate-drywall-screw-gypsum-screw</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/pvc-buffer</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/caster-wheel</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/pu-buffer</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/chipboard-screws</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/nylon-frame-fixing-anchors-csk</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
   <url>
     <loc>https://durablefastener.com/product/machine-screw</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/ss-self-tapping-screw</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/sds-hex</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/sds-csk</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/hex-head-flange-torx-screw</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://durablefastener.com/product/sds-truss</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://durablefastener.com/product/wire-nails-with-head</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
-
   <url>
-    <loc>https://durablefastener.com/products/fittings</loc>
+    <loc>https://durablefastener.com/product/sds-pan</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
-
   <url>
     <loc>https://durablefastener.com/product/door-magnet</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
-
   <url>
-    <loc>https://durablefastener.com/product/door-sliencer</loc>
+    <loc>https://durablefastener.com/product/carriage-bolt</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/pvc-buffer</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/pu-buffer</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/door-catcher</loc>
-  </url>
-
   <url>
     <loc>https://durablefastener.com/product/wall-grip-pulg</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
-
   <url>
-    <loc>https://durablefastener.com/product/auto-hings</loc>
+    <loc>https://durablefastener.com/product/door-catcher</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
-
-  <url>
-    <loc>https://durablefastener.com/product/caster-wheel</loc>
-  </url>
-
-  <!-- Example Blog Pages (edit/add actual ones) -->
-  <url>
-    <loc>https://durablefastener.com/blog/screw-vs-bolt-whats-the-difference</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/blog/screw-anatomy-guide-head-types-drive-types-thread-types-screw-point-explained</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/blog/drywall-screw-selection-guide-coarse-vs-fine-thread-for-wood-metal-studs</loc>
-  </url>
-
-  <url>
-    <loc>https://durablefastener.com/blog/tek-screw-point-chart-point-3-vs-point-5-self-drilling-screws</loc>
-  </url>
-
 </urlset>
