@@ -1,6 +1,13 @@
 {
   "rewrites": [
-    { "source": "/api/reviews", "destination": "/api/index.js" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { 
+      "source": "/sitemap.xml", 
+      "destination": "/api/sitemap" 
+    },
+   
+    { 
+      "source": "/((?!api/).*)", 
+      "destination": "/index.html" 
+    }
   ]
 }
