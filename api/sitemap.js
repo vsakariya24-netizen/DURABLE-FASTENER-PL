@@ -13,13 +13,17 @@ console.log("Fetched Blogs:", blogs); // Vercel logs mein check karein
     const { data: products } = await supabase.from('products').select('slug');
 
     const STATIC_URLS = [
-      'https://durablefastener.com/',
-      'https://durablefastener.com/products',
-      'https://durablefastener.com/manufacturing',
-      'https://durablefastener.com/about',
-      'https://durablefastener.com/blog',
-      'https://durablefastener.com/contact'
-    ];
+  'https://durablefastener.com/',
+  'https://durablefastener.com/products',
+  'https://durablefastener.com/products/fasteners-segment', // Add karein
+  'https://durablefastener.com/products/fittings',          // Add karein
+  'https://durablefastener.com/manufacturing',
+  'https://durablefastener.com/about',
+  'https://durablefastener.com/blog',
+  'https://durablefastener.com/oem-platform',
+  'https://durablefastener.com/careers',
+  'https://durablefastener.com/contact'
+];
 
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
