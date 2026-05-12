@@ -139,6 +139,8 @@ const Manufacturing: React.FC = () => {
     <div className="bg-white min-h-screen pt-20 font-sans text-slate-800 overflow-x-hidden selection:bg-blue-600 selection:text-white">
       <Helmet>
         <title>Fastener Manufacturing Factory in Rajkot | Durable Fastener</title>
+        {/* Ye rahi canonical tag ki line */}
+        <link rel="canonical" href="https://durablefastener.com/manufacturing" />
         <style>
           {`
             html, body { max-width: 100%; overflow-x: hidden; }
