@@ -114,13 +114,14 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
   const bf = "'Georgia', serif";
 
   switch (block.type) {
-    case 'text':
+   case 'text':
       return (
         <div style={{ marginBottom: 26 }}>
           {block.heading && <h4 style={{ fontFamily: pf, fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 9, marginTop: 0 }}>{block.heading}</h4>}
-          <p style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151', margin: 0 }}>
-            {block.body || <em style={{ color: '#ccc' }}>Empty paragraph…</em>}
-          </p>
+          <div 
+            style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151', margin: 0 }}
+            dangerouslySetInnerHTML={{ __html: block.body || '<em style="color: #ccc">Empty paragraph…</em>' }}
+          />
         </div>
       );
     case 'image':
@@ -301,6 +302,18 @@ const BlockEditor: React.FC<{
 }> = ({ block, index, onUpdate, onRemove, onUpload, setDraggable }) => {
   const [uploading, setUploading] = useState(false);
   const u = (patch: Partial<Block>) => onUpdate(block.id, patch);
+
+  //------------------------------------------hyperlink add -------------------------------
+  const addLink = () => {
+    const url = window.prompt("Enter Product URL (e.g. /products/chipboard-screws):");
+    if (url) {
+      document.execCommand('createLink', false, url);
+      // Link add hone ke baad content save karne ke liye
+      const el = document.getElementById(`editor-${block.id}`);
+      if (el) u({ body: el.innerHTML });
+    }
+  };
+
   const meta = PALETTE.find(p => p.type === block.type)!;
 
   const handleFileChange = async (file: File | undefined, callback: (url: string) => void) => {
@@ -342,8 +355,33 @@ const BlockEditor: React.FC<{
       {/* --- TEXT BLOCK --- */}
       {block.type === 'text' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input className={inp} placeholder="Optional section heading…" value={block.heading || ''} onChange={e => u({ heading: e.target.value })} />
-          <textarea className={txta} rows={5} placeholder="Write your paragraph content here…" value={block.body || ''} onChange={e => u({ body: e.target.value })} />
+          <div className="flex items-center justify-between bg-zinc-50 p-2 rounded-t-lg border-b border-zinc-200">
+            <input 
+              className="bg-transparent border-none outline-none text-[10px] font-bold text-zinc-500 w-full" 
+              placeholder="OPTIONAL SECTION HEADING..." 
+              value={block.heading || ''} 
+              onChange={e => u({ heading: e.target.value })} 
+            />
+            <button 
+  type="button" 
+  onMouseDown={(e) => e.preventDefault()} 
+  onClick={addLink}
+  className="p-1.5 hover:bg-yellow-100 rounded text-zinc-600 hover:text-yellow-700 transition-colors"
+  title="Add Link"
+>
+  <LinkIcon size={14} />
+</button>
+          </div>
+
+          <div
+            id={`editor-${block.id}`}
+            contentEditable
+            suppressContentEditableWarning
+            className={txta + " min-h-[120px] p-4 border border-t-0 rounded-b-xl focus:ring-2 focus:ring-yellow-400/20 outline-none bg-white"}
+            onBlur={(e) => u({ body: e.currentTarget.innerHTML })}
+            dangerouslySetInnerHTML={{ __html: block.body || '' }}
+          />
+          <p className="text-[9px] text-zinc-400 italic px-1">* Select any word and click the link icon to add internal linking.</p>
         </div>
       )}
 
