@@ -275,16 +275,22 @@ const BlogDetail: React.FC = () => {
                   );
 
                 default:
-                  return (
-                    <section key={idx} id={sectionId} className="mb-12">
-                      {section.heading && <h2 className="text-2xl font-bold text-zinc-900 mb-6">{section.heading}</h2>}
-                      <div className="space-y-6">
-                        {section.body?.split('\n').map((para: string, pIdx: number) => (
-                          para.trim() && <p key={pIdx} className="text-lg leading-[1.8] text-zinc-600 font-serif font-light">{para}</p>
-                        ))}
-                      </div>
-                    </section>
-                  );
+          return (
+            <section key={idx} id={sectionId} className="mb-12">
+              {section.heading && <h2 className="text-2xl font-bold text-zinc-900 mb-6">{section.heading}</h2>}
+              <div className="space-y-6">
+                {section.body?.split('\n').map((para: string, pIdx: number) => (
+                  para.trim() && (
+                    <p 
+                      key={pIdx} 
+                      className="text-lg leading-[1.8] text-zinc-600 font-serif font-light [&_a]:text-blue-600 [&_a]:font-medium [&_a]:underline hover:[&_a]:text-blue-800 transition-colors"
+                      dangerouslySetInnerHTML={{ __html: para }}
+                    />
+                  )
+                ))}
+              </div>
+            </section>
+          );
               }
             })}
           </main>
