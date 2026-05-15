@@ -526,7 +526,7 @@ const OEMPlatform: React.FC = () => {
             INITIATE RFQ <ArrowRight size={18} />
           </span>
         </Link>
-          <a  href="/public/Durable Fastener Pvt. Ltd. Catalogue.pdf" target="_blank" rel="noopener noreferrer">
+          <a  href="/Durable Fastener Pvt. Ltd. Catalogue.pdf" target="_blank" rel="noopener noreferrer">
           <button className="px-8 py-4 border border-white/10 text-slate-300 font-mono text-sm hover:bg-white/5 transition-colors flex items-center gap-2">
             <Download size={18} /> DOWNLOAD BROCHURE
           </button>
