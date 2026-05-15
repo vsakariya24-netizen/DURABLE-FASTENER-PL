@@ -821,7 +821,7 @@ const getMaterialData = (displayMaterial: string) => {
                 )}                
               </div>
                  {/* CTA BUTTONS (Matching Image 1 Footer) */}
-   <div className="grid grid-cols-2 gap-4 pt-4">
+  <div className="grid grid-cols-2 gap-4 pt-4">
               <a
                 href="/contact"
                 className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:-translate-y-0.5"
