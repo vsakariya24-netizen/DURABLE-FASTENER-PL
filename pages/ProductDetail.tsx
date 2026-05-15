@@ -96,18 +96,24 @@ const getMaterialData = (displayMaterial: string) => {
      const fileName = url.split('/').pop();
      return `${R2_BASE}/${fileName}`;
    };   
-   const buildFaqSchema = (faqs: { question: string; answer: string }[]) => {
-     if (!faqs?.length) return null;
-     return JSON.stringify({
-       "@context": "https://schema.org",
-       "@type": "FAQPage",
-       "mainEntity": faqs.map(faq => ({
-         "@type": "Question",
-         "name": faq.question,
-         "acceptedAnswer": { "@type": "Answer", "text": faq.answer },
-       })),
-     });
-   };
+   // File ke upar (Builders section mein) ise update karein
+const buildFaqSchema = (faqs: any[]) => {
+  if (!faqs || faqs.length === 0) return null;
+  
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question.trim(),
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer.trim()
+      }
+    }))
+  };
+  return JSON.stringify(schema);
+};
    
    /** BreadcrumbList schema */
    const buildBreadcrumbSchema = (productName: string, slug: string) =>
@@ -821,7 +827,7 @@ const getMaterialData = (displayMaterial: string) => {
                 )}                
               </div>
                  {/* CTA BUTTONS (Matching Image 1 Footer) */}
-  <div className="grid grid-cols-2 gap-4 pt-4">
+   <div className="grid grid-cols-2 gap-4 pt-4">
               <a
                 href="/contact"
                 className="col-span-1 bg-yellow-500 hover:bg-yellow-400 text-neutral-900 h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition-all text-sm border border-yellow-600/10 hover:-translate-y-0.5"
