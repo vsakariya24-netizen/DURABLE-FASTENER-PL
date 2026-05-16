@@ -807,7 +807,7 @@ const ProductDetail: React.FC = () => {
                   <ShoppingCart size={20} /> Bulk Quote
                 </a>
                 <a
-                  href="/public/Durable Fastener Pvt. Ltd. Catalogue.pdf"
+                  href="/Durable Fastener Pvt. Ltd. Catalogue.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="col-span-1 bg-neutral-900 text-white h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-sm hover:-translate-y-0.5"
