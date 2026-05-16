@@ -8,7 +8,7 @@ import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import PrivacyPolicy from './components/Privacypolicy';
 import TermsAndConditions from './components/TermsAndConditions';
-import AdminGuard from './pages/Admin/AdminGuard';
+
 
 // Public Pages
 import Home from './pages/Home';
@@ -51,10 +51,6 @@ import WhatsAppButton from './components/WhatsAppButton';
 const { BrowserRouter: Router, Routes, Route, Navigate } = ReactRouterDOM;
 
 const App: React.FC = () => {
-  const RedirectToProduct = () => {
-    const { slug } = ReactRouterDOM.useParams<{ slug: string }>();
-    return <Navigate to={`/product/${slug}`} replace />;
-  };
   return (
     // 2. WRAP YOUR APP WITH HELMET PROVIDER
     <HelmetProvider>
@@ -64,8 +60,6 @@ const App: React.FC = () => {
             <ScrollToTop />
             
             <Routes>
-              <Route path="/fastener/:slug" element={<RedirectToProduct />} />
-          <Route path="/fitting/:slug" element={<RedirectToProduct />} />
               {/* --- Public Website Routes --- */}
   <Route path="/" element={
   <>
@@ -129,7 +123,6 @@ const App: React.FC = () => {
               <Route path="life-gallery" element={<AdminLifeGallery />} />
               <Route path="/admin/edit-about" element={<AdminAbout />} />
               {/* --- Secure Admin Panel --- */}
-              
               <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminLayout />}>
                   
