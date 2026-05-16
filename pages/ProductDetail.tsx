@@ -13,7 +13,8 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import MagicZoomClone from '../components/MagicZoomClone';
 import { Helmet } from 'react-helmet-async';
 
-const { useParams, Link } = ReactRouterDOM;
+const { useParams, Link, useLocation } = ReactRouterDOM;
+
 
 const getMaterialData = (displayMaterial: string) => {
   if (!displayMaterial) return { ms: '-', ss: '-' };
@@ -258,7 +259,8 @@ const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string }) => (
 
 const ProductDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-
+ const location = useLocation();          // ✅ Now valid
+  const fallbackCanonical = `https://durablefastener.com${location.pathname}`;
   // State
   const [product, setProduct] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -521,26 +523,7 @@ const ProductDetail: React.FC = () => {
       className={`${THEME.bg} min-h-screen pb-24 pt-[170px] md:pt-[200px] selection:bg-yellow-500/30 selection:text-black`}
       style={fontBody}
     >
-      <Helmet>
-        <title>{product.name} Manufacturer | Durable Fastener Rajkot</title>
-        <link rel="canonical" href={`https://durablefastener.com/product/${slug}`} />
-        <meta
-          name="description"
-          content={`Buy ${product.name} directly from factory. ISO certified ${product.category || 'Fastener'} manufacturer in Rajkot, Gujarat. Check specifications and bulk pricing.`}
-        />
-
-        {/* Breadcrumb Schema */}
-        <script type="application/ld+json">
-          {JSON.stringify(breadcrumbSchema)}
-        </script>
-
-        {/* Product Schema */}
-        <script type="application/ld+json">
-          {JSON.stringify(productSchema)}
-        </script>
-
-        {/* Note: FAQ Schema is injected via useEffect for better Google detection */}
-      </Helmet>
+      
 
       {/* Breadcrumb Nav Bar */}
       <div className="fixed top-[80px] md:top-[170px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md">
@@ -558,7 +541,7 @@ const ProductDetail: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
-        {/* Title Block */}
+        {/* Title const fetchProduct = async () => { */}
         <motion.div variants={containerVar} initial="hidden" animate="visible" className="mb-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
             <div>
@@ -807,7 +790,7 @@ const ProductDetail: React.FC = () => {
                   <ShoppingCart size={20} /> Bulk Quote
                 </a>
                 <a
-                  href="/Durable Fastener Pvt. Ltd. Catalogue.pdf"
+                  href="/public/Durable Fastener Pvt. Ltd. Catalogue.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="col-span-1 bg-neutral-900 text-white h-14 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-sm hover:-translate-y-0.5"
