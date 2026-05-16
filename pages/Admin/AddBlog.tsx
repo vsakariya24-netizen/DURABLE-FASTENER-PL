@@ -304,15 +304,49 @@ const BlockEditor: React.FC<{
   const u = (patch: Partial<Block>) => onUpdate(block.id, patch);
 
   //------------------------------------------hyperlink add -------------------------------
-  const addLink = () => {
-    const url = window.prompt("Enter Product URL (e.g. /products/chipboard-screws):");
-    if (url) {
-      document.execCommand('createLink', false, url);
-      // Link add hone ke baad content save karne ke liye
-      const el = document.getElementById(`editor-${block.id}`);
-      if (el) u({ body: el.innerHTML });
+ const addLink = () => {
+  // 1. Pehle check karein ki kya pehle se wahan koi link hai
+  const selection = window.getSelection();
+  let existingUrl = "";
+  
+  if (selection && selection.anchorNode) {
+    const parent = selection.anchorNode.parentElement;
+    if (parent && parent.tagName === 'A') {
+      existingUrl = parent.getAttribute('href') || "";
     }
-  };
+  }
+
+  // 2. Prompt mein purana URL dikhayein (agar hai toh)
+  const url = window.prompt("Edit Product URL:", existingUrl);
+  
+  if (url !== null) { // Agar user ne cancel nahi kiya
+    document.execCommand('createLink', false, url);
+    
+    // Attributes update karein
+    const newSelection = window.getSelection();
+    const newParent = newSelection.anchorNode.parentElement;
+    if (newParent && newParent.tagName === 'A') {
+      newParent.setAttribute('target', '_blank');
+      newParent.setAttribute('rel', 'noopener noreferrer');
+      newParent.style.color = '#2563eb';
+    }
+    
+    const el = document.getElementById(`editor-${block.id}`);
+    if (el) u({ body: el.innerHTML });
+  }
+};
+//------------------------------------------remove link------------------------------------------------
+const removeLink = () => {
+  // 1. Link hatayein
+  document.execCommand('unlink', false);
+  
+  // 2. Extra formatting (jaise ki reh gaya blue color) hatane ke liye
+  document.execCommand('removeFormat', false); 
+
+  // 3. State update karein
+  const el = document.getElementById(`editor-${block.id}`);
+  if (el) u({ body: el.innerHTML });
+};
 
   const meta = PALETTE.find(p => p.type === block.type)!;
 
@@ -355,6 +389,7 @@ const BlockEditor: React.FC<{
       {/* --- TEXT BLOCK --- */}
       {block.type === 'text' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+         
           <div className="flex items-center justify-between bg-zinc-50 p-2 rounded-t-lg border-b border-zinc-200">
             <input 
               className="bg-transparent border-none outline-none text-[10px] font-bold text-zinc-500 w-full" 
@@ -371,6 +406,17 @@ const BlockEditor: React.FC<{
 >
   <LinkIcon size={14} />
 </button>
+{/* REMOVE LINK BUTTON (Naya add kiya) */}
+    <button 
+      type="button" 
+      onMouseDown={(e) => e.preventDefault()} 
+      onClick={removeLink}
+      className="p-1.5 hover:bg-red-100 rounded text-zinc-400 hover:text-red-600 transition-colors"
+      title="Remove Link"
+    >
+      <X size={14} />
+    </button>
+
           </div>
 
           <div
@@ -388,7 +434,18 @@ const BlockEditor: React.FC<{
       {/* --- TABLE BLOCK --- */}
       {block.type === 'table' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <input className={inp} placeholder="Table Heading (e.g. Technical Specifications)" value={block.heading || ''} onChange={e => u({ heading: e.target.value })} />
+          <div className="flex gap-2 items-center">
+  <input className={inp} placeholder="Table Heading (e.g. Technical Specifications)" value={block.heading || ''} onChange={e => u({ heading: e.target.value })} />
+  <button 
+    type="button" 
+    onMouseDown={(e) => e.preventDefault()}
+    onClick={addLink}
+    className="p-3 bg-white border border-zinc-200 hover:bg-yellow-100 rounded-xl text-zinc-600 hover:text-yellow-700 transition-colors flex-shrink-0"
+    title="Add Link to Selected Table Text"
+  >
+    <LinkIcon size={16} />
+  </button>
+</div>
           <div style={{ overflowX: 'auto', border: '1.5px solid #e4e4e7', borderRadius: 12 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
@@ -414,16 +471,18 @@ const BlockEditor: React.FC<{
                   <tr key={ri} style={{ background: ri % 2 === 0 ? '#fff' : '#f9fafb' }}>
                     {row.map((cell, ci) => (
                       <td key={ci} style={{ padding: 8, border: '1px solid #e4e4e7' }}>
-                        <input 
-                          style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent' }}
-                          value={cell}
-                          onChange={e => {
-                            const newRows = [...(block.rows || [])];
-                            newRows[ri] = [...newRows[ri]];
-                            newRows[ri][ci] = e.target.value;
-                            u({ rows: newRows });
-                          }}
-                        />
+                        <div 
+  contentEditable
+  suppressContentEditableWarning
+  style={{ width: '100%', minHeight: '20px', border: 'none', outline: 'none', background: 'transparent' }}
+  onBlur={e => {
+    const newRows = [...(block.rows || [])];
+    newRows[ri] = [...newRows[ri]];
+    newRows[ri][ci] = e.currentTarget.innerHTML;
+    u({ rows: newRows });
+  }}
+  dangerouslySetInnerHTML={{ __html: cell || '' }}
+/>
                       </td>
                     ))}
                     <td style={{ textAlign: 'center' }}>
@@ -535,7 +594,28 @@ const BlockEditor: React.FC<{
           </div>
           <input type="file" accept="image/*" onChange={e => handleFileChange(e.target.files?.[0], (url) => u({ splitImage: url }))} />
           <input className={inp} placeholder="Or paste image URL" value={block.splitImage || ''} onChange={e => u({ splitImage: e.target.value })} />
-          <textarea className={txta} rows={4} placeholder="Write content here..." value={block.splitContent || ''} onChange={e => u({ splitContent: e.target.value })} />
+          {/* NAYA RICH TEXT EDITOR FOR SPLIT CONTENT */}
+          <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
+            <div className="flex items-center justify-end bg-zinc-50 p-2 border-b border-zinc-200">
+              <button 
+                type="button" 
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={addLink}
+                className="p-1.5 hover:bg-yellow-100 rounded text-zinc-600 hover:text-yellow-700 transition-colors"
+                title="Add Link"
+              >
+                <LinkIcon size={14} />
+              </button>
+            </div>
+            <div
+              id={`editor-split-${block.id}`}
+              contentEditable
+              suppressContentEditableWarning
+              className={txta + " min-h-[100px] border-none rounded-none focus:ring-0"}
+              onBlur={(e) => u({ splitContent: e.currentTarget.innerHTML })}
+              dangerouslySetInnerHTML={{ __html: block.splitContent || '' }}
+            />
+          </div>
         </div>
       )}
 
@@ -759,6 +839,16 @@ const AddBlog = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f4f4f5', fontFamily: "'DM Sans',sans-serif" }}>
+
+      {/* --- YEH SECTION ADD KAREIN --- */}
+   <style>{`
+  [contenteditable] a {
+    color: #2563eb !important; /* Blue color sirf link hone par */
+    text-decoration: underline !important;
+    font-weight: 600;
+  }
+`}</style>
+
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet"/>
 
       <form onSubmit={handleSubmit}>
