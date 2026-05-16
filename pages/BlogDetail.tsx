@@ -211,7 +211,13 @@ const BlogDetail: React.FC = () => {
                         <tbody>
                           {section.rows?.map((row: string[], ri: number) => (
                             <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-zinc-50'}>
-                              {row.map((cell: string, ci: number) => <td key={ci} className="px-6 py-4 text-sm text-zinc-600 border border-zinc-100">{cell}</td>)}
+                             {row.map((cell: string, ci: number) => (
+  <td 
+    key={ci} 
+    className="px-6 py-4 text-sm text-zinc-600 border border-zinc-100 [&_a]:text-blue-600 [&_a]:font-medium [&_a]:underline hover:[&_a]:text-blue-800 transition-colors"
+    dangerouslySetInnerHTML={{ __html: cell || '' }}
+  />
+))}
                             </tr>
                           ))}
                         </tbody>
