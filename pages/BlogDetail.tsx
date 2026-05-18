@@ -37,9 +37,10 @@ const FAQItem = ({ item, index }: { item: any; index: number }) => {
         className="overflow-hidden"
       >
         <div className="pb-8 pl-12 pr-6">
-          <p className="text-zinc-600 leading-relaxed font-serif text-lg m-0 italic border-l-2 border-yellow-500/30 pl-4">
-            {item.answer}
-          </p>
+          <div 
+            className="text-zinc-600 leading-relaxed font-serif text-lg m-0 italic border-l-2 border-yellow-500/30 pl-4 [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800 transition-colors"
+            dangerouslySetInnerHTML={{ __html: item.answer || '' }}
+          />
         </div>
       </motion.div>
     </div>
@@ -103,6 +104,28 @@ const BlogDetail: React.FC = () => {
 
   return (
     <div className="bg-[#FCFCFC] min-h-screen font-sans text-zinc-900 selection:bg-yellow-200">
+      
+      {/* --- INJECTED STYLE SHEET: Admin Panel ke layout aur typography se matched text configuration --- */}
+      <style>{`
+        .blog-content-render,
+        .blog-content-render div,
+        .blog-content-render p,
+        .blog-content-render span,
+        .blog-content-render li {
+          font-family: 'Georgia', serif !important;
+          font-size: 17px !important;
+          line-height: 1.9 !important;
+          color: #374151 !important;
+          font-weight: 400 !important;
+        }
+        .blog-content-render a,
+        .blog-content-render * a {
+          color: #2563eb !important;
+          text-decoration: underline !important;
+          font-weight: 600 !important;
+        }
+      `}</style>
+
       <Helmet><title>{post?.title} | Durable Fastener</title></Helmet>
 
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-yellow-500 origin-left z-[250]" style={{ scaleX }} />
@@ -211,13 +234,13 @@ const BlogDetail: React.FC = () => {
                         <tbody>
                           {section.rows?.map((row: string[], ri: number) => (
                             <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-zinc-50'}>
-                             {row.map((cell: string, ci: number) => (
-  <td 
-    key={ci} 
-    className="px-6 py-4 text-sm text-zinc-600 border border-zinc-100 [&_a]:text-blue-600 [&_a]:font-medium [&_a]:underline hover:[&_a]:text-blue-800 transition-colors"
-    dangerouslySetInnerHTML={{ __html: cell || '' }}
-  />
-))}
+                              {row.map((cell: string, ci: number) => (
+                                <td 
+                                  key={ci} 
+                                  className="px-6 py-4 text-sm text-zinc-600 border border-zinc-100 [&_a]:text-blue-600 [&_a]:font-medium [&_a]:underline hover:[&_a]:text-blue-800 transition-colors"
+                                  dangerouslySetInnerHTML={{ __html: cell || '' }}
+                                />
+                              ))}
                             </tr>
                           ))}
                         </tbody>
@@ -230,12 +253,11 @@ const BlogDetail: React.FC = () => {
                     <div key={idx} className="relative my-12 p-10 bg-[#0f0f11] rounded-[2rem] text-white shadow-2xl">
                       <div className="flex items-center gap-3 mb-6">
                         <div className="h-[2px] w-8 bg-yellow-500" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500">EXECUTIVE SUMMARY </span>
+                        <span style={{ fontSize: 10, fontWeight: 900 }} className="uppercase tracking-[0.3em] text-yellow-500">EXECUTIVE SUMMARY </span>
                       </div>
                       <p className="text-xl text-zinc-300 font-serif italic leading-relaxed">{section.body}</p>
                     </div>
                   );
-                  //-------------------------------------FAQ SECTION----------------------------------------------
 
                 case 'faq':
                   return (
@@ -244,18 +266,16 @@ const BlogDetail: React.FC = () => {
                         <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/20">
                           <BookOpen className="text-black" size={20} />
                         </div>
-                        {/* Yahan humne dynamic heading add kar di hai jo admin panel se aayegi */}
                         <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-900 m-0">
                           {section.heading || 'FAQ Section'}
                         </h2>
                       </div>
                       <div className="divide-y divide-zinc-100">
-                        {/* section.items ki jagah section.faqItems kar diya gaya hai */}
                         {section.faqItems?.map((item: any, fIdx: number) => <FAQItem key={fIdx} item={item} index={fIdx} />)}
                       </div>
                     </div>
                   );
-                  //-------------------------------------image with text --------------------------------------------------------
+
                 case 'split':
                   return (
                     <div key={idx} id={sectionId} className="block my-12 overflow-hidden">
@@ -263,11 +283,11 @@ const BlogDetail: React.FC = () => {
                         <img src={section.splitImage || ''} alt="" className="w-full rounded-2xl shadow-xl object-cover border border-zinc-100" />
                         {section.caption && <p className="mt-3 text-sm text-zinc-400 italic font-serif text-center md:text-left">— {section.caption}</p>}
                       </div>
-                      <div className="prose prose-zinc prose-lg max-w-none">
-                        {section.splitContent?.split('\n').map((para: string, i: number) => (
-                          para.trim() && <p key={i} className="text-lg leading-[1.8] text-zinc-600 font-serif mb-6 text-justify">{para}</p>
-                        ))}
-                      </div>
+                      {/* Sahi dynamic rendering configuration wrapper class use ki hai code sync ke liye */}
+                      <div 
+                        className="blog-content-render"
+                        dangerouslySetInnerHTML={{ __html: section.splitContent || '' }}
+                      />
                       <div className="clear-both"></div>
                     </div>
                   );
@@ -281,22 +301,16 @@ const BlogDetail: React.FC = () => {
                   );
 
                 default:
-          return (
-            <section key={idx} id={sectionId} className="mb-12">
-              {section.heading && <h2 className="text-2xl font-bold text-zinc-900 mb-6">{section.heading}</h2>}
-              <div className="space-y-6">
-                {section.body?.split('\n').map((para: string, pIdx: number) => (
-                  para.trim() && (
-                    <p 
-                      key={pIdx} 
-                      className="text-lg leading-[1.8] text-zinc-600 font-serif font-light [&_a]:text-blue-600 [&_a]:font-medium [&_a]:underline hover:[&_a]:text-blue-800 transition-colors"
-                      dangerouslySetInnerHTML={{ __html: para }}
-                    />
-                  )
-                ))}
-              </div>
-            </section>
-          );
+                  return (
+                    <section key={idx} id={sectionId} className="mb-12">
+                      {section.heading && <h2 className="text-2xl font-bold text-zinc-900 mb-6">{section.heading}</h2>}
+                      {/* Base parsing component style lock classes apply kar di gayi hain */}
+                      <div 
+                        className="blog-content-render"
+                        dangerouslySetInnerHTML={{ __html: section.body || '' }}
+                      />
+                    </section>
+                  );
               }
             })}
           </main>
