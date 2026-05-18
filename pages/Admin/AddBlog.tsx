@@ -59,8 +59,8 @@ interface Block {
 
 const PALETTE: { type: BlockType; label: string; icon: React.ReactNode; desc: string; accent: string }[] = [
   { type: 'text',      label: 'Paragraph',     icon: <Type size={15}/>,        desc: 'Body text + optional heading', accent: '#6366f1' },
-  { type: 'heading2',  label: 'H2 Heading',    icon: <Heading1 size={15}/>,    desc: 'Major section title',          accent: '#7c3aed' },
-  { type: 'heading3',  label: 'H3 Heading',    icon: <Heading2 size={15}/>,    desc: 'Sub-section title',            accent: '#a78bfa' },
+  { type: 'heading2',  label: 'H2 Heading',     icon: <Heading1 size={15}/>,    desc: 'Major section title',          accent: '#7c3aed' },
+  { type: 'heading3',  label: 'H3 Heading',     icon: <Heading2 size={15}/>,    desc: 'Sub-section title',            accent: '#a78bfa' },
   { type: 'list',      label: 'List',          icon: <List size={15}/>,        desc: 'Bullet or numbered list',      accent: '#0891b2' },
   { type: 'quote',     label: 'Blockquote',    icon: <Quote size={15}/>,       desc: 'Pull quote or attribution',    accent: '#db2777' },
   { type: 'callout',   label: 'Callout',       icon: <AlertCircle size={15}/>, desc: 'Info / Tip / Warning box',     accent: '#d97706' },
@@ -119,6 +119,7 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
         <div style={{ marginBottom: 26 }}>
           {block.heading && <h4 style={{ fontFamily: pf, fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 9, marginTop: 0 }}>{block.heading}</h4>}
           <div 
+            className="blog-preview-render-text"
             style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151', margin: 0 }}
             dangerouslySetInnerHTML={{ __html: block.body || '<em style="color: #ccc">Empty paragraph…</em>' }}
           />
@@ -172,7 +173,7 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
       );
     }
     case 'highlight':
-      return <div style={{ background: block.highlightColor || '#fef9c3', borderRadius: 14, padding: '15px 19px', margin: '18px 0', borderLeft: '4px solid #eab308', fontFamily: bf, fontSize: 17, fontWeight: 500, color: '#713f12', lineHeight: 1.75 }}>{block.body || 'Key takeaway…'}</div>;
+      return <div style={{ background: block.highlightColor || '#fef9c3', borderRadius: 14, padding: '15px 19px', margin: '18px 0', borderLeft: '4px solid #eab308', fontFamily: bf, fontSize: 17, fontWeight: 500, color: '#717172', lineHeight: 1.75 }}>{block.body || 'Key takeaway…'}</div>;
     case 'list': {
       const Tag = block.listType === 'numbered' ? 'ol' : 'ul';
       return (
@@ -197,7 +198,7 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
             <tbody>
               {(block.rows || []).map((row, ri) => (
                 <tr key={ri} style={{ background: ri % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                  {row.map((cell, ci) => <td key={ci} style={{ padding: '10px 15px', color: '#374151', fontWeight: ci === 0 ? 600 : 400 }}>{cell}</td>)}
+                  {row.map((cell, ci) => <td key={ci} style={{ padding: '10px 15px', color: '#374151', fontWeight: ci === 0 ? 600 : 400 }} dangerouslySetInnerHTML={{ __html: cell || '' }} />)}
                 </tr>
               ))}
             </tbody>
@@ -250,18 +251,17 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'center', margin: '30px 0' }}>
           {block.splitLayout === 'left-image' ? (
             <>
-              <img src={block.splitImage} style={{ width: '100%', borderRadius: 12 }} />
-              <p style={{ lineHeight: 1.8 }}>{block.splitContent}</p>
+              <img src={block.splitImage} style={{ width: '100%', borderRadius: 12 }} alt="" />
+              <div className="blog-preview-render-text" style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: block.splitContent || '' }} />
             </>
           ) : (
             <>
-              <p style={{ lineHeight: 1.8 }}>{block.splitContent}</p>
-              <img src={block.splitImage} style={{ width: '100%', borderRadius: 12 }} />
+              <div className="blog-preview-render-text" style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: block.splitContent || '' }} />
+              <img src={block.splitImage} style={{ width: '100%', borderRadius: 12 }} alt="" />
             </>
           )}
         </div>
       );
-      //---------------------------------FAQ section ------------------------------
    case 'faq':
       return (
         <div style={{ margin: '36px 0' }}>
@@ -305,7 +305,6 @@ const BlockEditor: React.FC<{
 
   //------------------------------------------hyperlink add -------------------------------
  const addLink = () => {
-  // 1. Pehle check karein ki kya pehle se wahan koi link hai
   const selection = window.getSelection();
   let existingUrl = "";
   
@@ -316,19 +315,19 @@ const BlockEditor: React.FC<{
     }
   }
 
-  // 2. Prompt mein purana URL dikhayein (agar hai toh)
   const url = window.prompt("Edit Product URL:", existingUrl);
   
-  if (url !== null) { // Agar user ne cancel nahi kiya
+  if (url !== null) {
     document.execCommand('createLink', false, url);
     
-    // Attributes update karein
     const newSelection = window.getSelection();
-    const newParent = newSelection.anchorNode.parentElement;
-    if (newParent && newParent.tagName === 'A') {
-      newParent.setAttribute('target', '_blank');
-      newParent.setAttribute('rel', 'noopener noreferrer');
-      newParent.style.color = '#2563eb';
+    if (newSelection && newSelection.anchorNode) {
+      const newParent = newSelection.anchorNode.parentElement;
+      if (newParent && newParent.tagName === 'A') {
+        newParent.setAttribute('target', '_blank');
+        newParent.setAttribute('rel', 'noopener noreferrer');
+        newParent.style.color = '#2563eb';
+      }
     }
     
     const el = document.getElementById(`editor-${block.id}`);
@@ -337,13 +336,9 @@ const BlockEditor: React.FC<{
 };
 //------------------------------------------remove link------------------------------------------------
 const removeLink = () => {
-  // 1. Link hatayein
   document.execCommand('unlink', false);
-  
-  // 2. Extra formatting (jaise ki reh gaya blue color) hatane ke liye
   document.execCommand('removeFormat', false); 
 
-  // 3. State update karein
   const el = document.getElementById(`editor-${block.id}`);
   if (el) u({ body: el.innerHTML });
 };
@@ -386,51 +381,50 @@ const removeLink = () => {
         <button type="button" onClick={() => onRemove(block.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fca5a5', padding: 3 }} className="hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
       </div>
 
-      {/* --- TEXT BLOCK --- */}
-      {block.type === 'text' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-         
-          <div className="flex items-center justify-between bg-zinc-50 p-2 rounded-t-lg border-b border-zinc-200">
-            <input 
-              className="bg-transparent border-none outline-none text-[10px] font-bold text-zinc-500 w-full" 
-              placeholder="OPTIONAL SECTION HEADING..." 
-              value={block.heading || ''} 
-              onChange={e => u({ heading: e.target.value })} 
-            />
-            <button 
-  type="button" 
-  onMouseDown={(e) => e.preventDefault()} 
-  onClick={addLink}
-  className="p-1.5 hover:bg-yellow-100 rounded text-zinc-600 hover:text-yellow-700 transition-colors"
-  title="Add Link"
->
-  <LinkIcon size={14} />
-</button>
-{/* REMOVE LINK BUTTON (Naya add kiya) */}
-    <button 
-      type="button" 
-      onMouseDown={(e) => e.preventDefault()} 
-      onClick={removeLink}
-      className="p-1.5 hover:bg-red-100 rounded text-zinc-400 hover:text-red-600 transition-colors"
-      title="Remove Link"
-    >
-      <X size={14} />
-    </button>
+     {/* --- TEXT BLOCK --- */}
+{block.type === 'text' && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+   
+    <div className="flex items-center justify-between bg-zinc-50 p-2 rounded-t-lg border border-zinc-200">
+      <input 
+        className="bg-transparent border-none outline-none text-[10px] font-bold text-zinc-500 w-full" 
+        placeholder="OPTIONAL SECTION HEADING..." 
+        value={block.heading || ''} 
+        onChange={e => u({ heading: e.target.value })} 
+      />
+      <div className="flex gap-1">
+        <button 
+          type="button" 
+          onMouseDown={(e) => e.preventDefault()} 
+          onClick={addLink}
+          className="p-1.5 hover:bg-yellow-100 rounded text-zinc-600 hover:text-yellow-700 transition-colors"
+          title="Add Link"
+        >
+          <LinkIcon size={14} />
+        </button>
+        <button 
+          type="button" 
+          onMouseDown={(e) => e.preventDefault()} 
+          onClick={removeLink}
+          className="p-1.5 hover:bg-red-100 rounded text-zinc-400 hover:text-red-600 transition-colors"
+          title="Remove Link"
+        >
+          <X size={14} />
+        </button>
+      </div>
+    </div>
 
-          </div>
-
-          <div
-            id={`editor-${block.id}`}
-            contentEditable
-            suppressContentEditableWarning
-            className={txta + " min-h-[120px] p-4 border border-t-0 rounded-b-xl focus:ring-2 focus:ring-yellow-400/20 outline-none bg-white"}
-            onBlur={(e) => u({ body: e.currentTarget.innerHTML })}
-            dangerouslySetInnerHTML={{ __html: block.body || '' }}
-          />
-          <p className="text-[9px] text-zinc-400 italic px-1">* Select any word and click the link icon to add internal linking.</p>
-        </div>
-      )}
-
+    <div
+      id={`editor-${block.id}`}
+      contentEditable
+      suppressContentEditableWarning
+      className="w-full min-h-[120px] max-h-[250px] overflow-y-auto p-4 border border-zinc-200 border-t-0 rounded-b-xl focus:ring-2 focus:ring-yellow-400/20 outline-none bg-white font-serif text-[16px] leading-relaxed text-zinc-800 select-text"
+      onBlur={(e) => u({ body: e.currentTarget.innerHTML })}
+      dangerouslySetInnerHTML={{ __html: block.body || '' }}
+    />
+    <p className="text-[9px] text-zinc-400 italic px-1">* Select any word and click the link icon to add internal linking.</p>
+  </div>
+)}
       {/* --- TABLE BLOCK --- */}
       {block.type === 'table' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -581,44 +575,44 @@ const removeLink = () => {
         </div>
       )}
 
-      {/* --- SPLIT IMAGE/TEXT BLOCK --- */}
-      {block.type === 'split' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {['left-image', 'right-image'].map((layout) => (
-              <button key={layout} type="button" onClick={() => u({ splitLayout: layout as any })}
-                className={`px-3 py-1 text-[10px] font-bold rounded ${block.splitLayout === layout ? 'bg-zinc-900 text-yellow-400' : 'bg-zinc-100'}`}>
-                {layout === 'left-image' ? 'Image Left' : 'Image Right'}
-              </button>
-            ))}
-          </div>
-          <input type="file" accept="image/*" onChange={e => handleFileChange(e.target.files?.[0], (url) => u({ splitImage: url }))} />
-          <input className={inp} placeholder="Or paste image URL" value={block.splitImage || ''} onChange={e => u({ splitImage: e.target.value })} />
-          {/* NAYA RICH TEXT EDITOR FOR SPLIT CONTENT */}
-          <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
-            <div className="flex items-center justify-end bg-zinc-50 p-2 border-b border-zinc-200">
-              <button 
-                type="button" 
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={addLink}
-                className="p-1.5 hover:bg-yellow-100 rounded text-zinc-600 hover:text-yellow-700 transition-colors"
-                title="Add Link"
-              >
-                <LinkIcon size={14} />
-              </button>
-            </div>
-            <div
-              id={`editor-split-${block.id}`}
-              contentEditable
-              suppressContentEditableWarning
-              className={txta + " min-h-[100px] border-none rounded-none focus:ring-0"}
-              onBlur={(e) => u({ splitContent: e.currentTarget.innerHTML })}
-              dangerouslySetInnerHTML={{ __html: block.splitContent || '' }}
-            />
-          </div>
-        </div>
-      )}
-
+    {/* --- SPLIT IMAGE/TEXT BLOCK --- */}
+{block.type === 'split' && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', gap: 8 }}>
+      {['left-image', 'right-image'].map((layout) => (
+        <button key={layout} type="button" onClick={() => u({ splitLayout: layout as any })}
+          className={`px-3 py-1 text-[10px] font-bold rounded ${block.splitLayout === layout ? 'bg-zinc-900 text-yellow-400' : 'bg-zinc-100'}`}>
+          {layout === 'left-image' ? 'Image Left' : 'Image Right'}
+        </button>
+      ))}
+    </div>
+    <input type="file" accept="image/*" onChange={e => handleFileChange(e.target.files?.[0], (url) => u({ splitImage: url }))} />
+    <input className={inp} placeholder="Or paste image URL" value={block.splitImage || ''} onChange={e => u({ splitImage: e.target.value })} />
+    
+    <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
+      <div className="flex items-center justify-end bg-zinc-50 p-2 border-b border-zinc-200">
+        <button 
+          type="button" 
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={addLink}
+          className="p-1.5 hover:bg-yellow-100 rounded text-zinc-600 hover:text-yellow-700 transition-colors"
+          title="Add Link"
+        >
+          <LinkIcon size={14} />
+        </button>
+      </div>
+      
+      <div
+        id={`editor-split-${block.id}`}
+        contentEditable
+        suppressContentEditableWarning
+        className="w-full min-h-[120px] max-h-[200px] overflow-y-auto p-4 focus:ring-2 focus:ring-yellow-400/20 outline-none bg-white font-serif text-[16px] leading-relaxed text-zinc-800"
+        onBlur={(e) => u({ splitContent: e.currentTarget.innerHTML })}
+        dangerouslySetInnerHTML={{ __html: block.splitContent || '' }}
+      />
+    </div>
+  </div>
+)}
       {/* --- QUOTE BLOCK --- */}
       {block.type === 'quote' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -840,20 +834,49 @@ const AddBlog = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#f4f4f5', fontFamily: "'DM Sans',sans-serif" }}>
 
-      {/* --- YEH SECTION ADD KAREIN --- */}
-   <style>{`
-  [contenteditable] a {
-    color: #2563eb !important; /* Blue color sirf link hone par */
-    text-decoration: underline !important;
-    font-weight: 600;
-  }
-`}</style>
+      {/* --- INJECTED INLINE STYLE SHEET TO LOCK TYPOGRAPHY --- */}
+      <style>{`
+        /* 1. Force layout constraints and styling on Editor blocks */
+        [contenteditable] {
+          font-family: Georgia, serif !important;
+          font-size: 16px !important;
+          line-height: 1.8 !important;
+        }
+        [contenteditable] * {
+          font-family: Georgia, serif !important;
+          font-size: 16px !important;
+          line-height: 1.8 !important;
+        }
+        [contenteditable] a {
+          color: #2563eb !important;
+          text-decoration: underline !important;
+          font-weight: 600;
+        }
+        
+        /* 2. Force absolute hierarchy rule on inner preview nodes to prevent browser default reset */
+        .blog-preview-render-text,
+        .blog-preview-render-text div, 
+        .blog-preview-render-text p, 
+        .blog-preview-render-text span,
+        .blog-preview-render-text li {
+          font-family: 'Georgia', serif !important;
+          font-size: 17px !important;
+          line-height: 1.9 !important;
+          color: #374151 !important;
+        }
+        .blog-preview-render-text a {
+          color: #2563eb !important;
+          text-decoration: underline !important;
+          font-weight: 600 !important;
+        }
+      `}</style>
 
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet"/>
 
       <form onSubmit={handleSubmit}>
         {/* TOPBAR */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e4e4e7', padding: '10px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        {/* TOPBAR */}
+<div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e4e4e7', padding: '10px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <Link to="/dfpladmin access/blogs" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#71717a', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             <ArrowLeft size={12}/> Back
           </Link>
