@@ -13,9 +13,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import MagicZoomClone from '../components/MagicZoomClone';
 import { Helmet } from 'react-helmet-async';
 
-const { useParams, Link, useLocation } = ReactRouterDOM;
-const location = useLocation();
-const fallbackCanonical = `https://durablefastener.com${location.pathname}`;
+const { useParams, Link } = ReactRouterDOM;
 
 const getMaterialData = (displayMaterial: string) => {
   if (!displayMaterial) return { ms: '-', ss: '-' };
@@ -101,11 +99,10 @@ const cleanImageUrl = (url: string): string => {
   return `${R2_BASE}/${fileName}`;
 };
 
-// ✅ IMPROVED FAQ Schema Builder - Proper format for Google
+// ✅ Improved FAQ Schema Builder – ensures valid format for Google
 const buildFaqSchema = (faqs: { question: string; answer: string }[]) => {
   if (!faqs?.length) return null;
 
-  // Filter out any FAQs with missing data
   const validFaqs = faqs.filter(faq => faq.question?.trim() && faq.answer?.trim());
   if (validFaqs.length === 0) return null;
 
@@ -123,7 +120,7 @@ const buildFaqSchema = (faqs: { question: string; answer: string }[]) => {
   };
 };
 
-/** BreadcrumbList schema */
+/** BreadcrumbList schema – always valid */
 const buildBreadcrumbSchema = (productName: string, slug: string) => ({
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -134,6 +131,7 @@ const buildBreadcrumbSchema = (productName: string, slug: string) => ({
   ],
 });
 
+/** Product schema – robust for all product types (fasteners, fittings, etc.) */
 const buildProductSchema = (
   product: any,
   slug: string,
@@ -141,35 +139,48 @@ const buildProductSchema = (
   selectedLen: string,
   selectedUnit: string,
 ) => {
-  const images = (product.images || []).map((img: string) =>
-    `${R2_BASE}/${img.split('/').pop()}`,
-  );
+  // Ensure images array exists, at least one placeholder
+  let images = (product.images || []);
+  if (!images.length) {
+    images = ['https://via.placeholder.com/600x600?text=No+Image'];
+  }
+  const cleanedImages = images.map((img: string) => cleanImageUrl(img));
 
-  const additionalProperties = (product.specifications || [])
-    .filter((s: any) => !HIDDEN_SPECS.includes(s.key.toLowerCase()))
+  // Build additionalProperty safely
+  const specifications = product.specifications || [];
+  const additionalProperties = specifications
+    .filter((s: any) => s?.key && !HIDDEN_SPECS.includes(s.key.toLowerCase()))
     .map((s: any) => ({
       "@type": "PropertyValue",
       "name": s.key,
       "value": s.value,
     }));
 
+  // Build size string only if both dimensions exist
+  let size = undefined;
+  if (selectedDia && selectedLen) {
+    size = `${selectedDia} × ${selectedLen} ${selectedUnit}`;
+  } else if (product.size) {
+    size = product.size;
+  }
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": product.name,
-    "description": product.short_description || "",
-    "image": images,
-    "sku": product.slug,
-    "mpn": product.slug,
+    "name": product.name || "Industrial Product",
+    "description": product.short_description || product.description || "High-quality industrial component from Durable Fastener.",
+    "image": cleanedImages,
+    "sku": product.slug || slug,
+    "mpn": product.slug || slug,
     "brand": { "@type": "Brand", "name": "Classone" },
     "manufacturer": {
       "@type": "Organization",
       "name": "Durable Fastener Private Limited",
       "url": "https://durablefastener.com",
     },
-    "category": product.category || "Industrial Fasteners",
+    "category": product.category || "Industrial Components",
     "material": product.material || "",
-    "size": selectedDia && selectedLen ? `${selectedDia} × ${selectedLen} ${selectedUnit}` : undefined,
+    ...(size ? { "size": size } : {}),
     ...(additionalProperties.length > 0 ? { "additionalProperty": additionalProperties } : {}),
     "offers": {
       "@type": "Offer",
@@ -274,7 +285,7 @@ const ProductDetail: React.FC = () => {
   const [fullScreenAppImage, setFullScreenAppImage] = useState<string | null>(null);
   const [activeAppIndex, setActiveAppIndex] = useState(0);
 
-  // ✅ NEW: Effect to inject FAQ schema directly into head (bypasses Helmet limitations)
+  // ✅ Inject FAQ schema directly into head (bypasses Helmet limitations)
   useEffect(() => {
     if (!product?.faqs?.length) return;
 
@@ -293,7 +304,6 @@ const ProductDetail: React.FC = () => {
     }
 
     return () => {
-      // Cleanup on unmount
       const scriptsToRemove = document.querySelectorAll('script[type="application/ld+json"][data-faq-schema]');
       scriptsToRemove.forEach(script => script.remove());
     };
@@ -346,10 +356,12 @@ const ProductDetail: React.FC = () => {
           specifications: productData.specifications || [],
           dimensional_specifications: productData.dimensional_specifications || [],
           faqs: productData.faqs || [],
+          images: productData.images || [],
         };
 
         setProduct(fullProduct);
 
+        // Set default selections only if variants exist
         if (vData && vData.length > 0) {
           const dias = Array.from(
             new Set(vData.map((v: any) => v.diameter).filter(Boolean)),
@@ -365,9 +377,9 @@ const ProductDetail: React.FC = () => {
     fetchProduct();
   }, [slug]);
 
-  // Derived data
+  // Derived data – robust for missing variants
   const uniqueDiameters = useMemo(() => {
-    if (!product?.variants) return [];
+    if (!product?.variants?.length) return [];
     const dias = product.variants
       .map((v: any) => v.diameter?.toString().trim())
       .filter(Boolean);
@@ -377,13 +389,13 @@ const ProductDetail: React.FC = () => {
   }, [product]);
 
   const diameterTitle = useMemo(() => {
-    if (!product?.variants || !selectedDia) return 'Select Diameter';
+    if (!product?.variants?.length || !selectedDia) return 'Select Diameter';
     const v = product.variants.find((v: any) => v.diameter === selectedDia);
     return v?.diameter_unit === 'gauge' ? 'Select Gauge' : 'Select Diameter';
   }, [product, selectedDia]);
 
   const availableLengthOptions = useMemo(() => {
-    if (!product?.variants || !selectedDia) return [];
+    if (!product?.variants?.length || !selectedDia) return [];
     const filtered = product.variants.filter((v: any) => v.diameter === selectedDia);
     const map = new Map();
     filtered.forEach((v: any) => {
@@ -411,11 +423,15 @@ const ProductDetail: React.FC = () => {
         setSelectedLen(availableLengthOptions[0].value);
         setSelectedUnit(availableLengthOptions[0].unit);
       }
+    } else {
+      // Reset if no length options
+      setSelectedLen('');
+      setSelectedUnit('mm');
     }
   }, [selectedDia, availableLengthOptions, selectedLen, selectedUnit]);
 
   const availableFinishes = useMemo(() => {
-    if (!product?.variants) return [];
+    if (!product?.variants?.length) return [];
     return Array.from(
       new Set(
         product.variants
@@ -432,7 +448,7 @@ const ProductDetail: React.FC = () => {
   }, [product, selectedDia, selectedLen, selectedUnit]);
 
   const availableTypes = useMemo(() => {
-    if (!product?.variants) return [];
+    if (!product?.variants?.length) return [];
     return Array.from(
       new Set(
         product.variants
@@ -470,10 +486,9 @@ const ProductDetail: React.FC = () => {
     setSelectedImageIndex(0);
   };
 
+  // Safe image list
   const displayImages = useMemo(() => {
-    const imgs = (product?.images || ['https://via.placeholder.com/600x600?text=No+Image']).map(
-      cleanImageUrl,
-    );
+    let imgs = (product?.images?.length ? product.images : ['https://via.placeholder.com/600x600?text=No+Image']).map(cleanImageUrl);
     if (activeImageOverride) return [cleanImageUrl(activeImageOverride), ...imgs];
     return imgs;
   }, [product, activeImageOverride]);
@@ -489,11 +504,10 @@ const ProductDetail: React.FC = () => {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center ${THEME.bg} p-10 text-center`}>
         <h2 className="text-4xl font-bold mb-4 text-neutral-900" style={fontHeading}>
-          Screw Specification Not Found
+          Product Not Found
         </h2>
         <p className="text-neutral-600 mb-8 max-w-md">
-          The specific fastener you are looking for may have been moved or is currently out of stock.
-          Please browse our full catalog of industrial fasteners.
+          The product you are looking for may have been moved or is currently unavailable.
         </p>
         <div className="flex gap-4">
           <Link to="/products" className="bg-yellow-500 px-6 py-3 rounded-lg font-bold uppercase">
@@ -513,10 +527,13 @@ const ProductDetail: React.FC = () => {
   const displayHeadType = product.head_type?.replace(/Buggel/gi, 'Bugle') || '';
   const materialData = getMaterialData(displayMaterial);
 
-  // Schema data
+  // Schema data – always generated even if some fields missing
   const breadcrumbSchema = buildBreadcrumbSchema(product.name, slug!);
   const productSchema = buildProductSchema(product, slug!, selectedDia, selectedLen, selectedUnit);
   const faqSchema = buildFaqSchema(product.faqs || []);
+
+  // Determine canonical URL – always use product slug
+  const canonicalUrl = `https://durablefastener.com/product/${slug}`;
 
   return (
     <div
@@ -524,24 +541,21 @@ const ProductDetail: React.FC = () => {
       style={fontBody}
     >
       <Helmet>
-      <title>
-        {product?.name 
-          ? `${product.name} Manufacturer | Durable Fastener Rajkot` 
-          : 'Product | Durable Fastener'}
-      </title>
-      <link rel="canonical" href={product?.slug 
-        ? `https://durablefastener.com/product/${product.slug}` 
-        :fallbackCanonical } 
-      />
-      <meta name="description" content={product?.short_description || 'High-quality industrial fasteners and fittings from Durable Fastener, Rajkot.'} />
-      {/* Other schema scripts – but only inject if product exists to avoid errors */}
-      {product && (
-        <>
-          <script type="application/ld+json">{JSON.stringify(buildBreadcrumbSchema(product.name, slug!))}</script>
-          <script type="application/ld+json">{JSON.stringify(buildProductSchema(product, slug!, selectedDia, selectedLen, selectedUnit))}</script>
-        </>
-      )}
-    </Helmet>
+        <title>{product.name} | Durable Fastener – Industrial Solutions</title>
+        <link rel="canonical" href={canonicalUrl} />
+        <meta
+          name="description"
+          content={product.short_description || `High-quality ${product.name} from Durable Fastener. Ideal for industrial applications. Bulk orders available.`}
+        />
+        {/* Breadcrumb Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbSchema)}
+        </script>
+        {/* Product Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify(productSchema)}
+        </script>
+      </Helmet>
 
       {/* Breadcrumb Nav Bar */}
       <div className="fixed top-[80px] md:top-[170px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md">
@@ -559,13 +573,13 @@ const ProductDetail: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
-        {/* Title const fetchProduct = async () => { */}
+        {/* Title Block */}
         <motion.div variants={containerVar} initial="hidden" animate="visible" className="mb-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
             <div>
               <motion.div variants={itemVar} className="flex items-center gap-3 mb-3">
                 <span className="px-3 py-1 rounded bg-yellow-100 border border-yellow-200 text-yellow-900 text-[12px] font-bold uppercase tracking-widest">
-                  Industrial Series
+                  {product.category || 'Industrial Series'}
                 </span>
                 {standard && (
                   <span className="text-neutral-600 text-[12px] font-mono font-bold tracking-wider px-2 py-1 bg-white rounded border border-neutral-200">
@@ -592,7 +606,7 @@ const ProductDetail: React.FC = () => {
           </div>
           <motion.div variants={itemVar} className="flex items-start gap-5 mt-6 border-l-4 border-yellow-500 pl-6">
             <p className="text-neutral-700 text-lg font-normal leading-relaxed max-w-4xl">
-              {product.short_description}
+              {product.short_description || product.description || "Precision-engineered component suitable for a wide range of industrial applications."}
             </p>
           </motion.div>
         </motion.div>
@@ -612,164 +626,170 @@ const ProductDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: CONFIG PANEL */}
+          {/* RIGHT COLUMN: CONFIG PANEL – only show if variants exist, otherwise show basic info */}
           <div className="lg:col-span-8 space-y-7">
             <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-4">
-              {/* SELECT DIAMETER */}
-              <div className="mb-8">
-                <SectionHeader icon={Ruler} title={diameterTitle} />
-                <div className="flex flex-wrap gap-3">
-                  {uniqueDiameters.map((dia: any) => {
-                    const isSelected = selectedDia === dia;
-                    return (
-                      <button
-                        key={dia}
-                        onClick={() => setSelectedDia(dia)}
-                        className={`relative px-3 h-12 min-w-[3.5rem] rounded-lg flex items-center justify-center text-lg transition-all duration-200 border-2 ${isSelected
-                            ? 'bg-yellow-500 text-neutral-900 border-yellow-500 shadow-md font-bold'
-                            : 'bg-neutral-50 text-neutral-600 border-neutral-100 hover:border-neutral-300 hover:text-neutral-900 hover:bg-white font-medium'
-                          }`}
-                        style={fontMono}
-                      >
-                        {dia.toString().replace('mm', '').trim()}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* SELECT LENGTH */}
-              <div className="mb-5">
-                <div className="flex justify-between items-end mb-0 border-b border-neutral-100 pb-2">
-                  <SectionHeader icon={Maximize2} title={`Select Length (${selectedUnit})`} />
-                  <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
-                    {selectedLen || '--'}
-                    <span className="text-sm text-neutral-400 ml-1 font-sans font-medium">{selectedUnit}</span>
-                  </span>
-                </div>
-                <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-2 relative overflow-hidden">
-                  <div
-                    className="absolute inset-0 opacity-[0.05] pointer-events-none"
-                    style={{
-                      backgroundImage: 'linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px)',
-                      backgroundSize: '12px 12px',
-                    }}
-                  />
-                  <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
-                    {availableLengthOptions.length > 0 ? (
-                      availableLengthOptions.map((opt: any, idx: number) => {
-                        const isSelected = selectedLen === opt.value && selectedUnit === opt.unit;
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => { setSelectedLen(opt.value); setSelectedUnit(opt.unit); }}
-                            className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
-                          >
-                            <span className={`font-mono transition-all duration-200 whitespace-nowrap block ${isSelected
-                                ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110'
-                                : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900'
-                              }`}>
-                              {parseFloat(opt.value)}
-                              {opt.unit !== 'mm' && <span className="text-[9px] block text-center">{opt.unit}</span>}
-                            </span>
-                            <div className={`w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ${isSelected ? 'h-full bg-yellow-500 shadow-md' : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'
-                              }`} />
-                            <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10" />
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm italic">
-                        Select Diameter to view lengths
+              {product.variants?.length > 0 ? (
+                <>
+                  {/* SELECT DIAMETER */}
+                  {uniqueDiameters.length > 0 && (
+                    <div className="mb-8">
+                      <SectionHeader icon={Ruler} title={diameterTitle} />
+                      <div className="flex flex-wrap gap-3">
+                        {uniqueDiameters.map((dia: any) => {
+                          const isSelected = selectedDia === dia;
+                          return (
+                            <button
+                              key={dia}
+                              onClick={() => setSelectedDia(dia)}
+                              className={`relative px-3 h-12 min-w-[3.5rem] rounded-lg flex items-center justify-center text-lg transition-all duration-200 border-2 ${isSelected
+                                  ? 'bg-yellow-500 text-neutral-900 border-yellow-500 shadow-md font-bold'
+                                  : 'bg-neutral-50 text-neutral-600 border-neutral-100 hover:border-neutral-300 hover:text-neutral-900 hover:bg-white font-medium'
+                                }`}
+                              style={fontMono}
+                            >
+                              {dia.toString().replace('mm', '').trim()}
+                            </button>
+                          );
+                        })}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* SELECT LENGTH */}
+                  {availableLengthOptions.length > 0 && (
+                    <div className="mb-5">
+                      <div className="flex justify-between items-end mb-0 border-b border-neutral-100 pb-2">
+                        <SectionHeader icon={Maximize2} title={`Select Length (${selectedUnit})`} />
+                        <span className="text-4xl font-bold text-neutral-900 tracking-tight" style={fontHeading}>
+                          {selectedLen || '--'}
+                          <span className="text-sm text-neutral-400 ml-1 font-sans font-medium">{selectedUnit}</span>
+                        </span>
+                      </div>
+                      <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-2 relative overflow-hidden">
+                        <div
+                          className="absolute inset-0 opacity-[0.05] pointer-events-none"
+                          style={{
+                            backgroundImage: 'linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px)',
+                            backgroundSize: '12px 12px',
+                          }}
+                        />
+                        <div className="flex items-end justify-between h-32 gap-1 relative z-10 w-full px-1">
+                          {availableLengthOptions.map((opt: any, idx: number) => {
+                            const isSelected = selectedLen === opt.value && selectedUnit === opt.unit;
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => { setSelectedLen(opt.value); setSelectedUnit(opt.unit); }}
+                                className="group flex-1 flex flex-col items-center justify-end h-full gap-3 focus:outline-none relative"
+                              >
+                                <span className={`font-mono transition-all duration-200 whitespace-nowrap block ${isSelected
+                                    ? 'text-base font-bold text-neutral-900 -translate-y-2 scale-110'
+                                    : 'text-xs sm:text-sm text-neutral-500 font-medium group-hover:text-neutral-900'
+                                  }`}>
+                                  {parseFloat(opt.value)}
+                                  {opt.unit !== 'mm' && <span className="text-[9px] block text-center">{opt.unit}</span>}
+                                </span>
+                                <div className={`w-1.5 sm:w-2 rounded-t-[2px] transition-all duration-300 ${isSelected ? 'h-full bg-yellow-500 shadow-md' : 'h-8 bg-neutral-300 group-hover:h-12 group-hover:bg-neutral-400'
+                                  }`} />
+                                <div className="absolute bottom-0 w-full h-[1px] bg-neutral-300 -z-10" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Finish */}
+                  {availableFinishes.length > 0 && (
+                    <div className="mb-4">
+                      <SectionHeader icon={Layers} title="Surface Finish" />
+                      <div className="flex flex-wrap gap-4">
+                        {availableFinishes.map((finish: any) => {
+                          const key = finish.toLowerCase().trim();
+                          const customIcon = product.finish_icons?.[finish];
+                          const isActive =
+                            activeImageOverride === (product.finish_images?.[finish]) ||
+                            product.variants?.find(
+                              (v: any) => v.finish === finish && v.image === activeImageOverride
+                            );
+                          const bgStyle = FINISH_TEXTURES[key] || "#f3f4f6";
+
+                          return (
+                            <button
+                              key={finish}
+                              onClick={() => handleFinishClick(finish)}
+                              className={`flex flex-col items-center justify-center gap-2 p-1.5 rounded-xl border transition-all duration-300
+                                ${isActive
+                                  ? "ring-2 ring-yellow-500 scale-105 border-yellow-500 bg-white shadow-lg"
+                                  : "border-neutral-200 bg-neutral-50/50 hover:bg-white hover:scale-105 hover:shadow-md"
+                                }
+                              `}
+                            >
+                              <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-neutral-100">
+                                {customIcon ? (
+                                  <img src={customIcon} alt={finish} className="w-full h-full object-contain p-1" />
+                                ) : (
+                                  <div className="w-full h-full" style={{ background: bgStyle }} />
+                                )}
+                              </div>
+                              <span className={`text-[10px] font-black uppercase tracking-widest px-1 transition-colors ${isActive ? 'text-neutral-900' : 'text-neutral-400'
+                                }`} style={fontHeading}>
+                                {finish}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 text-neutral-500">
+                  <Tag size={48} className="mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">This product has no variant options.</p>
+                  <p className="text-sm">Please contact us for more details.</p>
                 </div>
-              </div>
+              )}
 
-              {/* Finish */}
-              <div className="mb-4">
-                <SectionHeader icon={Layers} title="Surface Finish" />
-                {availableFinishes.length > 0 ? (
-                  <div className="flex flex-wrap gap-4">
-                    {availableFinishes.map((finish: any) => {
-                      const key = finish.toLowerCase().trim();
-                      const customIcon = product.finish_icons?.[finish];
-                      const isActive =
-                        activeImageOverride === (product.finish_images?.[finish]) ||
-                        product.variants?.find(
-                          (v: any) => v.finish === finish && v.image === activeImageOverride
-                        );
-                      const bgStyle = FINISH_TEXTURES[key] || "#f3f4f6";
-
-                      return (
-                        <button
-                          key={finish}
-                          onClick={() => handleFinishClick(finish)}
-                          className={`flex flex-col items-center justify-center gap-2 p-1.5 rounded-xl border transition-all duration-300
-                            ${isActive
-                              ? "ring-2 ring-yellow-500 scale-105 border-yellow-500 bg-white shadow-lg"
-                              : "border-neutral-200 bg-neutral-50/50 hover:bg-white hover:scale-105 hover:shadow-md"
-                            }
-                          `}
-                        >
-                          <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center bg-white border border-neutral-100">
-                            {customIcon ? (
-                              <img src={customIcon} alt={finish} className="w-full h-full object-contain p-1" />
-                            ) : (
-                              <div className="w-full h-full" style={{ background: bgStyle }} />
-                            )}
-                          </div>
-                          <span className={`text-[10px] font-black uppercase tracking-widest px-1 transition-colors ${isActive ? 'text-neutral-900' : 'text-neutral-400'
-                            }`} style={fontHeading}>
-                            {finish}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-sm text-neutral-400 italic font-mono p-4 border border-dashed rounded-lg">
-                    Select Diameter & Length to see finishes
-                  </div>
-                )}
-              </div>
-
-              {/* Specification Details */}
-              <div className="mb-5 border-b border-neutral-100">
-                <SectionHeader icon={FileCheck} title="Specification Details" />
-                <table className="w-full text-sm rounded-2xl border-collapse border border-neutral-200">
-                  <tbody>
-                    {[
-                      { label: 'Head Type', value: displayHeadType },
-                      { label: 'Drive', value: product.drive_type },
-                      { label: 'Type', value: selectedType },
-                      ...product.specifications
-                        .filter((s: any) => !HIDDEN_SPECS.includes(s.key.toLowerCase()))
-                        .map((s: any) => ({
-                          label: s.key,
-                          value: s.value,
-                        })),
-                    ].map(
-                      (item, idx) =>
-                        item.value && (
-                          <tr key={idx} className="border">
-                            <td className="p-4 border font-medium text-neutral-600 uppercase text-xs tracking-wider w-[30%]">
-                              {item.label}
-                            </td>
-                            <td className="p-4 border font-semibold text-neutral-900" colSpan={2}>
-                              {item.value}
-                            </td>
-                          </tr>
-                        )
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              {/* Specification Details – always show if specifications exist */}
+              {(product.specifications?.length > 0 || displayHeadType || product.drive_type) && (
+                <div className="mb-5 border-b border-neutral-100">
+                  <SectionHeader icon={FileCheck} title="Specification Details" />
+                  <table className="w-full text-sm rounded-2xl border-collapse border border-neutral-200">
+                    <tbody>
+                      {[
+                        { label: 'Head Type', value: displayHeadType },
+                        { label: 'Drive', value: product.drive_type },
+                        { label: 'Type', value: selectedType },
+                        ...(product.specifications || [])
+                          .filter((s: any) => s?.key && !HIDDEN_SPECS.includes(s.key.toLowerCase()))
+                          .map((s: any) => ({
+                            label: s.key,
+                            value: s.value,
+                          })),
+                      ].map(
+                        (item, idx) =>
+                          item.value && (
+                            <tr key={idx} className="border">
+                              <td className="p-4 border font-medium text-neutral-600 uppercase text-xs tracking-wider w-[30%]">
+                                {item.label}
+                              </td>
+                              <td className="p-4 border font-semibold text-neutral-900" colSpan={2}>
+                                {item.value}
+                              </td>
+                            </tr>
+                          )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Material Specifications */}
-              <div className="p-1 flex flex-col gap-0 divide-y divide-neutral-100">
-                {displayMaterial && (
+              {displayMaterial && (
+                <div className="p-1 flex flex-col gap-0 divide-y divide-neutral-100">
                   <div className="pb-1 mb-1">
                     <h4 className="text-center text-sm font-bold uppercase tracking-widest text-neutral-800 mb-5" style={fontHeading}>
                       Material Specifications
@@ -795,8 +815,8 @@ const ProductDetail: React.FC = () => {
                       })}
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* CTA BUTTONS */}
               <div className="grid grid-cols-2 gap-4 pt-4">
@@ -821,10 +841,10 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Technical Vault */}
-        <div className="bg-[#aaaaab] border-t border-neutral-300 relative z-20 overflow-hidden text-neutral-900 mt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-            {showDimensions && (
+        {/* Technical Vault – only if dimensions or drawing exist */}
+        {showDimensions && (
+          <div className="bg-[#aaaaab] border-t border-neutral-300 relative z-20 overflow-hidden text-neutral-900 mt-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={containerVar}>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                   <div className="flex items-center gap-3">
@@ -834,7 +854,7 @@ const ProductDetail: React.FC = () => {
                     </h3>
                   </div>
                   <div className="flex flex-wrap gap-4 mt-6">
-                    {product.certifications?.map((cert: any, idx: number) => (
+                    {(product.certifications || []).map((cert: any, idx: number) => (
                       <div key={idx} className="bg-neutral-900 rounded-md py-2 px-3 flex items-center gap-3 border border-neutral-800 shadow-2xl hover:scale-105 transition-transform duration-300">
                         <div className="p-1 rounded-full border-2 border-emerald-500/30">
                           <ShieldCheck className="text-emerald-500" size={24} strokeWidth={2.5} />
@@ -891,7 +911,7 @@ const ProductDetail: React.FC = () => {
                     </div>
                     <div className="space-y-3 flex-1 overflow-y-auto pr-2">
                       {PERFORMANCE_KEYS_DISPLAY.map((key, i) => {
-                        const spec = product.specifications.find(
+                        const spec = (product.specifications || []).find(
                           (s: any) => s.key.toLowerCase() === key.toLowerCase(),
                         );
                         if (!spec) return null;
@@ -908,7 +928,7 @@ const ProductDetail: React.FC = () => {
                           </motion.div>
                         );
                       })}
-                      {!product.specifications.some((s: any) =>
+                      {!(product.specifications || []).some((s: any) =>
                         PERFORMANCE_KEYS_DISPLAY.map(k => k.toLowerCase()).includes(s.key.toLowerCase()),
                       ) && (
                           <div className="text-center text-neutral-500 text-xs italic py-4 font-mono">
@@ -925,104 +945,106 @@ const ProductDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Technical Dimensional Vault */}
-                <div className="w-full bg-white border border-t-0 border-neutral-200 rounded-b-2xl overflow-hidden shadow-sm">
-                  {/* MOBILE VIEW */}
-                  <div className="block md:hidden">
-                    {uniqueDiameters.map((dia: any) => {
-                      const isActive = selectedDia === dia;
-                      return (
-                        <div key={dia} className={`border-b last:border-0 ${isActive ? 'ring-2 ring-inset ring-yellow-500 bg-yellow-50/30' : ''}`}>
-                          <div className={`p-3 flex justify-between items-center ${isActive ? 'bg-yellow-500 text-neutral-900' : 'bg-neutral-800 text-white'}`}>
-                            <span className="text-xs font-black uppercase tracking-widest" style={fontHeading}>Size Detail</span>
-                            <span className="text-xl font-black" style={fontHeading}>{dia.includes('mm') ? dia : `${dia}mm`}</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-px bg-neutral-100">
-                            {product.dimensional_specifications?.map((dim: any, idx: number) => {
-                              let val = '-';
-                              if (dim.values && typeof dim.values === 'object') {
-                                const raw = dia.toString().replace('mm', '').replace('#', '').trim();
-                                val = String(dim.values[dia] || dim.values[raw] ||
-                                  Object.entries(dim.values).find(([k]) => k.replace('mm', '').trim() === raw)?.[1] || '-');
-                              } else if (dia === selectedDia) {
-                                val = String(dim.value || '-');
-                              }
-                              return (
-                                <div key={idx} className="bg-white p-3 flex flex-col justify-center min-h-[70px]">
-                                  <div className="flex items-center gap-1.5 mb-1">
-                                    <span className="text-[10px] font-serif italic font-bold text-yellow-600">{dim.symbol || '•'}</span>
-                                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-tighter">{dim.label}</span>
+                {/* Dimensional Table – only if dimensional_specifications exist */}
+                {product.dimensional_specifications?.length > 0 && uniqueDiameters.length > 0 && (
+                  <div className="w-full bg-white border border-t-0 border-neutral-200 rounded-b-2xl overflow-hidden shadow-sm">
+                    {/* MOBILE VIEW */}
+                    <div className="block md:hidden">
+                      {uniqueDiameters.map((dia: any) => {
+                        const isActive = selectedDia === dia;
+                        return (
+                          <div key={dia} className={`border-b last:border-0 ${isActive ? 'ring-2 ring-inset ring-yellow-500 bg-yellow-50/30' : ''}`}>
+                            <div className={`p-3 flex justify-between items-center ${isActive ? 'bg-yellow-500 text-neutral-900' : 'bg-neutral-800 text-white'}`}>
+                              <span className="text-xs font-black uppercase tracking-widest" style={fontHeading}>Size Detail</span>
+                              <span className="text-xl font-black" style={fontHeading}>{dia.includes('mm') ? dia : `${dia}mm`}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-px bg-neutral-100">
+                              {product.dimensional_specifications.map((dim: any, idx: number) => {
+                                let val = '-';
+                                if (dim.values && typeof dim.values === 'object') {
+                                  const raw = dia.toString().replace('mm', '').replace('#', '').trim();
+                                  val = String(dim.values[dia] || dim.values[raw] ||
+                                    Object.entries(dim.values).find(([k]) => k.replace('mm', '').trim() === raw)?.[1] || '-');
+                                } else if (dia === selectedDia) {
+                                  val = String(dim.value || '-');
+                                }
+                                return (
+                                  <div key={idx} className="bg-white p-3 flex flex-col justify-center min-h-[70px]">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                      <span className="text-[10px] font-serif italic font-bold text-yellow-600">{dim.symbol || '•'}</span>
+                                      <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-tighter">{dim.label}</span>
+                                    </div>
+                                    <div className="text-sm font-mono font-bold text-neutral-900">{val}</div>
                                   </div>
-                                  <div className="text-sm font-mono font-bold text-neutral-900">{val}</div>
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
 
-                  {/* DESKTOP VIEW */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
-                      <thead>
-                        <tr className="border-b border-neutral-200 bg-neutral-100">
-                          <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>
-                            Feature
-                          </th>
-                          <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>
-                            Symbol
-                          </th>
-                          {uniqueDiameters.map((dia: any) => (
-                            <th
-                              key={dia}
-                              className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'
-                                }`}
-                              style={fontHeading}
-                            >
-                              {dia.includes('.') && !dia.includes('mm') && !dia.includes('#') ? `${dia}mm` : dia}
+                    {/* DESKTOP VIEW */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                          <tr className="border-b border-neutral-200 bg-neutral-100">
+                            <th className="py-6 pl-8 text-sm font-bold text-neutral-800 uppercase tracking-widest sticky left-0 z-10 bg-neutral-100 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]" style={fontHeading}>
+                              Feature
                             </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-neutral-100 text-sm font-mono">
-                        {product.dimensional_specifications?.map((dim: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
-                            <td className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]" style={fontHeading}>
-                              {dim.label}
-                            </td>
-                            <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">
-                              {dim.symbol || '-'}
-                            </td>
-                            {uniqueDiameters.map((dia: any) => {
-                              let val = '-';
-                              if (dim.values && typeof dim.values === 'object') {
-                                const raw = dia.toString().replace('mm', '').replace('#', '').trim();
-                                val = String(dim.values[dia] || dim.values[raw] ||
-                                  Object.entries(dim.values).find(([k]) => k.replace('mm', '').trim() === raw)?.[1] || '-');
-                              } else if (dia === selectedDia) {
-                                val = String(dim.value || '-');
-                              }
-                              return (
-                                <td key={dia} className={`py-5 text-center transition-all duration-300 font-medium ${selectedDia === dia ? 'bg-yellow-50 text-neutral-900 font-bold text-base border-x border-yellow-200' : 'text-neutral-500 border-x border-transparent'
-                                  }`}>
-                                  {val}
-                                </td>
-                              );
-                            })}
+                            <th className="py-6 text-center text-sm font-bold text-neutral-600 uppercase tracking-widest w-28 bg-neutral-100 border-r border-neutral-200" style={fontHeading}>
+                              Symbol
+                            </th>
+                            {uniqueDiameters.map((dia: any) => (
+                              <th
+                                key={dia}
+                                className={`py-6 px-6 text-center text-base font-bold uppercase tracking-widest whitespace-nowrap ${selectedDia === dia ? 'text-yellow-700 bg-yellow-50 border-b-2 border-yellow-500' : 'text-neutral-500'
+                                  }`}
+                                style={fontHeading}
+                              >
+                                {dia.includes('.') && !dia.includes('mm') && !dia.includes('#') ? `${dia}mm` : dia}
+                              </th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-100 text-sm font-mono">
+                          {product.dimensional_specifications.map((dim: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-neutral-50 transition-colors group">
+                              <td className="py-5 pl-8 text-neutral-800 font-bold text-sm uppercase tracking-wider sticky left-0 bg-white group-hover:bg-neutral-50 border-r border-neutral-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]" style={fontHeading}>
+                                {dim.label}
+                              </td>
+                              <td className="py-5 text-center text-yellow-600/90 font-serif italic font-bold bg-neutral-50/50 border-r border-neutral-200">
+                                {dim.symbol || '-'}
+                              </td>
+                              {uniqueDiameters.map((dia: any) => {
+                                let val = '-';
+                                if (dim.values && typeof dim.values === 'object') {
+                                  const raw = dia.toString().replace('mm', '').replace('#', '').trim();
+                                  val = String(dim.values[dia] || dim.values[raw] ||
+                                    Object.entries(dim.values).find(([k]) => k.replace('mm', '').trim() === raw)?.[1] || '-');
+                                } else if (dia === selectedDia) {
+                                  val = String(dim.value || '-');
+                                }
+                                return (
+                                  <td key={dia} className={`py-5 text-center transition-all duration-300 font-medium ${selectedDia === dia ? 'bg-yellow-50 text-neutral-900 font-bold text-base border-x border-yellow-200' : 'text-neutral-500 border-x border-transparent'
+                                    }`}>
+                                    {val}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
+                )}
               </motion.div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Applications */}
+        {/* Applications – only if present */}
         {product.applications?.length > 0 && (
           <section className={`py-32 ${THEME.bg} overflow-hidden border-t border-neutral-300`}>
             <div className="max-w-7xl mx-auto px-4">
