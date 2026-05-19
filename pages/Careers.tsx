@@ -368,6 +368,9 @@ const isFiltered = selectedDepts.length > 0;
     name="description" 
     content={`Explore ${filteredJobs.length} open positions in ${selectedDepts.length > 0 ? selectedDepts.join(', ') : 'Engineering, Sales, and Admin'}. Join Rajkot's leading fastener manufacturer.`} 
   />
+      {/* HERE IS YOUR CANONICAL LINK */}
+  <link rel="canonical" href="https://durablefastener.com/careers" />
+
 
   {/* 2. DYNAMIC JOB POSTING SCHEMA (Uses 'filteredJobs' instead of all 'jobs') */}
   {!loading && filteredJobs.length > 0 && (
