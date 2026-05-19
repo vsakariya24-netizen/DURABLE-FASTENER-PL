@@ -187,6 +187,9 @@ try {
       <Helmet>
         <title>Contact Durable Fastener | Top Screw Manufacturer in Rajkot</title>
         <meta name="description" content="Contact Durable Fastener Private Limited, Rajkot. MS screw manufacturer and global exporter." />
+
+        {/* CANONICAL LINK ADDED HERE */}
+  <link rel="canonical" href="https://durablefastener.com/contact" />
       </Helmet>
 
       {/* --- SUCCESS POPUP MODAL --- */}
