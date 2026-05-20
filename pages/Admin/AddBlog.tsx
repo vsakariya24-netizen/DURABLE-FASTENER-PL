@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import {
   Save, Plus, Trash2, ArrowLeft, Upload, X, Layout,
@@ -21,6 +21,382 @@ const generateSlug = (text: string) => {
 };
 
 const genId = () => Math.random().toString(36).slice(2, 9);
+
+// ─── GLOBAL SELECTION TRACKER ───────────────────────────────────────────────
+let globalSavedRange: Range | null = null;
+
+export const cacheGlobalSelection = () => {
+  const selection = window.getSelection();
+  if (selection && selection.rangeCount > 0) {
+    globalSavedRange = selection.getRangeAt(0).cloneRange();
+  }
+};
+
+// ─── GLOBAL RIBBON TOOLBAR (COMPLETE & ERROR-FREE) ──────────────────────────
+export const GlobalToolbar = () => {
+  const [showFontMenu, setShowFontMenu] = useState(false);
+  const [showSizeMenu, setShowSizeMenu] = useState(false);
+  const [showColorMenu, setShowColorMenu] = useState(false);
+  const [showBgMenu, setShowBgMenu] = useState(false);
+
+  const fonts = [
+    { name: 'Arial', value: 'Arial, sans-serif' },
+    { name: 'Calibri', value: "'Calibri', sans-serif" },
+    { name: 'Georgia', value: "'Georgia', serif" },
+    { name: 'Times New Roman', value: "'Times New Roman', serif" },
+    { name: 'Playfair Display', value: "'Playfair Display', serif" },
+    { name: 'Monospace', value: 'monospace' }
+  ];
+
+  const sizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '40px'];
+
+  const colorPalette = [
+    '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
+    '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
+    '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
+    '#cc0202', '#ea9999', '#f9cb9c', '#ffe599', '#b6d7a8', '#a2c4c9', '#a4c2f4', '#9fc5e8', '#b4a7d6', '#d5a6bd'
+  ];
+
+  const triggerGlobalSync = () => {
+    window.dispatchEvent(new Event('sync-editor-content'));
+  };
+
+  const handleColorClick = (property: string, colorValue: string) => {
+    const selection = window.getSelection();
+    if (globalSavedRange) {
+      selection?.removeAllRanges();
+      selection?.addRange(globalSavedRange);
+    }
+
+    if (!selection || selection.isCollapsed) return;
+    const range = selection.getRangeAt(0);
+
+    const extractStylesAndClean = (node: Node) => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        if (element.style.getPropertyValue(property)) {
+          element.style.removeProperty(property);
+        }
+        if (element.tagName === 'SPAN' && !element.style.cssText) {
+          const parent = element.parentNode;
+          while (element.firstChild) {
+            parent?.insertBefore(element.firstChild, element);
+          }
+          parent?.removeChild(element);
+        }
+      }
+      node.childNodes.forEach(extractStylesAndClean);
+    };
+
+    const fragment = range.extractContents();
+    extractStylesAndClean(fragment);
+
+    const span = document.createElement('span');
+    span.style.setProperty(property, colorValue);
+    span.appendChild(fragment);
+    range.insertNode(span);
+
+    triggerGlobalSync();
+    
+    globalSavedRange = range.cloneRange();
+    setShowColorMenu(false);
+    setShowBgMenu(false);
+  };
+
+  const applyCustomSpanStyle = (property: string, value: string) => {
+    const selection = window.getSelection();
+    if (globalSavedRange) {
+      selection?.removeAllRanges();
+      selection?.addRange(globalSavedRange);
+    }
+
+    if (!selection || selection.isCollapsed) return;
+    const range = selection.getRangeAt(0);
+    const span = document.createElement('span');
+    span.style.setProperty(property, value);
+
+    try {
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+    } catch (e) {
+      document.execCommand(property === 'color' ? 'foreColor' : 'backColor', false, value);
+    }
+
+    triggerGlobalSync();
+    if (range) globalSavedRange = range.cloneRange();
+  };
+
+  const applyInlineStyle = (command: string, value: string = '') => {
+    const selection = window.getSelection();
+    if (globalSavedRange) {
+      selection?.removeAllRanges();
+      selection?.addRange(globalSavedRange);
+    }
+    document.execCommand(command, false, value);
+    triggerGlobalSync();
+  };
+
+  const applyIncrementalFontSize = (multiplier: number) => {
+    const selection = window.getSelection();
+    if (globalSavedRange) {
+      selection?.removeAllRanges();
+      selection?.addRange(globalSavedRange);
+    }
+    if (!selection || selection.isCollapsed) return;
+
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer.parentElement;
+    
+    let currentSize = 16; 
+    if (container) {
+      const computedStyle = window.getComputedStyle(container).fontSize;
+      currentSize = parseInt(computedStyle) || 16;
+    }
+
+    const newSize = `${currentSize + (multiplier * 2)}px`;
+    applyCustomSpanStyle('font-size', newSize);
+  };
+
+  const addLink = () => {
+    const selection = window.getSelection();
+    let existingUrl = "";
+    if (selection && selection.anchorNode) {
+      const parent = selection.anchorNode.parentElement;
+      if (parent && parent.tagName === 'A') existingUrl = parent.getAttribute('href') || "";
+    }
+
+    const url = window.prompt("Edit URL:", existingUrl);
+    if (url !== null) {
+      document.execCommand('createLink', false, url);
+      const newSelection = window.getSelection();
+      if (newSelection && newSelection.anchorNode) {
+        const newParent = newSelection.anchorNode.parentElement;
+        if (newParent && newParent.tagName === 'A') {
+          newParent.setAttribute('target', '_blank');
+          newParent.setAttribute('rel', 'noopener noreferrer');
+        }
+      }
+      triggerGlobalSync();
+    }
+  };
+  const removeLink = () => {
+    const selection = window.getSelection();
+    if (globalSavedRange) {
+      selection?.removeAllRanges();
+      selection?.addRange(globalSavedRange);
+    }
+    if (!selection || selection.isCollapsed) return;
+
+    document.execCommand('unlink', false);
+    triggerGlobalSync();
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 bg-zinc-100 p-1.5 rounded-xl border border-zinc-200 shadow-sm mx-auto select-none flex-wrap z-50">
+      
+      {/* 1. FONT STYLE DROPDOWN */}
+      <div className="relative">
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            cacheGlobalSelection();
+            setShowFontMenu(!showFontMenu);
+            setShowSizeMenu(false);
+            setShowColorMenu(false);
+            setShowBgMenu(false);
+          }}
+          className="flex items-center justify-between text-[11px] font-bold bg-white border border-zinc-200 rounded-md px-2 py-1 min-w-[100px] text-zinc-700 hover:bg-zinc-50"
+        >
+          <span>Font Style</span>
+          <span className="text-[9px] text-zinc-400 ml-1">▼</span>
+        </button>
+        
+        {showFontMenu && (
+          <div className="absolute left-0 top-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-xl py-1 z-[999] min-w-[140px] max-h-[200px] overflow-y-auto">
+            {fonts.map((f) => (
+              <button
+                key={f.name}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyCustomSpanStyle('font-family', f.value);
+                  setShowFontMenu(false);
+                }}
+                className="w-full text-left px-3 py-1.5 text-xs text-zinc-700 hover:bg-yellow-50 hover:text-yellow-700 font-medium transition-colors"
+                style={{ fontFamily: f.value }}
+              >
+                {f.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 2. FONT SIZE DROPDOWN */}
+      <div className="relative">
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            cacheGlobalSelection();
+            setShowSizeMenu(!showSizeMenu);
+            setShowFontMenu(false);
+            setShowColorMenu(false);
+            setShowBgMenu(false);
+          }}
+          className="flex items-center justify-between text-[11px] font-bold bg-white border border-zinc-200 rounded-md px-2 py-1 min-w-[55px] text-zinc-700 hover:bg-zinc-50"
+        >
+          <span>Size</span>
+          <span className="text-[9px] text-zinc-400 ml-1">▼</span>
+        </button>
+        
+        {showSizeMenu && (
+          <div className="absolute left-0 top-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-xl py-1 z-[999] min-w-[80px] max-h-[200px] overflow-y-auto">
+            {sizes.map((sz) => (
+              <button
+                key={sz}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyCustomSpanStyle('font-size', sz);
+                  setShowSizeMenu(false);
+                }}
+                className="w-full text-left px-3 py-1.5 text-xs text-zinc-700 hover:bg-yellow-50 hover:text-yellow-700 font-bold transition-colors"
+              >
+                {sz.replace('px', '')}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* A+ / A- Buttons */}
+      <div className="flex items-center bg-white border border-zinc-200 rounded-md p-0.5">
+        <button type="button" onMouseDown={(e) => { e.preventDefault(); cacheGlobalSelection(); }} onClick={() => applyIncrementalFontSize(1)} className="p-1 px-2 hover:bg-zinc-100 rounded text-xs font-black text-zinc-800" title="Grow Font">A⁺</button>
+        <button type="button" onMouseDown={(e) => { e.preventDefault(); cacheGlobalSelection(); }} onClick={() => applyIncrementalFontSize(-1)} className="p-1 px-2 hover:bg-zinc-100 rounded text-xs font-black text-zinc-800" title="Shrink Font">A⁻</button>
+      </div>
+
+      <div className="w-[1px] h-4 bg-zinc-300 mx-0.5" />
+
+      {/* Basic Weights */}
+      <div className="flex items-center bg-white border border-zinc-200 rounded-md p-0.5 whitespace-nowrap">
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('bold')} className="p-1 px-1.5 hover:bg-zinc-100 rounded text-zinc-800 font-extrabold text-xs" title="Bold">B</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('italic')} className="p-1 px-1.5 hover:bg-zinc-100 rounded text-zinc-800 italic text-xs" title="Italic">I</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('underline')} className="p-1 px-1.5 hover:bg-zinc-100 rounded text-zinc-800 underline text-xs" title="Underline">U</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('strikeThrough')} className="p-1 px-1.5 hover:bg-zinc-100 rounded text-zinc-800 line-through text-xs" title="Strikethrough">abc</button>
+      </div>
+
+      <div className="w-[1px] h-4 bg-zinc-300 mx-0.5" />
+
+      {/* 3. HIGHLIGHT COLOR (ab) */}
+      <div className="relative">
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            cacheGlobalSelection();
+            setShowBgMenu(!showBgMenu);
+            setShowColorMenu(false);
+            setShowFontMenu(false);
+            setShowSizeMenu(false);
+          }}
+          className="flex items-center gap-1 bg-white border border-zinc-200 rounded-md px-2 py-1 text-zinc-700 hover:bg-zinc-50 font-bold"
+          title="Text Highlight Color"
+        >
+          <span className="text-[11px] font-black border-b-2 border-yellow-400">ab</span>
+          <span className="text-[7px] text-zinc-400">▼</span>
+        </button>
+
+        {showBgMenu && (
+          <div className="absolute left-0 top-full mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl p-2 z-[999] w-[180px]">
+            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 px-0.5">Highlight Color</p>
+            <div className="grid grid-cols-10 gap-1">
+              {colorPalette.map((color, cIdx) => (
+                <button
+                  key={cIdx}
+                  type="button"
+                  style={{ backgroundColor: color }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleColorClick('background-color', color);
+                  }}
+                  className="w-3.5 h-3.5 rounded border border-zinc-200/50 hover:scale-115 hover:shadow-sm transition-transform"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 4. FONT TEXT COLOR (A) */}
+      <div className="relative">
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            cacheGlobalSelection();
+            setShowColorMenu(!showColorMenu);
+            setShowBgMenu(false);
+            setShowFontMenu(false);
+            setShowSizeMenu(false);
+          }}
+          className="flex items-center gap-1 bg-white border border-zinc-200 rounded-md px-2 py-1 text-zinc-800 hover:bg-zinc-50 font-bold"
+          title="Font Color"
+        >
+          <span className="text-[11px] font-black border-b-2 border-red-600">A</span>
+          <span className="text-[7px] text-zinc-400">▼</span>
+        </button>
+
+        {showColorMenu && (
+          <div className="absolute left-0 top-full mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl p-2 z-[999] w-[180px]">
+            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 px-0.5">Font Color</p>
+            <div className="grid grid-cols-10 gap-1">
+              {colorPalette.map((color, cIdx) => (
+                <button
+                  key={cIdx}
+                  type="button"
+                  style={{ backgroundColor: color }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleColorClick('color', color);
+                  }}
+                  className="w-3.5 h-3.5 rounded border border-zinc-200/50 hover:scale-115 hover:shadow-sm transition-transform"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="w-[1px] h-4 bg-zinc-300 mx-0.5" />
+
+      {/* 5. BULLETS & INDENT */}
+      <div className="flex items-center bg-white border border-zinc-200 rounded-md p-0.5">
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('insertUnorderedList')} className="p-1 hover:bg-zinc-100 rounded text-zinc-700 text-xs font-bold" title="Bullets">⋮☰</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('insertOrderedList')} className="p-1 hover:bg-zinc-100 rounded text-zinc-700 text-xs font-bold" title="Numbering">1☰</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('outdent')} className="p-1 hover:bg-zinc-100 rounded text-zinc-700 text-xs font-bold" title="Decrease Indent">⇦</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('indent')} className="p-1 hover:bg-zinc-100 rounded text-zinc-700 text-xs font-bold" title="Increase Indent">⇨</button>
+      </div>
+      
+      <div className="w-[1px] h-4 bg-zinc-300 mx-0.5" />
+
+      {/* 6. ALIGNMENT (Justify Included) */}
+      <div className="flex items-center bg-white border border-zinc-200 rounded-md p-0.5">
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('justifyLeft')} className="p-1 hover:bg-zinc-100 rounded text-zinc-700 text-xs" title="Align Left">𝌆</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('justifyCenter')} className="p-1 hover:bg-zinc-100 rounded text-zinc-700 text-xs" title="Center">𝌇</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('justifyRight')} className="p-1 hover:bg-zinc-100 rounded text-zinc-700 text-xs" title="Align Right">𝌈</button>
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyInlineStyle('justifyFull')} className="p-1 hover:bg-zinc-100 rounded text-zinc-700 text-xs" title="Justify">𝌉</button>
+      </div>
+
+      <div className="w-[1px] h-4 bg-zinc-300 mx-0.5" />
+
+      {/* Links */}
+      <button type="button" onMouseDown={e => e.preventDefault()} onClick={addLink} className="p-1.5 hover:bg-blue-50 rounded text-blue-600 bg-white border" title="Link"><LinkIcon size={13}/></button>
+      <button type="button" onMouseDown={e => { e.preventDefault(); cacheGlobalSelection(); }} onClick={removeLink} className="p-1.5 hover:bg-red-50 rounded text-red-400 bg-white border" title="Unlink"><X size={13}/></button>
+    </div>
+  );
+};
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -68,7 +444,7 @@ const PALETTE: { type: BlockType; label: string; icon: React.ReactNode; desc: st
   { type: 'image',     label: 'Single Image',  icon: <ImageIcon size={15}/>,   desc: 'Full-width image + caption',   accent: '#059669' },
   { type: 'image_row', label: 'Image Row',      icon: <Grid size={15}/>,        desc: '2–3 images side by side',      accent: '#0d9488' },
   { type: 'table',     label: 'Table',         icon: <TableIcon size={15}/>,   desc: 'Comparison or data table',     accent: '#16a34a' },
-  { type: 'code',      label: 'Code Block',    icon: <Code size={15}/>,        desc: 'Code or command snippet',      accent: '#65a30d' },
+  { type: 'code',      label: 'Code Block',     icon: <Code size={15}/>,        desc: 'Code or command snippet',      accent: '#65a30d' },
   { type: 'divider',   label: 'Divider',       icon: <Minus size={15}/>,       desc: 'Visual section separator',     accent: '#94a3b8' },
   { type: 'summary',   label: 'Exec. Summary', icon: <BookOpen size={15}/>,    desc: 'Dark executive summary card',  accent: '#facc15' },
   { type: 'split',     label: 'Image + Content',icon: <Layout size={15}/>,      desc: 'Side by side layout',          accent: '#2563eb'},
@@ -103,7 +479,6 @@ const makeBlock = (type: BlockType): Block => {
     case 'faq':
       return { id, type, heading: 'Frequently Asked Questions', faqItems: [{ question: '', answer: '' }] };
     default:          return { id, type, heading: '', body: '' };
-    
   }
 };
 
@@ -119,7 +494,7 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
         <div style={{ marginBottom: 26 }}>
           {block.heading && <h4 style={{ fontFamily: pf, fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 9, marginTop: 0 }}>{block.heading}</h4>}
           <div 
-            className="blog-preview-render-text"
+            className="blog-preview-render-text whitespace-pre-line"
             style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151', margin: 0 }}
             dangerouslySetInnerHTML={{ __html: block.body || '<em style="color: #ccc">Empty paragraph…</em>' }}
           />
@@ -252,17 +627,17 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
           {block.splitLayout === 'left-image' ? (
             <>
               <img src={block.splitImage} style={{ width: '100%', borderRadius: 12 }} alt="" />
-              <div className="blog-preview-render-text" style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: block.splitContent || '' }} />
+              <div className="blog-preview-render-text whitespace-pre-line" style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: block.splitContent || '' }} />
             </>
           ) : (
             <>
-              <div className="blog-preview-render-text" style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: block.splitContent || '' }} />
+              <div className="blog-preview-render-text whitespace-pre-line" style={{ fontFamily: bf, fontSize: 17, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: block.splitContent || '' }} />
               <img src={block.splitImage} style={{ width: '100%', borderRadius: 12 }} alt="" />
             </>
           )}
         </div>
       );
-   case 'faq':
+    case 'faq':
       return (
         <div style={{ margin: '36px 0' }}>
           {block.heading && (
@@ -276,7 +651,7 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
                 <summary style={{ fontWeight: 700, fontFamily: bf, fontSize: 16, color: '#1f2937', outline: 'none' }}>
                   {item.question || 'Empty Question'}
                 </summary>
-                <p style={{ marginTop: 12, marginBottom: 0, fontFamily: bf, fontSize: 15, color: '#4b5563', lineHeight: 1.7 }}>
+                <p style={{ marginTop: 12, marginBottom: 0, fontFamily: bf, fontSize: 15, color: '#4b5563', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
                   {item.answer || 'Empty Answer'}
                 </p>
               </details>
@@ -284,7 +659,7 @@ const PreviewBlock: React.FC<{ block: Block }> = ({ block }) => {
           </div>
         </div>
       );
-      default: return null;
+    default: return null;
   }
 };
 
@@ -302,46 +677,63 @@ const BlockEditor: React.FC<{
 }> = ({ block, index, onUpdate, onRemove, onUpload, setDraggable }) => {
   const [uploading, setUploading] = useState(false);
   const u = (patch: Partial<Block>) => onUpdate(block.id, patch);
-
-  //------------------------------------------hyperlink add -------------------------------
- const addLink = () => {
-  const selection = window.getSelection();
-  let existingUrl = "";
   
-  if (selection && selection.anchorNode) {
-    const parent = selection.anchorNode.parentElement;
-    if (parent && parent.tagName === 'A') {
-      existingUrl = parent.getAttribute('href') || "";
-    }
-  }
+  // NAYA: Global toolbar se command aane par text save karega
+  useEffect(() => {
+    const handleSync = () => {
+      const el = document.getElementById(`editor-body-${block.id}`);
+      if (el && el.innerHTML !== block.body) u({ body: el.innerHTML });
 
-  const url = window.prompt("Edit Product URL:", existingUrl);
-  
-  if (url !== null) {
-    document.execCommand('createLink', false, url);
-    
-    const newSelection = window.getSelection();
-    if (newSelection && newSelection.anchorNode) {
-      const newParent = newSelection.anchorNode.parentElement;
-      if (newParent && newParent.tagName === 'A') {
-        newParent.setAttribute('target', '_blank');
-        newParent.setAttribute('rel', 'noopener noreferrer');
-        newParent.style.color = '#2563eb';
+      const elSplit = document.getElementById(`editor-split-${block.id}`);
+      if (elSplit && elSplit.innerHTML !== block.splitContent) u({ splitContent: elSplit.innerHTML });
+    };
+
+    window.addEventListener('sync-editor-content', handleSync);
+    return () => window.removeEventListener('sync-editor-content', handleSync);
+  }, [block, u]);
+
+  const syncContent = () => {
+    // Text Block Sync
+    const elText = document.getElementById(`editor-body-${block.id}`);
+    if (elText && block.type === 'text') u({ body: elText.innerHTML });
+
+    // Split Block Sync
+    const elSplit = document.getElementById(`editor-split-${block.id}`);
+    if (elSplit && block.type === 'split') u({ splitContent: elSplit.innerHTML });
+
+    // Summary Block Sync
+    const elSummary = document.getElementById(`editor-body-${block.id}`);
+    if (elSummary && block.type === 'summary') u({ body: elSummary.innerHTML });
+
+    // Headings Sync
+    const elHeading = document.getElementById(`editor-body-${block.id}`);
+    if (elHeading && (block.type === 'heading2' || block.type === 'heading3')) u({ body: elHeading.innerHTML });
+  };
+
+  const addLinkLocal = () => {
+    const selection = window.getSelection();
+    let existingUrl = "";
+    if (selection && selection.anchorNode) {
+      const parent = selection.anchorNode.parentElement;
+      if (parent && parent.tagName === 'A') {
+        existingUrl = parent.getAttribute('href') || "";
       }
     }
-    
-    const el = document.getElementById(`editor-${block.id}`);
-    if (el) u({ body: el.innerHTML });
-  }
-};
-//------------------------------------------remove link------------------------------------------------
-const removeLink = () => {
-  document.execCommand('unlink', false);
-  document.execCommand('removeFormat', false); 
 
-  const el = document.getElementById(`editor-${block.id}`);
-  if (el) u({ body: el.innerHTML });
-};
+    const url = window.prompt("Edit Product URL:", existingUrl);
+    if (url !== null) {
+      document.execCommand('createLink', false, url);
+     const newSelection = window.getSelection();
+      if (newSelection && newSelection.anchorNode) {
+        const newParent = newSelection.anchorNode.parentElement;
+        if (newParent && newParent.tagName === 'A') {
+          newParent.setAttribute('target', '_blank');
+          newParent.setAttribute('rel', 'noopener noreferrer');
+        }
+      }
+      syncContent();
+    }
+  };
 
   const meta = PALETTE.find(p => p.type === block.type)!;
 
@@ -362,7 +754,6 @@ const removeLink = () => {
     <div style={{ background: '#fff', border: '1.5px solid #e4e4e7', borderRadius: 20, padding: '22px 22px 18px', position: 'relative' }} className="hover:border-yellow-400 hover:shadow-sm transition-all group">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          {/* DRAG HANDLE */}
           <div 
             onMouseEnter={() => setDraggable(true)} 
             onMouseLeave={() => setDraggable(false)}
@@ -381,65 +772,47 @@ const removeLink = () => {
         <button type="button" onClick={() => onRemove(block.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fca5a5', padding: 3 }} className="hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
       </div>
 
-     {/* --- TEXT BLOCK --- */}
-{block.type === 'text' && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-   
-    <div className="flex items-center justify-between bg-zinc-50 p-2 rounded-t-lg border border-zinc-200">
-      <input 
-        className="bg-transparent border-none outline-none text-[10px] font-bold text-zinc-500 w-full" 
-        placeholder="OPTIONAL SECTION HEADING..." 
-        value={block.heading || ''} 
-        onChange={e => u({ heading: e.target.value })} 
-      />
-      <div className="flex gap-1">
-        <button 
-          type="button" 
-          onMouseDown={(e) => e.preventDefault()} 
-          onClick={addLink}
-          className="p-1.5 hover:bg-yellow-100 rounded text-zinc-600 hover:text-yellow-700 transition-colors"
-          title="Add Link"
-        >
-          <LinkIcon size={14} />
-        </button>
-        <button 
-          type="button" 
-          onMouseDown={(e) => e.preventDefault()} 
-          onClick={removeLink}
-          className="p-1.5 hover:bg-red-100 rounded text-zinc-400 hover:text-red-600 transition-colors"
-          title="Remove Link"
-        >
-          <X size={14} />
-        </button>
-      </div>
-    </div>
+      {/* ─── TEXT BLOCK ─── */}
+      {block.type === 'text' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="flex items-center justify-between bg-zinc-50 p-2 rounded-t-lg border border-zinc-200 flex-wrap gap-2">
+            <input 
+              className="bg-transparent border-none outline-none text-[10px] font-bold text-zinc-500 min-w-[150px] flex-1" 
+              placeholder="OPTIONAL SECTION HEADING..." 
+              value={block.heading || ''} 
+              onChange={e => u({ heading: e.target.value })} 
+            />
+          </div>
 
-    <div
-      id={`editor-${block.id}`}
-      contentEditable
-      suppressContentEditableWarning
-      className="w-full min-h-[120px] max-h-[250px] overflow-y-auto p-4 border border-zinc-200 border-t-0 rounded-b-xl focus:ring-2 focus:ring-yellow-400/20 outline-none bg-white font-serif text-[16px] leading-relaxed text-zinc-800 select-text"
-      onBlur={(e) => u({ body: e.currentTarget.innerHTML })}
-      dangerouslySetInnerHTML={{ __html: block.body || '' }}
-    />
-    <p className="text-[9px] text-zinc-400 italic px-1">* Select any word and click the link icon to add internal linking.</p>
-  </div>
-)}
-      {/* --- TABLE BLOCK --- */}
+          <div
+            id={`editor-body-${block.id}`}
+            contentEditable
+            suppressContentEditableWarning
+            className="w-full min-h-[120px] max-h-[250px] overflow-y-auto p-4 border border-zinc-200 border-t-0 rounded-b-xl focus:ring-2 focus:ring-yellow-400/20 outline-none bg-white font-serif text-[16px] leading-relaxed text-zinc-800 select-text whitespace-pre-line"
+            onMouseUp={cacheGlobalSelection}
+            onKeyUp={cacheGlobalSelection}
+            onBlur={syncContent}
+            dangerouslySetInnerHTML={{ __html: block.body || '' }}
+          />
+          <p className="text-[9px] text-zinc-400 italic px-1">* Highlight text to format styles dynamically mirroring standard corporate processors.</p>
+        </div>
+      )}
+
+      {/* ─── TABLE BLOCK ─── */}
       {block.type === 'table' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="flex gap-2 items-center">
-  <input className={inp} placeholder="Table Heading (e.g. Technical Specifications)" value={block.heading || ''} onChange={e => u({ heading: e.target.value })} />
-  <button 
-    type="button" 
-    onMouseDown={(e) => e.preventDefault()}
-    onClick={addLink}
-    className="p-3 bg-white border border-zinc-200 hover:bg-yellow-100 rounded-xl text-zinc-600 hover:text-yellow-700 transition-colors flex-shrink-0"
-    title="Add Link to Selected Table Text"
-  >
-    <LinkIcon size={16} />
-  </button>
-</div>
+            <input className={inp} placeholder="Table Heading (e.g. Technical Specifications)" value={block.heading || ''} onChange={e => u({ heading: e.target.value })} />
+            <button 
+              type="button" 
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={addLinkLocal}
+              className="p-3 bg-white border border-zinc-200 hover:bg-yellow-100 rounded-xl text-zinc-600 hover:text-yellow-700 transition-colors flex-shrink-0"
+              title="Add Link to Selected Table Text"
+            >
+              <LinkIcon size={16} />
+            </button>
+          </div>
           <div style={{ overflowX: 'auto', border: '1.5px solid #e4e4e7', borderRadius: 12 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
@@ -466,17 +839,19 @@ const removeLink = () => {
                     {row.map((cell, ci) => (
                       <td key={ci} style={{ padding: 8, border: '1px solid #e4e4e7' }}>
                         <div 
-  contentEditable
-  suppressContentEditableWarning
-  style={{ width: '100%', minHeight: '20px', border: 'none', outline: 'none', background: 'transparent' }}
-  onBlur={e => {
-    const newRows = [...(block.rows || [])];
-    newRows[ri] = [...newRows[ri]];
-    newRows[ri][ci] = e.currentTarget.innerHTML;
-    u({ rows: newRows });
-  }}
-  dangerouslySetInnerHTML={{ __html: cell || '' }}
-/>
+                          contentEditable
+                          suppressContentEditableWarning
+                          style={{ width: '100%', minHeight: '20px', border: 'none', outline: 'none', background: 'transparent' }}
+                          onMouseUp={cacheGlobalSelection}
+                          onKeyUp={cacheGlobalSelection}
+                          onBlur={e => {
+                            const newRows = [...(block.rows || [])];
+                            newRows[ri] = [...newRows[ri]];
+                            newRows[ri][ci] = e.currentTarget.innerHTML;
+                            u({ rows: newRows });
+                          }}
+                          dangerouslySetInnerHTML={{ __html: cell || '' }}
+                        />
                       </td>
                     ))}
                     <td style={{ textAlign: 'center' }}>
@@ -494,22 +869,38 @@ const removeLink = () => {
         </div>
       )}
 
-      {/* --- EXECUTIVE SUMMARY BLOCK --- */}
+      {/* ─── EXECUTIVE SUMMARY BLOCK ─── */}
       {block.type === 'summary' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <p style={{ fontSize: 9, fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Summary Content (Italicized in preview)</p>
-          <textarea className={txta} rows={4} placeholder="Enter the executive summary text..." value={block.body || ''} onChange={e => u({ body: e.target.value })} />
+          <div
+            id={`editor-body-${block.id}`}
+            contentEditable
+            suppressContentEditableWarning
+            className={`${txta} min-h-[100px] bg-white`}
+            onMouseUp={cacheGlobalSelection}
+            onKeyUp={cacheGlobalSelection}
+            onBlur={syncContent}
+            dangerouslySetInnerHTML={{ __html: block.body || '' }}
+          />
         </div>
       )}
 
-      {/* --- HEADINGS --- */}
+      {/* ─── HEADINGS ─── */}
       {(block.type === 'heading2' || block.type === 'heading3') && (
-        <input className={`w-full border border-zinc-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 rounded-xl px-4 py-3 outline-none transition-all font-black ${block.type === 'heading2' ? 'text-2xl' : 'text-xl'}`}
-          placeholder={block.type === 'heading2' ? 'Section heading…' : 'Sub-section heading…'}
-          value={block.body || ''} onChange={e => u({ body: e.target.value })} />
+        <div
+          id={`editor-body-${block.id}`}
+          contentEditable
+          suppressContentEditableWarning
+          className={`w-full border border-zinc-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 rounded-xl px-4 py-3 outline-none transition-all font-black bg-white ${block.type === 'heading2' ? 'text-2xl' : 'text-xl'}`}
+          onMouseUp={cacheGlobalSelection}
+          onKeyUp={cacheGlobalSelection}
+          onBlur={syncContent}
+          dangerouslySetInnerHTML={{ __html: block.body || '' }}
+        />
       )}
 
-      {/* --- IMAGE BLOCK --- */}
+      {/* ─── IMAGE BLOCK ─── */}
       {block.type === 'image' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ position: 'relative', height: 120, background: '#f9fafb', border: '2px dashed #d4d4d8', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -538,7 +929,7 @@ const removeLink = () => {
         </div>
       )}
 
-      {/* --- IMAGE ROW BLOCK --- */}
+      {/* ─── IMAGE ROW BLOCK ─── */}
       {block.type === 'image_row' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -575,52 +966,44 @@ const removeLink = () => {
         </div>
       )}
 
-    {/* --- SPLIT IMAGE/TEXT BLOCK --- */}
-{block.type === 'split' && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-    <div style={{ display: 'flex', gap: 8 }}>
-      {['left-image', 'right-image'].map((layout) => (
-        <button key={layout} type="button" onClick={() => u({ splitLayout: layout as any })}
-          className={`px-3 py-1 text-[10px] font-bold rounded ${block.splitLayout === layout ? 'bg-zinc-900 text-yellow-400' : 'bg-zinc-100'}`}>
-          {layout === 'left-image' ? 'Image Left' : 'Image Right'}
-        </button>
-      ))}
-    </div>
-    <input type="file" accept="image/*" onChange={e => handleFileChange(e.target.files?.[0], (url) => u({ splitImage: url }))} />
-    <input className={inp} placeholder="Or paste image URL" value={block.splitImage || ''} onChange={e => u({ splitImage: e.target.value })} />
-    
-    <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
-      <div className="flex items-center justify-end bg-zinc-50 p-2 border-b border-zinc-200">
-        <button 
-          type="button" 
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={addLink}
-          className="p-1.5 hover:bg-yellow-100 rounded text-zinc-600 hover:text-yellow-700 transition-colors"
-          title="Add Link"
-        >
-          <LinkIcon size={14} />
-        </button>
-      </div>
-      
-      <div
-        id={`editor-split-${block.id}`}
-        contentEditable
-        suppressContentEditableWarning
-        className="w-full min-h-[120px] max-h-[200px] overflow-y-auto p-4 focus:ring-2 focus:ring-yellow-400/20 outline-none bg-white font-serif text-[16px] leading-relaxed text-zinc-800"
-        onBlur={(e) => u({ splitContent: e.currentTarget.innerHTML })}
-        dangerouslySetInnerHTML={{ __html: block.splitContent || '' }}
-      />
-    </div>
-  </div>
-)}
-      {/* --- QUOTE BLOCK --- */}
+      {/* ─── SPLIT IMAGE/TEXT BLOCK ─── */}
+      {block.type === 'split' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {['left-image', 'right-image'].map((layout) => (
+              <button key={layout} type="button" onClick={() => u({ splitLayout: layout as any })}
+                className={`px-3 py-1 text-[10px] font-bold rounded ${block.splitLayout === layout ? 'bg-zinc-900 text-yellow-400' : 'bg-zinc-100'}`}>
+                {layout === 'left-image' ? 'Image Left' : 'Image Right'}
+              </button>
+            ))}
+          </div>
+          <input type="file" accept="image/*" onChange={e => handleFileChange(e.target.files?.[0], (url) => u({ splitImage: url }))} />
+          <input className={inp} placeholder="Or paste image URL" value={block.splitImage || ''} onChange={e => u({ splitImage: e.target.value })} />
+          
+          <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
+            <div
+              id={`editor-split-${block.id}`}
+              contentEditable
+              suppressContentEditableWarning
+              className="w-full min-h-[120px] max-h-[200px] overflow-y-auto p-4 focus:ring-2 focus:ring-yellow-400/20 outline-none bg-white font-serif text-[16px] leading-relaxed text-zinc-800 whitespace-pre-line"
+              onMouseUp={cacheGlobalSelection}
+              onKeyUp={cacheGlobalSelection}
+              onBlur={syncContent}
+              dangerouslySetInnerHTML={{ __html: block.splitContent || '' }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ─── QUOTE BLOCK ─── */}
       {block.type === 'quote' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <textarea className={txta} rows={3} placeholder="Your quote…" value={block.body || ''} onChange={e => u({ body: e.target.value })} />
           <input className={inp} placeholder="Source or attribution (optional)" value={block.heading || ''} onChange={e => u({ heading: e.target.value })} />
         </div>
       )}
-      {/* --- FAQ BLOCK --- */}
+
+      {/* ─── FAQ BLOCK ─── */}
       {block.type === 'faq' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <input 
@@ -662,7 +1045,7 @@ const removeLink = () => {
               
               <textarea 
                 className={txta} 
-                rows={2} 
+                rows={4} 
                 placeholder="Enter answer here..." 
                 value={item.answer} 
                 onChange={e => {
@@ -722,7 +1105,6 @@ const AddBlog = () => {
     author: 'Durable Editorial', image_url: ''
   });
 
-  // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [draggableBlockId, setDraggableBlockId] = useState<string | null>(null);
@@ -768,7 +1150,6 @@ const AddBlog = () => {
   const updateBlock = (id: string, patch: Partial<Block>) =>
     setBlocks(p => p.map(b => b.id === id ? { ...b, ...patch } : b));
 
-  // ── DRAG AND DROP HANDLERS ──────────────────────────────────────────────────
   const handleDragStart = (e: React.DragEvent, index: number) => {
     e.dataTransfer.effectAllowed = "move";
     setDraggedIndex(index);
@@ -798,7 +1179,6 @@ const AddBlog = () => {
     setDraggableBlockId(null);
   };
 
-  // ── HANDLE SUBMIT ────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); 
     setLoading(true);
@@ -834,17 +1214,10 @@ const AddBlog = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#f4f4f5', fontFamily: "'DM Sans',sans-serif" }}>
 
-      {/* --- INJECTED INLINE STYLE SHEET TO LOCK TYPOGRAPHY --- */}
       <style>{`
-        /* 1. Force layout constraints and styling on Editor blocks */
         [contenteditable] {
-          font-family: Georgia, serif !important;
-          font-size: 16px !important;
-          line-height: 1.8 !important;
-        }
-        [contenteditable] * {
-          font-family: Georgia, serif !important;
-          font-size: 16px !important;
+          font-family: Georgia, serif;
+          font-size: 16px;
           line-height: 1.8 !important;
         }
         [contenteditable] a {
@@ -853,16 +1226,20 @@ const AddBlog = () => {
           font-weight: 600;
         }
         
-        /* 2. Force absolute hierarchy rule on inner preview nodes to prevent browser default reset */
         .blog-preview-render-text,
         .blog-preview-render-text div, 
         .blog-preview-render-text p, 
-        .blog-preview-render-text span,
         .blog-preview-render-text li {
-          font-family: 'Georgia', serif !important;
-          font-size: 17px !important;
-          line-height: 1.9 !important;
-          color: #374151 !important;
+          font-family: 'Georgia', serif;
+          font-size: 17px;
+          line-height: 1.9;
+          color: #374151;
+        }
+        .blog-preview-render-text span {
+          font-family: inherit;
+          font-size: inherit;
+          color: inherit;
+          line-height: inherit;
         }
         .blog-preview-render-text a {
           color: #2563eb !important;
@@ -875,11 +1252,17 @@ const AddBlog = () => {
 
       <form onSubmit={handleSubmit}>
         {/* TOPBAR */}
-        {/* TOPBAR */}
-<div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e4e4e7', padding: '10px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e4e4e7', padding: '10px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          
           <Link to="/dfpladmin access/blogs" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#71717a', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             <ArrowLeft size={12}/> Back
           </Link>
+
+          {/* YAHAN GLOBAL TOOLBAR AAYEGA JO HAMESHA UPAR DIKHEGA */}
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+            <GlobalToolbar />
+          </div>
+          
           <div style={{ display: 'flex', gap: 7 }}>
             <button type="button" onClick={() => setShowPreview(v => !v)}
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 15px', borderRadius: 8, fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.15s', background: showPreview ? '#18181b' : '#f4f4f5', color: showPreview ? '#facc15' : '#71717a', border: '1.5px solid ' + (showPreview ? '#18181b' : '#d4d4d8') }}>
