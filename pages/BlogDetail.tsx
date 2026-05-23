@@ -139,7 +139,26 @@ const BlogDetail: React.FC = () => {
         }
       `}</style>
 
-      <Helmet><title>{post?.title} | Durable Fastener</title></Helmet>
+      <Helmet>
+  {/* Title */}
+  <title>{post ? `${post.title} | Durable Fastener` : 'Durable Fastener Blog'}</title>
+
+  {/* Dynamic Meta Description */}
+  <meta 
+    name="description" 
+    content={
+      post?.meta_description || 
+      "Explore expert insights, technical guides, and industry updates on high-precision manufacturing and industrial fasteners from Durable Fastener."
+    } 
+  />
+
+  {/* Dynamic Canonical Link */}
+  {/* window.location.origin se aapki base domain dynamically fetch ho jayegi (e.g., https://yourwebsite.com) */}
+  <link 
+    rel="canonical" 
+    href={`${typeof window !== 'undefined' ? window.location.origin : 'https://www.durablefastener.com'}/blog/${slug}`} 
+  />
+</Helmet>
 
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-yellow-500 origin-left z-[250]" style={{ scaleX }} />
 
