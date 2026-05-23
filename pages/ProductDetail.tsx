@@ -533,7 +533,30 @@ const ProductDetail: React.FC = () => {
   const faqSchema = buildFaqSchema(product.faqs || []);
 
   // Determine canonical URL – always use product slug
-  const canonicalUrl = `https://durablefastener.com/product/${slug}`;
+ // const canonicalUrl = `https://durablefastener.com/product/${slug}`;
+  let categoryPath = 'product'; // Default fallback path
+  
+  if (product?.category) {
+    const cat = product.category.toLowerCase();
+    // Agar category 'fitting' hai
+    if (cat.includes('fitting')) {
+      categoryPath = 'fitting'; // Note: Agar aapki actual website ka link plural hai, toh isko 'fittings' kar dein
+    } 
+    // Agar category 'fastener' hai
+    else if (cat.includes('fastener')) {
+      categoryPath = 'fastener'; // Note: Agar aapki actual website ka link plural hai, toh isko 'fasteners' kar dein
+    }
+    // Future proofing: Agar koi teesri category aati hai
+    else {
+      categoryPath = cat.replace(/\s+/g, '-');
+    }
+  }
+
+  // Generate dynamic Canonical URL 
+  // window.location.origin dynamically base URL (http://localhost:5173 ya https://durablefastener.com) fetch kar lega
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://durablefastener.com';
+  const canonicalUrl = `${baseUrl}/${categoryPath}/${slug}`;
+  console.log("Current Canonical URL:", canonicalUrl);
 
   return (
     <div
