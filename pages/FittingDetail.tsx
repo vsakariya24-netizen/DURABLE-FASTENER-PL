@@ -128,12 +128,24 @@ const FittingDetail = ({ product }: { product: any }) => {
     setActiveImageIndex(-1); // Reset gallery selection highlight
   };
 
+  //const containerVar = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  //const itemVar = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const containerVar = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVar = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
+  // Generate exact Canonical URL
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://durablefastener.com';
+  const canonicalUrl = `${baseUrl}/product/${product?.slug}`;
+
   return (
     <div className={`${THEME.bg} min-h-screen pb-24 pt-[110px] md:pt-[150px] font-sans`} style={fontBody}>
-      <Helmet><title>{product ? `${product.name} | CLASSONE` : 'Product Details'}</title></Helmet>
+    <Helmet>
+        <title>{product ? `${product.name} | CLASSONE` : 'Product Details'}</title>
+        {/* Yeh rahi aapki Canonical Link */}
+        <link rel="canonical" href={canonicalUrl} />
+        {/* SEO ke liye description bhi Helmet me add karna best practice hai */}
+        <meta name="description" content={product?.short_description || "High-performance hardware solutions engineered for precision and durability."} />
+      </Helmet>
 
       {/* --- BREADCRUMB --- */}
      <div className="fixed top-[80px] md:top-[140px] left-0 w-full z-30 bg-neutral-900 border-b border-neutral-800 shadow-md transition-all duration-300">
