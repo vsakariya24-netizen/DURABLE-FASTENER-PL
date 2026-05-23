@@ -534,28 +534,13 @@ const ProductDetail: React.FC = () => {
 
   // Determine canonical URL – always use product slug
  // const canonicalUrl = `https://durablefastener.com/product/${slug}`;
-  let categoryPath = 'product'; // Default fallback path
-  
-  if (product?.category) {
-    const cat = product.category.toLowerCase();
-    // Agar category 'fitting' hai
-    if (cat.includes('fitting')) {
-      categoryPath = 'fitting'; // Note: Agar aapki actual website ka link plural hai, toh isko 'fittings' kar dein
-    } 
-    // Agar category 'fastener' hai
-    else if (cat.includes('fastener')) {
-      categoryPath = 'fastener'; // Note: Agar aapki actual website ka link plural hai, toh isko 'fasteners' kar dein
-    }
-    // Future proofing: Agar koi teesri category aati hai
-    else {
-      categoryPath = cat.replace(/\s+/g, '-');
-    }
-  }
-
-  // Generate dynamic Canonical URL 
-  // window.location.origin dynamically base URL (http://localhost:5173 ya https://durablefastener.com) fetch kar lega
+// Generate exact Canonical URL matching your website's routing structure
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://durablefastener.com';
-  const canonicalUrl = `${baseUrl}/${categoryPath}/${slug}`;
+  
+  // Kyunki aapke sabhi products '/product/slug' par khulte hain, canonical bhi same rahega
+  const canonicalUrl = `${baseUrl}/product/${slug}`;
+
+  // Testing ke liye console log (aap testing ke baad isse hata sakte hain)
   console.log("Current Canonical URL:", canonicalUrl);
 
   return (
