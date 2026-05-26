@@ -129,6 +129,12 @@ const BlogDetail: React.FC = () => {
         .blog-content-render a { color: #2563eb !important; text-decoration: underline !important; font-weight: 600 !important; }
 
         /* 🔥 CRITICAL FIX FOR H2 & H3 🔥 */
+        /* 🔥 SUMMARY BOX TEXT COLOR FIX 🔥 */
+/* Yeh admin side se aane wale kisi bhi color (black) ko hatakar text ko zinc-300 kar dega */
+
+.summary-fix * {
+  color: #ffffff !important;
+}
         /* Admin toolbar adds <span style="font-size: 16px"> which overrides Tailwind classes. 
            This CSS forces spans inside Headings to inherit proper sizes while keeping custom colors intact. */
         .heading-render span {
@@ -139,7 +145,7 @@ const BlogDetail: React.FC = () => {
         }
       `}</style>
 
-      <Helmet>
+     <Helmet>
   {/* Title */}
   <title>{post ? `${post.title} | Durable Fastener` : 'Durable Fastener Blog'}</title>
 
@@ -295,15 +301,16 @@ const BlogDetail: React.FC = () => {
                   );
 
                 case 'summary':
-                  return (
-                    <div key={idx} className="relative my-12 p-10 bg-[#0f0f11] rounded-[2rem] text-white shadow-2xl">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="h-[2px] w-8 bg-yellow-500" />
-                        <span style={{ fontSize: 10, fontWeight: 900 }} className="uppercase tracking-[0.3em] text-yellow-500">EXECUTIVE SUMMARY </span>
-                      </div>
-                      <div className="blog-content-render text-xl text-zinc-300 font-serif italic leading-relaxed" dangerouslySetInnerHTML={{ __html: section.body || '' }} />
-                    </div>
-                  );
+  return (
+    <div key={idx} className="relative my-12 p-10 bg-[#0f0f11] rounded-[2rem] text-white shadow-2xl">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="h-[2px] w-8 bg-yellow-500" />
+        <span style={{ fontSize: 10, fontWeight: 900 }} className="uppercase tracking-[0.3em] text-yellow-500">EXECUTIVE SUMMARY </span>
+      </div>
+      {/* Niche wali line me 'summary-fix' hona zaroori hai */}
+      <div className="blog-content-render summary-fix text-xl font-serif italic leading-relaxed" dangerouslySetInnerHTML={{ __html: section.body || '' }} />
+    </div>
+  );
 
                 case 'faq':
                   const rawItems = section.faqItems || section.items || section.rows || [];
