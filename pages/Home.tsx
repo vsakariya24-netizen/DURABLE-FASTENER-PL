@@ -104,8 +104,9 @@ const cleanImageUrl = (url: string): string => {
 
   // Any Supabase or workers.dev URL → extract filename → redirect to R2
   if (url.startsWith('http://') || url.startsWith('https://')) {
-    const fileName = url.split('/').pop(); // e.g. "1773038153437-panhead.png"
-    return `${R2_BASE}/${fileName}`;
+    //const fileName = url.split('/').pop(); // e.g. "1773038153437-panhead.png"
+   // return `${R2_BASE}/${fileName}`;
+      return url; 
   }
 
   // Relative path → prepend R2
@@ -793,7 +794,9 @@ const { data: allProducts } = await supabase
                             src={post.image_url}
                             alt={post.title}
                             className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            //onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                             onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg'; }}
+                            
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center">
