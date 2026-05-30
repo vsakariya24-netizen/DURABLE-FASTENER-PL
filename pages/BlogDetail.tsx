@@ -90,9 +90,15 @@ const BlogDetail: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const toc = useMemo(() => {
-    return sections.filter(s => s.heading || s.type === 'heading2').map(s => s.heading || s.body);
-  }, [sections]);
+ const toc = useMemo(() => {
+  return sections
+    .filter(s => s.heading || s.type === 'heading2' || s.type === 'heading3')
+    .map(s => {
+      const rawText = s.heading || s.body || '';
+      // Yeh regex saare HTML tags (like <h1>, <span style...>) ko remove kar dega
+      return rawText.replace(/<\/?[^>]+(>|$)/g, "").trim();
+    });
+}, [sections]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50">
