@@ -1,3 +1,4 @@
+// ProductDetail.tsx
 import React, { useState, useMemo, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -90,13 +91,27 @@ const itemVar: Variants = {
   visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 60, damping: 20 } },
 };
 
-const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
-
+// =========================================
+// SMART IMAGE URL HELPER
+// =========================================
 const cleanImageUrl = (url: string): string => {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  const fileName = url.split('/').pop();
-  return `${R2_BASE}/${fileName}`;
+  if (!url || typeof url !== 'string') return '';
+  
+  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+  
+  // Already R2 → return as-is
+  if (url.startsWith(R2_BASE)) return url;
+  
+  // ANY full URL (workers.dev, supabase.co, etc.)
+  // → extract just the filename → redirect to R2
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    const fileName = url.split('/').pop();
+    return `${R2_BASE}/${fileName}`;
+  }
+  
+  // Relative path → prepend R2
+  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
+  return `${R2_BASE}/${cleanPath}`;
 };
 
 // ✅ Improved FAQ Schema Builder – ensures valid format for Google
@@ -533,8 +548,6 @@ const ProductDetail: React.FC = () => {
   const faqSchema = buildFaqSchema(product.faqs || []);
 
   // Determine canonical URL – always use product slug
- // const canonicalUrl = `https://durablefastener.com/product/${slug}`;
-// Generate exact Canonical URL matching your website's routing structure
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://durablefastener.com';
   
   // Kyunki aapke sabhi products '/product/slug' par khulte hain, canonical bhi same rahega
