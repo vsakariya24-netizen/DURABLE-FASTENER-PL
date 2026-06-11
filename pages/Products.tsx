@@ -1,3 +1,4 @@
+// Products.tsx
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -57,26 +58,34 @@ const fromSlug = (slug: string) => {
   return slug.replace(/-/g, ' ').toLowerCase();
 };
 
+// =========================================
+// SMART IMAGE URL HELPER
+// =========================================
+const cleanImageUrl = (url: string): string => {
+  if (!url || typeof url !== 'string') return '';
+  
+  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
+  
+  // Already R2 → return as-is
+  if (url.startsWith(R2_BASE)) return url;
+  
+  // ANY full URL (workers.dev, supabase.co, etc.)
+  // → extract just the filename → redirect to R2
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    const fileName = url.split('/').pop(); 
+    return `${R2_BASE}/${fileName}`;
+  }
+  
+  // Relative path → prepend R2
+  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
+  return `${R2_BASE}/${cleanPath}`;
+};
+
 const Products: React.FC = () => {
   const { category: urlCategory, subcategory: urlSubCategory } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-const cleanImageUrl = (url: string) => {
-  if (!url) return '';
 
-  // 1. If it's already a full URL (Cloudinary, S3, etc.), just return it
-  if (url.startsWith('http')) {
-    return url;
-  }
-
-  // 2. If it's just a path or filename, attach your R2 base
-  const R2_BASE = "https://pub-ffd0eb07a99540ac95c35c521dd8f7ae.r2.dev";
-  
-  // Remove leading slash if it exists to avoid double slashes //
-  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
-
-  return `${R2_BASE}/${cleanPath}`;
-};
   // STATE
   const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; name: string }>({ 
     type: 'ALL', 
@@ -193,49 +202,44 @@ const cleanImageUrl = (url: string) => {
     }
   }, [urlCategory, urlSubCategory, categoryTree, navigate]);
 
-
   // -------------------------------------------
-  // STEP 3: FETCH PRODUCTS  ✅ WITH CACHE
+  // STEP 3: FETCH PRODUCTS 
   // -------------------------------------------
- // -------------------------------------------
-// STEP 3: FETCH PRODUCTS 
-// -------------------------------------------
-useEffect(() => {
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      // ✅ Naya cache version (v2) use karein taaki purana data clear ho jaye
-      const cacheKey = `products_v2_${activeFilter.type}_${activeFilter.value}_${searchTerm}`;
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const cacheKey = `products_v2_${activeFilter.type}_${activeFilter.value}_${searchTerm}`;
 
-      let query = supabase
-        .from('products')
-        .select('*')
-        .order('position', { ascending: true });
+        let query = supabase
+          .from('products')
+          .select('*')
+          .order('position', { ascending: true });
 
-      // 🎯 YE LINES FILTERING KE LIYE ZARURI HAIN:
-      if (activeFilter.type === 'CATEGORY') {
-        query = query.ilike('category', activeFilter.value); 
-      } else if (activeFilter.type === 'SUB_CATEGORY') {
-        query = query.eq('sub_category', activeFilter.value); 
+        // FILTERING
+        if (activeFilter.type === 'CATEGORY') {
+          query = query.ilike('category', activeFilter.value); 
+        } else if (activeFilter.type === 'SUB_CATEGORY') {
+          query = query.eq('sub_category', activeFilter.value); 
+        }
+
+        if (searchTerm) {
+          query = query.ilike('name', `%${searchTerm}%`);
+        }
+
+        const { data } = await query;
+        if (data) {
+          setProducts(data);
+        }
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (searchTerm) {
-        query = query.ilike('name', `%${searchTerm}%`);
-      }
+    const timeoutId = setTimeout(fetchProducts, 300);
+    return () => clearTimeout(timeoutId);
+  }, [activeFilter, searchTerm]);
 
-      const { data } = await query;
-      if (data) {
-        setProducts(data);
-        // setCache(cacheKey, data); // Check karne ke baad uncomment karein
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const timeoutId = setTimeout(fetchProducts, 300);
-  return () => clearTimeout(timeoutId);
-}, [activeFilter, searchTerm]);
   // -------------------------------------------
   // UI HANDLERS
   // -------------------------------------------
@@ -467,11 +471,11 @@ useEffect(() => {
                         <div className="relative aspect-square bg-[#f8f8f8] flex items-center justify-center p-4 md:p-0 overflow-hidden">
                           {product.images && product.images[0] ? (
                             <img 
-  src={cleanImageUrl(product.images[0])} 
-  alt={product.name}
-  loading="lazy"
-  className="max-w-full max-h-full w-auto h-auto object-contain group-hover:scale-110 transition-transform duration-500"
-/>
+                              src={cleanImageUrl(product.images[0])} 
+                              alt={product.name}
+                              loading="lazy"
+                              className="max-w-full max-h-full w-auto h-auto object-contain group-hover:scale-110 transition-transform duration-500"
+                            />
                           ) : (
                             <div className="text-zinc-300 text-[10px] font-bold uppercase">No Image</div>
                           )}
