@@ -166,10 +166,8 @@ const BlogDetail: React.FC = () => {
 
   {/* Dynamic Canonical Link */}
   {/* window.location.origin se aapki base domain dynamically fetch ho jayegi (e.g., https://yourwebsite.com) */}
-  <link 
-    rel="canonical" 
-    href={`${typeof window !== 'undefined' ? window.location.origin : 'https://www.durablefastener.com'}/blog/${slug}`} 
-  />
+ <link rel="canonical" href={`https://durablefastener.com/blog/${slug}`} />
+
 </Helmet>
 
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-yellow-500 origin-left z-[250]" style={{ scaleX }} />
