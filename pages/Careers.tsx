@@ -45,10 +45,8 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
     const phoneNumber = "918758700783"; 
     const message = `Hello, I am interested in the position of *${job.title}* at Durable Fastener.`;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    let url = isMobile 
-        ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
-        : `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+window.open(url, '_blank');
   };
 
   return (
@@ -146,10 +144,8 @@ const InternshipCard: React.FC = () => {
       const phoneNumber = "918758700783"; 
       const message = "Hello, I am interested in the *Internship / Training Program* at Durable Fastener.";
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const url = isMobile 
-        ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
-        : `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-      window.open(url, '_blank');
+      const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+window.open(url, '_blank');
     };
   
     return (
