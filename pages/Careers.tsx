@@ -16,10 +16,7 @@ const getBadgeStyles = (text: string) => {
   if (t.includes('admin') || t.includes('hr') || t.includes('found')) return 'bg-purple-50 text-purple-700 ring-purple-600/20';
   return 'bg-slate-100 text-slate-700 ring-slate-500/20';
 };
-const stripHtml = (html: string) => {
-  if (!html) return "";
-  return html.replace(/<[^>]*>?/gm, '').replace(/class="[^"]*"/gm, '').trim();
-};
+
 // Helper to get Icon Component from String Name
 const DynamicIcon = ({ name, size = 32, className }: { name: string; size?: number, className?: string }) => {
   const IconComponent = (LucideIcons as any)[name];
@@ -286,7 +283,6 @@ const Careers: React.FC = () => {
     return matchesSearch && matchesDept && matchesLoc && matchesSalary && matchesGender;
   });
 
-  
   const toggleFilter = (item: string, list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (list.includes(item)) setList(list.filter(i => i !== item));
     else setList([...list, item]);
@@ -316,15 +312,12 @@ const isFiltered = selectedDepts.length > 0;
 
   // 3. Dynamic Schema (Google Jobs)
   // We use "filteredJobs" here so Google sees exactly what the user sees
-const jsonLd = useMemo(() => {
-  if (loading || filteredJobs.length === 0) return null;
-
-  const schemaData = {
+  const jobSchema = {
     "@context": "https://schema.org",
     "@graph": filteredJobs.map(job => ({
       "@type": "JobPosting",
       "title": job.title,
-      "description": stripHtml(job.description), // Yahan HTML saaf ho jayega
+      "description": job.description.replace(/"/g, '\\"').replace(/\n/g, ' '),
       "identifier": {
         "@type": "PropertyValue",
         "name": "Durable Fastener",
@@ -361,8 +354,6 @@ const jsonLd = useMemo(() => {
       }
     }))
   };
-  return JSON.stringify(schemaData); // Yeh ab ek clean String hai
-}, [filteredJobs, loading]);
   return (
     <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
     <Helmet>
@@ -381,11 +372,46 @@ const jsonLd = useMemo(() => {
   <link rel="canonical" href="https://durablefastener.com/careers" />
 
   {/* 2. DYNAMIC JOB POSTING SCHEMA (Uses 'filteredJobs' instead of all 'jobs') */}
- {!loading && jsonLd && (
-    <script 
-      type="application/ld+json" 
-      dangerouslySetInnerHTML={{ __html: jsonLd }} 
-    />
+  {!loading && filteredJobs.length > 0 && (
+    <script type="application/ld+json">
+      {`
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            ${filteredJobs.map(job => `
+              {
+                "@type": "JobPosting",
+                "title": "${job.title}",
+                "description": "${job.description.replace(/"/g, '\\"').replace(/\n/g, ' ')}",
+                "identifier": {
+                  "@type": "PropertyValue",
+                  "name": "Durable Fastener",
+                  "value": "${job.id}"
+                },
+                "datePosted": "${job.created_at}",
+                "validThrough": "2026-12-31",
+                "hiringOrganization": {
+                  "@type": "Organization",
+                  "name": "Durable Fastener Pvt Ltd",
+                  "sameAs": "https://durablefastener.com",
+                  "logo": "https://durablefastener.com/durablefastener.png"
+                },
+                "jobLocation": {
+                  "@type": "Place",
+                  "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": "${job.location || 'Rajkot'}",
+                    "addressRegion": "Gujarat",
+                    "addressCountry": "IN"
+                  }
+                },
+                "employmentType": "FULL_TIME"
+              }
+            `).join(',')}
+          ]
+        }
+      `}
+    </script>
   )}
 </Helmet>
       {/* PROFESSIONAL HEADER */}
