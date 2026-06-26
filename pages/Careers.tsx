@@ -316,7 +316,7 @@ const isFiltered = selectedDepts.length > 0;
 
   // 3. Dynamic Schema (Google Jobs)
   // We use "filteredJobs" here so Google sees exactly what the user sees
-  const jsonLd = useMemo(() => {
+const jsonLd = useMemo(() => {
   if (loading || filteredJobs.length === 0) return null;
 
   const schemaData = {
@@ -325,24 +325,43 @@ const isFiltered = selectedDepts.length > 0;
       "@type": "JobPosting",
       "title": job.title,
       "description": stripHtml(job.description), // Yahan HTML saaf ho jayega
+      "identifier": {
+        "@type": "PropertyValue",
+        "name": "Durable Fastener",
+        "value": job.id
+      },
+      "datePosted": job.created_at,
+      "validThrough": "2026-12-31",
       "hiringOrganization": {
         "@type": "Organization",
         "name": "Durable Fastener Pvt Ltd",
-        "sameAs": "https://durablefastener.com"
+        "sameAs": "https://durablefastener.com",
+        "logo": "https://durablefastener.com/durablefastener.png"
       },
       "jobLocation": {
         "@type": "Place",
         "address": {
           "@type": "PostalAddress",
+          "streetAddress": "Plot No.16, Ravki",
           "addressLocality": job.location || "Rajkot",
           "addressRegion": "Gujarat",
           "addressCountry": "IN"
         }
       },
-      "employmentType": "FULL_TIME"
+      "employmentType": "FULL_TIME",
+      "baseSalary": {
+        "@type": "MonetaryAmount",
+        "currency": "INR",
+        "value": {
+          "@type": "QuantitativeValue",
+          "minValue": job.salary_min || 15000,
+          "maxValue": job.salary_max || 50000,
+          "unitText": "MONTH"
+        }
+      }
     }))
   };
-  return JSON.stringify(schemaData); // Yeh ab ek String hai
+  return JSON.stringify(schemaData); // Yeh ab ek clean String hai
 }, [filteredJobs, loading]);
   return (
     <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
@@ -362,7 +381,7 @@ const isFiltered = selectedDepts.length > 0;
   <link rel="canonical" href="https://durablefastener.com/careers" />
 
   {/* 2. DYNAMIC JOB POSTING SCHEMA (Uses 'filteredJobs' instead of all 'jobs') */}
- {jsonLd && (
+ {!loading && jsonLd && (
     <script 
       type="application/ld+json" 
       dangerouslySetInnerHTML={{ __html: jsonLd }} 
