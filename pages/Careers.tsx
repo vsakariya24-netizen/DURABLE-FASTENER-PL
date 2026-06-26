@@ -16,7 +16,16 @@ const getBadgeStyles = (text: string) => {
   if (t.includes('admin') || t.includes('hr') || t.includes('found')) return 'bg-purple-50 text-purple-700 ring-purple-600/20';
   return 'bg-slate-100 text-slate-700 ring-slate-500/20';
 };
-
+// --- IMPROVED STRIPPER ---
+const stripHtml = (html: string) => {
+  if (!html) return "";
+  // 1. Remove all HTML tags
+  let text = html.replace(/<[^>]*>?/gm, '');
+  // 2. Remove multiple spaces/newlines and trim
+  text = text.replace(/\s+/g, ' ').trim();
+  // 3. Escape double quotes to prevent breaking the JSON string
+  return text.replace(/"/g, '\\"');
+};
 // Helper to get Icon Component from String Name
 const DynamicIcon = ({ name, size = 32, className }: { name: string; size?: number, className?: string }) => {
   const IconComponent = (LucideIcons as any)[name];
@@ -283,6 +292,7 @@ const Careers: React.FC = () => {
     return matchesSearch && matchesDept && matchesLoc && matchesSalary && matchesGender;
   });
 
+  
   const toggleFilter = (item: string, list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (list.includes(item)) setList(list.filter(i => i !== item));
     else setList([...list, item]);
@@ -312,48 +322,48 @@ const isFiltered = selectedDepts.length > 0;
 
   // 3. Dynamic Schema (Google Jobs)
   // We use "filteredJobs" here so Google sees exactly what the user sees
-  const jobSchema = {
+const jsonLd = useMemo(() => {
+  if (loading || filteredJobs.length === 0) return null;
+
+  // We map each job individually for better compatibility
+  const jobPostings = filteredJobs.map(job => ({
     "@context": "https://schema.org",
-    "@graph": filteredJobs.map(job => ({
-      "@type": "JobPosting",
-      "title": job.title,
-      "description": job.description.replace(/"/g, '\\"').replace(/\n/g, ' '),
-      "identifier": {
-        "@type": "PropertyValue",
-        "name": "Durable Fastener",
-        "value": job.id
-      },
-      "datePosted": job.created_at,
-      "validThrough": "2026-12-31",
-      "hiringOrganization": {
-        "@type": "Organization",
-        "name": "Durable Fastener Pvt Ltd",
-        "sameAs": "https://durablefastener.com",
-        "logo": "https://durablefastener.com/durablefastener.png"
-      },
-      "jobLocation": {
-        "@type": "Place",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Plot No.16, Ravki",
-          "addressLocality": job.location || "Rajkot",
-          "addressRegion": "Gujarat",
-          "addressCountry": "IN"
-        }
-      },
-      "employmentType": "FULL_TIME",
-      "baseSalary": {
-        "@type": "MonetaryAmount",
-        "currency": "INR",
-        "value": {
-          "@type": "QuantitativeValue",
-          "minValue": job.salary_min || 15000,
-          "maxValue": job.salary_max || 50000,
-          "unitText": "MONTH"
-        }
+    "@type": "JobPosting",
+    "title": job.title,
+    "description": stripHtml(job.description),
+    "datePosted": job.created_at || new Date().toISOString(),
+    "validThrough": "2026-12-31T23:59:59Z", // Ensure this is a future date
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": "Durable Fastener Pvt Ltd",
+      "sameAs": "https://durablefastener.com",
+      "logo": "https://durablefastener.com/durablefastener.png"
+    },
+    "jobLocation": {
+      "@type": "Place",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Plot No.16, Ravki",
+        "addressLocality": job.location || "Rajkot",
+        "addressRegion": "Gujarat",
+        "addressCountry": "IN"
       }
-    }))
-  };
+    },
+    "employmentType": "FULL_TIME",
+    "baseSalary": {
+      "@type": "MonetaryAmount",
+      "currency": "INR",
+      "value": {
+        "@type": "QuantitativeValue",
+        "minValue": job.salary_min || 15000,
+        "maxValue": job.salary_max || 50000,
+        "unitText": "MONTH"
+      }
+    }
+  }));
+
+  return jobPostings;
+}, [filteredJobs, loading]);
   return (
     <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
     <Helmet>
@@ -372,47 +382,13 @@ const isFiltered = selectedDepts.length > 0;
   <link rel="canonical" href="https://durablefastener.com/careers" />
 
   {/* 2. DYNAMIC JOB POSTING SCHEMA (Uses 'filteredJobs' instead of all 'jobs') */}
-  {!loading && filteredJobs.length > 0 && (
-    <script type="application/ld+json">
-      {`
-        {
-          "@context": "https://schema.org",
-          "@graph": [
-            ${filteredJobs.map(job => `
-              {
-                "@type": "JobPosting",
-                "title": "${job.title}",
-                "description": "${job.description.replace(/"/g, '\\"').replace(/\n/g, ' ')}",
-                "identifier": {
-                  "@type": "PropertyValue",
-                  "name": "Durable Fastener",
-                  "value": "${job.id}"
-                },
-                "datePosted": "${job.created_at}",
-                "validThrough": "2026-12-31",
-                "hiringOrganization": {
-                  "@type": "Organization",
-                  "name": "Durable Fastener Pvt Ltd",
-                  "sameAs": "https://durablefastener.com",
-                  "logo": "https://durablefastener.com/durablefastener.png"
-                },
-                "jobLocation": {
-                  "@type": "Place",
-                  "address": {
-                    "@type": "PostalAddress",
-                    "addressLocality": "${job.location || 'Rajkot'}",
-                    "addressRegion": "Gujarat",
-                    "addressCountry": "IN"
-                  }
-                },
-                "employmentType": "FULL_TIME"
-              }
-            `).join(',')}
-          ]
-        }
-      `}
-    </script>
-  )}
+ {!loading && jsonLd && jsonLd.map((jobSchema, index) => (
+    <script 
+      key={`schema-${index}`}
+      type="application/ld+json" 
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jobSchema) }} 
+    />
+  ))}
 </Helmet>
       {/* PROFESSIONAL HEADER */}
       <div className="relative bg-slate-900 pt-32 pb-20 px-4 overflow-hidden">
