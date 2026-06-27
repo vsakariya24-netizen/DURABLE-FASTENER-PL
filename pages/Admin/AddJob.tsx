@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate, Link, useParams } from 'react-router-dom';
-import { 
-  Save, ArrowLeft, Briefcase, IndianRupee, Clock, CheckCircle, 
-  GraduationCap, Star, Globe, Code, Plus, Trash2, Settings, X, Loader, RotateCw
-} from 'lucide-react';
+import { Save, ArrowLeft, Briefcase, IndianRupee, Clock, CheckCircle, GraduationCap, Star, Globe, Code, Plus, Trash2, Settings, X, Loader } from 'lucide-react';
 
 // --- TYPE DEFINITIONS ---
 interface ListItem {
@@ -17,7 +14,7 @@ interface AttributeItem {
   value: string;
 }
 
-// --- SUB-COMPONENT 1: Manage Options Modal ---
+// --- SUB-COMPONENT 1: Manage Options Modal (From Code 1) ---
 const ManageOptionsModal: React.FC<{
   category: string;
   onClose: () => void;
@@ -28,6 +25,7 @@ const ManageOptionsModal: React.FC<{
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
+  // Fetch existing items for this category
   const fetchItems = async () => {
     setFetching(true);
     const { data } = await supabase
@@ -44,6 +42,7 @@ const ManageOptionsModal: React.FC<{
     fetchItems();
   }, [category]);
 
+  // Add New Item
   const handleAdd = async () => {
     if (!newValue.trim()) return;
     setLoading(true);
@@ -52,12 +51,13 @@ const ManageOptionsModal: React.FC<{
     if (error) alert('Error: ' + error.message);
     else {
       setNewValue('');
-      fetchItems();
-      onSuccess();
+      fetchItems(); // Refresh local list
+      onSuccess();  // Refresh parent dropdown
     }
     setLoading(false);
   };
 
+  // Delete Item
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this option?')) return;
     
@@ -65,14 +65,16 @@ const ManageOptionsModal: React.FC<{
     
     if (error) alert('Error: ' + error.message);
     else {
-      fetchItems();
-      onSuccess();
+      fetchItems(); // Refresh local list
+      onSuccess();  // Refresh parent dropdown
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
+        
+        {/* Header */}
         <div className="bg-gray-900 p-4 flex justify-between items-center flex-shrink-0">
           <h3 className="text-white font-bold capitalize flex items-center gap-2">
             <Settings size={18} className="text-yellow-400"/> Manage {category}s
@@ -82,7 +84,10 @@ const ManageOptionsModal: React.FC<{
           </button>
         </div>
 
+        {/* Body */}
         <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
+          
+          {/* Add Section */}
           <div className="flex gap-2 mb-6">
             <input 
               autoFocus
@@ -101,6 +106,7 @@ const ManageOptionsModal: React.FC<{
             </button>
           </div>
 
+          {/* List Section */}
           {fetching ? (
             <div className="text-center py-4 text-gray-400">Loading list...</div>
           ) : (
@@ -164,6 +170,8 @@ const ListInputSection: React.FC<{
         {items.map((item, index) => (
           <div key={index} className="flex flex-col md:flex-row gap-2 items-start group bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
             <span className="mt-3 md:mt-3 text-xs text-gray-400 font-mono select-none px-2">{index + 1}.</span>
+            
+            {/* Box 1: Title */}
             <div className="w-full md:w-1/3">
               <input
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all text-sm font-bold placeholder:font-normal"
@@ -172,6 +180,8 @@ const ListInputSection: React.FC<{
                 onChange={(e) => handleChange(index, 'title', e.target.value)}
               />
             </div>
+
+            {/* Box 2: Detail */}
             <div className="w-full md:w-2/3">
               <textarea
                 rows={1}
@@ -182,6 +192,7 @@ const ListInputSection: React.FC<{
                 style={{ minHeight: '38px' }}
               />
             </div>
+
             <button
               type="button"
               onClick={() => handleRemoveItem(index)}
@@ -213,21 +224,24 @@ const AddJob: React.FC = () => {
   
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
+  
+  // Modal State
   const [activeModal, setActiveModal] = useState<string | null>(null);
-  const [showRepostOption, setShowRepostOption] = useState(false);
 
+  // Dropdown Options State
   const [dropdownOptions, setDropdownOptions] = useState({
     departments: [] as string[],
     locations: [] as string[],
     types: [] as string[]
   });
 
+  // --- STATE ---
   const [formData, setFormData] = useState({
     title: '',
-    department: '',
-    type: '',
+    department: '', // Empty by default now (dynamic)
+    type: '',       // Empty by default now (dynamic)
     gender: 'Any', 
-    location_short: '',
+    location_short: '', // Empty by default now (dynamic)
     salary: '',      
     salary_min: '',  
     salary_max: '',  
@@ -243,6 +257,7 @@ const AddJob: React.FC = () => {
     benefits: [{ title: '', detail: '' }] as ListItem[]
   });
 
+  // --- 1. FETCH ATTRIBUTES (Dropdown Data) ---
   const fetchAttributes = async () => {
     const { data } = await supabase.from('job_attributes').select('*').order('value');
     if (data) {
@@ -258,6 +273,7 @@ const AddJob: React.FC = () => {
     fetchAttributes();
   }, []);
 
+  // --- 2. FETCH JOB DATA (EDIT MODE) ---
   useEffect(() => {
     if (isEditMode && id) {
       fetchJobData(id);
@@ -270,19 +286,15 @@ const AddJob: React.FC = () => {
       const { data, error } = await supabase.from('jobs').select('*').eq('id', jobId).single();
       
       if (error || !data) {
-        navigate('/admin/jobs');
+        navigate('/dfpladmin access/jobs');
         return;
       }
 
-      // Check if job is older than 3 days for repost option
-      const createdDate = new Date(data.created_at);
-      const now = new Date();
-      const daysDiff = Math.ceil((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-      setShowRepostOption(daysDiff > 3);
-
+      // --- SMART PARSING LOGIC ---
       const parser = new DOMParser();
       const doc = parser.parseFromString(data.description || '', 'text/html');
 
+      // Helper to handle multiple header types (h3, h4, h5, strong)
       const getTextByHeader = (keyword: string) => {
         const headers = Array.from(doc.querySelectorAll('h3, h4, h5, strong')); 
         const target = headers.find(h => h.textContent?.toLowerCase().includes(keyword.toLowerCase()));
@@ -300,6 +312,7 @@ const AddJob: React.FC = () => {
 
         let nextElem = targetHeader.nextElementSibling;
         let attempts = 0;
+        // Search next 5 siblings to find the UL
         while (nextElem && nextElem.tagName !== 'UL' && attempts < 5) {
           nextElem = nextElem.nextElementSibling;
           attempts++;
@@ -340,10 +353,14 @@ const AddJob: React.FC = () => {
         experience: data.experience || '',
         skills: data.skills || '',
         intro: introP?.textContent?.trim() || '',
+        
+        // Smart matching
         working_hours: getTextByHeader('Working'),
         commitment: getTextByHeader('Commitment') || getTextByHeader('Bond'),
         address: getTextByHeader('Location') || getTextByHeader('Address'),
         maps_link: linkElem ? linkElem.getAttribute('href') || '' : '',
+        
+        // List matching
         responsibilities: getListByHeader('Responsibilities'),
         qualifications: getListByHeader('Qualifications') || getListByHeader('Qualification'),
         benefits: getListByHeader('Benefits') || getListByHeader('Benefit')
@@ -351,7 +368,6 @@ const AddJob: React.FC = () => {
 
     } catch (err) {
       console.error(err);
-      navigate('/admin/jobs');
     } finally {
       setFetching(false);
     }
@@ -437,8 +453,7 @@ const AddJob: React.FC = () => {
       salary_min: formData.salary_min ? parseInt(String(formData.salary_min)) : 0,
       salary_max: formData.salary_max ? parseInt(String(formData.salary_max)) : 0,
       skills: formData.skills,
-      description: formattedDescription,
-      updated_at: new Date().toISOString()
+      description: formattedDescription
     };
     
     let error;
@@ -455,27 +470,7 @@ const AddJob: React.FC = () => {
       console.error(error);
       alert('Error: ' + error.message);
     } else {
-      navigate('/admin/jobs');
-    }
-    setLoading(false);
-  };
-
-  const handleRepost = async () => {
-    if (!window.confirm('Reposting will update the job timestamp to show as "Recently Reposted" on the careers page. Continue?')) return;
-    
-    setLoading(true);
-    const { error } = await supabase
-      .from('jobs')
-      .update({ 
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', parseInt(id || ''));
-    
-    if (error) {
-      alert('Error: ' + error.message);
-    } else {
-      alert('✅ Job reposted successfully! It will now show as "Recently Reposted" on the careers page.');
-      navigate('/admin/jobs');
+      navigate('/dfpladmin access/jobs');
     }
     setLoading(false);
   };
@@ -485,15 +480,16 @@ const AddJob: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto p-6 relative">
       
+      {/* POPUP MODAL (Condition Rendering) */}
       {activeModal && (
         <ManageOptionsModal 
-          category={activeModal} 
-          onClose={() => setActiveModal(null)} 
-          onSuccess={fetchAttributes} 
+            category={activeModal} 
+            onClose={() => setActiveModal(null)} 
+            onSuccess={fetchAttributes} 
         />
       )}
 
-      <Link to="/admin/jobs" className="flex items-center gap-2 text-gray-500 mb-6 hover:text-black transition-colors">
+      <Link to="/dfpladmin access/jobs" className="flex items-center gap-2 text-gray-500 mb-6 hover:text-black transition-colors">
         <ArrowLeft size={18} /> Back to Jobs List
       </Link>
       
@@ -503,42 +499,12 @@ const AddJob: React.FC = () => {
             <h2 className="text-2xl font-bold">{isEditMode ? 'Edit Job' : 'Post New Job'}</h2>
             <p className="text-gray-400 mt-1">Fill in the details below.</p>
           </div>
-          <div className="flex items-center gap-3">
-            {isEditMode && (
-              <span className="bg-yellow-500 text-black px-3 py-1 rounded text-xs font-bold">EDITING</span>
-            )}
-          </div>
+          {isEditMode && <span className="bg-yellow-500 text-black px-3 py-1 rounded text-xs font-bold">EDITING</span>}
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
           
-          {/* REPOST SECTION - Only visible in edit mode for old jobs */}
-          {isEditMode && showRepostOption && (
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-orange-100 p-2 rounded-lg">
-                  <RotateCw size={24} className="text-orange-600" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-orange-900">Repost This Job</h4>
-                  <p className="text-sm text-orange-700">
-                    This job was posted more than 3 days ago. Repost it to show as "Recently Reposted" on the careers page.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleRepost}
-                disabled={loading}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20"
-              >
-                {loading ? <Loader size={20} className="animate-spin" /> : <RotateCw size={20} />}
-                Repost Now
-              </button>
-            </div>
-          )}
-
-          {/* Basic Information */}
+          {/* Header Info */}
           <div>
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Briefcase size={16} /> Basic Information
@@ -549,92 +515,96 @@ const AddJob: React.FC = () => {
                 <input required className="input-field text-lg font-semibold" placeholder="e.g. Senior Accountant" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
               </div>
               
+              {/* DYNAMIC DEPARTMENT SELECTOR */}
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="label mb-0">Department</label>
-                  <button type="button" onClick={() => setActiveModal('department')} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline font-bold">
-                    <Settings size={12} /> Manage List
-                  </button>
-                </div>
-                <select className="input-field bg-white" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})}>
-                  <option value="">Select Department</option>
-                  {dropdownOptions.departments.map((dept, idx) => <option key={idx} value={dept}>{dept}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="label mb-0">Job Type</label>
-                  <button type="button" onClick={() => setActiveModal('type')} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline font-bold">
-                    <Settings size={12} /> Manage List
-                  </button>
-                </div>
-                <select className="input-field bg-white" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
-                  <option value="">Select Type</option>
-                  {dropdownOptions.types.map((type, idx) => <option key={idx} value={type}>{type}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="label">Gender Preference</label>
-                <select className="input-field bg-white" value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
-                  <option value="Any">Any (Male or Female)</option>
-                  <option value="Male">Male Only</option>
-                  <option value="Female">Female Only</option>
-                </select>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="label mb-0">Location (City)</label>
-                  <button type="button" onClick={() => setActiveModal('location')} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline font-bold">
-                    <Settings size={12} /> Manage List
-                  </button>
-                </div>
-                <select className="input-field bg-white" value={formData.location_short} onChange={e => setFormData({...formData, location_short: e.target.value})}>
-                  <option value="">Select Location</option>
-                  {dropdownOptions.locations.map((loc, idx) => <option key={idx} value={loc}>{loc}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="label">Salary Display Text</label>
-                <div className="relative mb-2">
-                  <IndianRupee size={18} className="absolute left-3 top-3.5 text-gray-400" />
-                  <input className="input-field pl-10" placeholder="e.g. ₹15,000 - ₹30,000" value={formData.salary} onChange={e => setFormData({...formData, salary: e.target.value})} />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
-                  <div>
-                    <label className="text-xs font-bold text-gray-500">Min (Number)</label>
-                    <input type="number" className="w-full p-1 text-sm border rounded" placeholder="15000" value={formData.salary_min} onChange={e => setFormData({...formData, salary_min: e.target.value})} />
+                  <div className="flex justify-between items-center mb-1">
+                      <label className="label mb-0">Department</label>
+                      <button type="button" onClick={() => setActiveModal('department')} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline font-bold">
+                        <Settings size={12} /> Manage List
+                      </button>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-500">Max (Number)</label>
-                    <input type="number" className="w-full p-1 text-sm border rounded" placeholder="30000" value={formData.salary_max} onChange={e => setFormData({...formData, salary_max: e.target.value})} />
+                  <select className="input-field bg-white" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})}>
+                    <option value="">Select Department</option>
+                    {dropdownOptions.departments.map((dept, idx) => <option key={idx} value={dept}>{dept}</option>)}
+                  </select>
+              </div>
+
+              {/* DYNAMIC TYPE SELECTOR */}
+              <div>
+                  <div className="flex justify-between items-center mb-1">
+                      <label className="label mb-0">Job Type</label>
+                      <button type="button" onClick={() => setActiveModal('type')} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline font-bold">
+                        <Settings size={12} /> Manage List
+                      </button>
                   </div>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-1">Enter raw numbers for filters (e.g., 15000).</p>
+                  <select className="input-field bg-white" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+                     <option value="">Select Type</option>
+                     {dropdownOptions.types.map((type, idx) => <option key={idx} value={type}>{type}</option>)}
+                  </select>
               </div>
 
               <div>
-                <label className="label">Experience</label>
-                <input className="input-field" placeholder="e.g. Min 2 Years" value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} />
+                  <label className="label">Gender Preference</label>
+                  <select className="input-field bg-white" value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
+                    <option value="Any">Any (Male or Female)</option>
+                    <option value="Male">Male Only</option>
+                    <option value="Female">Female Only</option>
+                  </select>
+              </div>
+
+              {/* DYNAMIC LOCATION SELECTOR */}
+              <div>
+                  <div className="flex justify-between items-center mb-1">
+                      <label className="label mb-0">Location (City)</label>
+                      <button type="button" onClick={() => setActiveModal('location')} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline font-bold">
+                        <Settings size={12} /> Manage List
+                      </button>
+                  </div>
+                  <select className="input-field bg-white" value={formData.location_short} onChange={e => setFormData({...formData, location_short: e.target.value})}>
+                    <option value="">Select Location</option>
+                    {dropdownOptions.locations.map((loc, idx) => <option key={idx} value={loc}>{loc}</option>)}
+                  </select>
+              </div>
+
+              {/* SALARY SECTION */}
+              <div>
+                  <label className="label">Salary Display Text</label>
+                  <div className="relative mb-2">
+                    <IndianRupee size={18} className="absolute left-3 top-3.5 text-gray-400" />
+                    <input className="input-field pl-10" placeholder="e.g. ₹15,000 - ₹30,000" value={formData.salary} onChange={e => setFormData({...formData, salary: e.target.value})} />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    <div>
+                        <label className="text-xs font-bold text-gray-500">Min (Number)</label>
+                        <input type="number" className="w-full p-1 text-sm border rounded" placeholder="15000" value={formData.salary_min} onChange={e => setFormData({...formData, salary_min: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500">Max (Number)</label>
+                        <input type="number" className="w-full p-1 text-sm border rounded" placeholder="30000" value={formData.salary_max} onChange={e => setFormData({...formData, salary_max: e.target.value})} />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">Enter raw numbers for filters (e.g., 15000).</p>
               </div>
 
               <div>
-                <label className="label">Skills (Comma Separated)</label>
-                <div className="relative">
-                  <Code size={18} className="absolute left-3 top-3.5 text-gray-400" />
-                  <input className="input-field pl-10" placeholder="e.g. Miracle, GST, Excel" value={formData.skills} onChange={e => setFormData({...formData, skills: e.target.value})} />
-                </div>
+                  <label className="label">Experience</label>
+                  <input className="input-field" placeholder="e.g. Min 2 Years" value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} />
+              </div>
+
+              <div>
+                  <label className="label">Skills (Comma Separated)</label>
+                  <div className="relative">
+                    <Code size={18} className="absolute left-3 top-3.5 text-gray-400" />
+                    <input className="input-field pl-10" placeholder="e.g. Miracle, GST, Excel" value={formData.skills} onChange={e => setFormData({...formData, skills: e.target.value})} />
+                  </div>
               </div>
             </div>
           </div>
 
           <hr className="border-gray-100" />
 
-          {/* Job Specifics */}
+          {/* Specifics */}
           <div>
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Globe size={16} /> Job Specifics
@@ -647,8 +617,8 @@ const AddJob: React.FC = () => {
               <div>
                 <label className="label">Working Hours</label>
                 <div className="relative">
-                  <Clock size={18} className="absolute left-3 top-3.5 text-gray-400" />
-                  <input className="input-field pl-10" placeholder="e.g. 9:00 AM to 7:00 PM" value={formData.working_hours} onChange={e => setFormData({...formData, working_hours: e.target.value})} />
+                   <Clock size={18} className="absolute left-3 top-3.5 text-gray-400" />
+                   <input className="input-field pl-10" placeholder="e.g. 9:00 AM to 7:00 PM" value={formData.working_hours} onChange={e => setFormData({...formData, working_hours: e.target.value})} />
                 </div>
               </div>
               <div>
@@ -656,12 +626,12 @@ const AddJob: React.FC = () => {
                 <input className="input-field" placeholder="e.g. Minimum tenure of two years" value={formData.commitment} onChange={e => setFormData({...formData, commitment: e.target.value})} />
               </div>
               <div className="col-span-2">
-                <label className="label">Full Office Address</label>
-                <textarea className="input-field h-20" placeholder="e.g. 1st Floor..." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                 <label className="label">Full Office Address</label>
+                 <textarea className="input-field h-20" placeholder="e.g. 1st Floor..." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
               </div>
               <div className="col-span-2">
-                <label className="label">Google Maps Link</label>
-                <input className="input-field text-blue-600" placeholder="http://googleusercontent.com/..." value={formData.maps_link} onChange={e => setFormData({...formData, maps_link: e.target.value})} />
+                 <label className="label">Google Maps Link</label>
+                 <input className="input-field text-blue-600" placeholder="http://googleusercontent.com/..." value={formData.maps_link} onChange={e => setFormData({...formData, maps_link: e.target.value})} />
               </div>
             </div>
           </div>
@@ -671,50 +641,36 @@ const AddJob: React.FC = () => {
           {/* Dynamic Lists */}
           <div className="grid grid-cols-1 gap-8">
             <ListInputSection 
-              title="Key Responsibilities" 
-              icon={<CheckCircle size={16} />} 
-              items={formData.responsibilities} 
-              setItems={(newItems) => setFormData({...formData, responsibilities: newItems})} 
-              placeholderKey="e.g. Dispatch Operations"
-              placeholderDetail="e.g. Plan and execute daily dispatch schedules..." 
+                title="Key Responsibilities" 
+                icon={<CheckCircle size={16} />} 
+                items={formData.responsibilities} 
+                setItems={(newItems) => setFormData({...formData, responsibilities: newItems})} 
+                placeholderKey="e.g. Dispatch Operations"
+                placeholderDetail="e.g. Plan and execute daily dispatch schedules..." 
             />
             
             <ListInputSection 
-              title="Qualifications Required" 
-              icon={<GraduationCap size={16} />} 
-              items={formData.qualifications} 
-              setItems={(newItems) => setFormData({...formData, qualifications: newItems})} 
-              placeholderKey="e.g. Education"
-              placeholderDetail="e.g. Bachelor's Degree in Commerce..." 
+                title="Qualifications Required" 
+                icon={<GraduationCap size={16} />} 
+                items={formData.qualifications} 
+                setItems={(newItems) => setFormData({...formData, qualifications: newItems})} 
+                placeholderKey="e.g. Education"
+                placeholderDetail="e.g. Bachelor's Degree in Commerce..." 
             />
             
             <ListInputSection 
-              title="Benefits & Growth" 
-              icon={<Star size={16} />} 
-              items={formData.benefits} 
-              setItems={(newItems) => setFormData({...formData, benefits: newItems})} 
-              placeholderKey="e.g. Salary"
-              placeholderDetail="e.g. Competitive salary based on skills..." 
+                title="Benefits & Growth" 
+                icon={<Star size={16} />} 
+                items={formData.benefits} 
+                setItems={(newItems) => setFormData({...formData, benefits: newItems})} 
+                placeholderKey="e.g. Salary"
+                placeholderDetail="e.g. Competitive salary based on skills..." 
             />
           </div>
 
-          {/* Footer Buttons */}
-          <div className="pt-6 border-t border-gray-100 flex gap-4 justify-end">
-            {isEditMode && showRepostOption && (
-              <button
-                type="button"
-                onClick={handleRepost}
-                disabled={loading}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2 transition-all"
-              >
-                <RotateCw size={20} /> Repost
-              </button>
-            )}
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="bg-yellow-500 hover:bg-yellow-600 text-black px-10 py-4 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-yellow-500/20 active:scale-95"
-            >
+          {/* Footer */}
+          <div className="pt-6 border-t border-gray-100 flex justify-end">
+            <button type="submit" disabled={loading} className="bg-yellow-500 hover:bg-yellow-600 text-black px-10 py-4 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-yellow-500/20 active:scale-95">
               {loading ? 'Saving...' : <><Save size={20} /> {isEditMode ? 'Update Job' : 'Publish Job'}</>}
             </button>
           </div>
@@ -726,11 +682,6 @@ const AddJob: React.FC = () => {
         .label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
         .input-field { width: 100%; padding: 0.75rem; border: 1px solid #E5E7EB; border-radius: 0.5rem; transition: all 0.2s; }
         .input-field:focus { outline: none; border-color: #FBBF24; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2); }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
       `}</style>
     </div>
   );
