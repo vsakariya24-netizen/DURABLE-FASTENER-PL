@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+// Import * as Icons so we can pick them by string name
 import * as LucideIcons from 'lucide-react'; 
 import { 
   Briefcase, MapPin, IndianRupee, ChevronDown, Send, 
-  Clock, Search, Filter, X, Users, User, ArrowRight, Building2, ArrowLeft, Sparkles, RotateCw
+  Clock, Search, Filter, X, Users, User, ArrowRight, Building2, ArrowLeft
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-
 // --- HELPERS ---
 const getBadgeStyles = (text: string) => {
   const t = text ? text.toLowerCase() : '';
@@ -17,8 +17,16 @@ const getBadgeStyles = (text: string) => {
   return 'bg-slate-100 text-slate-700 ring-slate-500/20';
 };
 
+// HTML को साफ करने वाला फंक्शन
+const stripHtml = (html: string) => {
+  if (!html) return "";
+  return html.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim().replace(/"/g, '\\"');
+};
+
+// Helper to get Icon Component from String Name
 const DynamicIcon = ({ name, size = 32, className }: { name: string; size?: number, className?: string }) => {
   const IconComponent = (LucideIcons as any)[name];
+  // Fallback if icon not found
   if (!IconComponent) return <Briefcase size={size} className={className} />;
   return <IconComponent size={size} className={className} />;
 };
@@ -34,107 +42,18 @@ const SALARY_RANGES = [
 
 // --- COMPONENTS ---
 
-// Fire Icon Component
-const Fire = ({ size = 12, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
-  </svg>
-);
-
-// 1. Job Card with Smart Badge System
-
-// 1. Job Card with Smart Badge System & Time Indicator
+// 1. Job Card (Same as before)
 const JobCard: React.FC<{ job: any }> = ({ job }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
-  // 🎯 SMART BADGE LOGIC
-  const badgeInfo = useMemo(() => {
-    if (!job.created_at) return null;
-    
-    const now = new Date();
-    const createdDate = new Date(job.created_at);
-    const updatedDate = job.updated_at ? new Date(job.updated_at) : createdDate;
-    
-    // Days since created
-    const daysSinceCreated = Math.ceil((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Days since last update
-    const daysSinceUpdated = Math.ceil((now.getTime() - updatedDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // 🆕 NEW OPENING: Created within last 3 days
-    if (daysSinceCreated <= 3) {
-      return {
-        type: 'new',
-        label: 'New Opening',
-        icon: <Sparkles size={12} className="text-green-600" />,
-        className: 'bg-green-100 text-green-700 ring-green-600/30 animate-pulse'
-      };
-    }
-    
-    // 🔄 RECENTLY REPOSTED: Updated within last 2 days (but not a new job)
-    if (daysSinceUpdated <= 2 && job.updated_at && job.updated_at !== job.created_at) {
-      return {
-        type: 'reposted',
-        label: 'Recently Reposted',
-        icon: <RotateCw size={12} className="text-orange-600" />,
-        className: 'bg-orange-100 text-orange-700 ring-orange-600/30'
-      };
-    }
-    
-    // 📢 HOT JOB: Updated within last 7 days
-    if (daysSinceUpdated <= 7) {
-      return {
-        type: 'hot',
-        label: 'Hot Job',
-        icon: <Fire size={12} className="text-red-600" />,
-        className: 'bg-red-100 text-red-700 ring-red-600/30'
-      };
-    }
-    
-    return null;
-  }, [job.created_at, job.updated_at]);
-
-  // 📅 TIME INDICATOR - Shows when job was posted/updated
-  const timeIndicator = useMemo(() => {
-    if (!job.created_at) return null;
-    
-    const now = new Date();
-    const createdDate = new Date(job.created_at);
-    const updatedDate = job.updated_at ? new Date(job.updated_at) : createdDate;
-    
-    // Use updated_at if it's different from created_at, otherwise use created_at
-    const displayDate = (job.updated_at && job.updated_at !== job.created_at) ? updatedDate : createdDate;
-    
-    const diffTime = Math.abs(now.getTime() - displayDate.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffTime / (1000 * 60));
-    
-    let timeText = '';
-    let isUpdated = job.updated_at && job.updated_at !== job.created_at;
-    
-    if (diffDays > 0) {
-      timeText = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    } else if (diffHours > 0) {
-      timeText = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    } else if (diffMinutes > 0) {
-      timeText = `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-    } else {
-      timeText = 'Just now';
-    }
-    
-    return {
-      text: timeText,
-      isUpdated: isUpdated,
-      label: isUpdated ? 'Updated' : 'Posted'
-    };
-  }, [job.created_at, job.updated_at]);
 
   const handleApply = (e: React.MouseEvent) => {
     e.preventDefault();
     const phoneNumber = "918758700783"; 
     const message = `Hello, I am interested in the position of *${job.title}* at Durable Fastener.`;
-    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let url = isMobile 
+        ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
+        : `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
 
@@ -147,90 +66,45 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset ${getBadgeStyles(job.department)}`}>
                 {job.department}
               </span>
-              
               {job.gender && (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset flex items-center gap-1 
-                  ${job.gender === 'Male' ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20' : job.gender === 'Female' ? 'bg-pink-50 text-pink-700 ring-pink-600/20' : 'bg-slate-100 text-slate-600 ring-slate-500/20'}`}>
-                  {job.gender === 'Any' ? <Users size={10} /> : <User size={10} />}
-                  {job.gender === 'Any' ? 'Male / Female' : `${job.gender} Only`}
-                </span>
-              )}
-              
-              {/* 🎯 SMART BADGE - Shows based on recency */}
-              {badgeInfo && (
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ring-1 ring-inset ${badgeInfo.className}`}>
-                  {badgeInfo.icon}
-                  {badgeInfo.label}
-                </span>
+                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset flex items-center gap-1 
+                    ${job.gender === 'Male' ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20' : job.gender === 'Female' ? 'bg-pink-50 text-pink-700 ring-pink-600/20' : 'bg-slate-100 text-slate-600 ring-slate-500/20' }`}>
+                    {job.gender === 'Any' ? <Users size={10} /> : <User size={10} />}
+                    {job.gender === 'Any' ? 'Male / Female' : `${job.gender} Only`}
+                 </span>
               )}
             </div>
-            
             <div>
               <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{job.title}</h3>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-1.5 text-sm text-slate-500">
                 <div className="flex items-center gap-1.5"><Building2 size={14} className="text-slate-400"/><span>Durable Fastener Pvt Ltd</span></div>
                 {job.location && (<div className="flex items-center gap-1.5"><MapPin size={14} className="text-slate-400"/><span>{job.location}</span></div>)}
                 <div className="flex items-center gap-1.5"><Clock size={14} className="text-slate-400"/><span>Full Time</span></div>
-                
-                {/* 📅 TIME INDICATOR */}
-                {timeIndicator && (
-                  <div className={`flex items-center gap-1.5 text-xs font-medium ${timeIndicator.isUpdated ? 'text-blue-600' : 'text-slate-400'}`}>
-                    <Clock size={12} className={timeIndicator.isUpdated ? 'text-blue-400' : 'text-slate-400'} />
-                    <span>
-                      {timeIndicator.isUpdated ? 'Updated' : 'Posted'} {timeIndicator.text}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
-          
           <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-4">
-            {job.salary && (
-              <div className="flex items-center gap-1 text-slate-900 font-bold bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                <IndianRupee size={16} className="text-slate-500" /> <span>{job.salary}</span>
-              </div>
-            )}
-            <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-              <ChevronDown size={20} className="text-slate-400" />
-            </div>
+             {job.salary && (
+               <div className="flex items-center gap-1 text-slate-900 font-bold bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                  <IndianRupee size={16} className="text-slate-500" /> <span>{job.salary}</span>
+               </div>
+             )}
+             <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}><ChevronDown size={20} className="text-slate-400" /></div>
           </div>
         </div>
       </div>
-      
       <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
         <div className="overflow-hidden">
           <div className="px-6 pb-6 pt-0 border-t border-slate-100 mt-2">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Experience</p>
-                <p className="text-sm font-semibold text-slate-900 flex items-center gap-2"><Briefcase size={14} className="text-blue-500"/> {job.experience || 'Not Specified'}</p>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Gender</p>
-                <p className="text-sm font-semibold text-slate-900 flex items-center gap-2"><Users size={14} className="text-blue-500"/> {job.gender === 'Any' || !job.gender ? 'Male / Female' : `${job.gender} Only`}</p>
-              </div>
-              {/* 📅 ADD TIME INDICATOR IN EXPANDED VIEW */}
-              {timeIndicator && (
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 col-span-2 md:col-span-1">
-                  <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Status</p>
-                  <p className={`text-sm font-semibold flex items-center gap-2 ${timeIndicator.isUpdated ? 'text-blue-600' : 'text-slate-700'}`}>
-                    <Clock size={14} className={timeIndicator.isUpdated ? 'text-blue-400' : 'text-slate-400'} />
-                    {timeIndicator.isUpdated ? 'Updated' : 'Posted'} {timeIndicator.text}
-                  </p>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Experience</p>
+                    <p className="text-sm font-semibold text-slate-900 flex items-center gap-2"><Briefcase size={14} className="text-blue-500"/> {job.experience || 'Not Specified'}</p>
                 </div>
-              )}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 col-span-2 md:col-span-1">
-                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Posted Date</p>
-                <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <Calendar size={14} className="text-slate-400" />
-                  {new Date(job.created_at).toLocaleDateString('en-IN', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Gender</p>
+                    <p className="text-sm font-semibold text-slate-900 flex items-center gap-2"><Users size={14} className="text-blue-500"/> {job.gender === 'Any' || !job.gender ? 'Male / Female' : `${job.gender} Only`}</p>
+                </div>
             </div>
             <div className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-a:text-blue-600 prose-strong:text-slate-900 prose-li:marker:text-slate-400" dangerouslySetInnerHTML={{ __html: job.description }} />
             <div className="mt-8 flex items-center justify-end pt-6 border-t border-slate-100">
@@ -245,16 +119,7 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
   );
 };
 
-// Calendar Icon Component (if not in lucide-react)
-const Calendar = ({ size = 14, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-    <line x1="16" y1="2" x2="16" y2="6"></line>
-    <line x1="8" y1="2" x2="8" y2="6"></line>
-    <line x1="3" y1="10" x2="21" y2="10"></line>
-  </svg>
-);
-// 2. Filter Section
+// 2. Filter Section (Same as before)
 const FilterSection: React.FC<{ title: string; options: { label: string; count: number }[]; selected: string[]; onChange: (val: string) => void; }> = ({ title, options, selected, onChange }) => {
   if (options.length === 0) return null;
   return (
@@ -281,12 +146,15 @@ const FilterSection: React.FC<{ title: string; options: { label: string; count: 
   );
 };
 
-// 3. Internship Card
+// 3. Internship Card (Same as before)
 const InternshipCard: React.FC = () => {
     const handleInternshipApply = () => {
       const phoneNumber = "918758700783"; 
       const message = "Hello, I am interested in the *Internship / Training Program* at Durable Fastener.";
-      const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const url = isMobile 
+        ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
+        : `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
     };
   
@@ -324,6 +192,7 @@ const CheckIcon = () => (
 // --- MAIN PAGE ---
 const Careers: React.FC = () => {
   const [jobs, setJobs] = useState<any[]>([]);
+  // Store fetched departments here
   const [departmentCategories, setDepartmentCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'departments' | 'jobs'>('departments');
@@ -336,11 +205,11 @@ const Careers: React.FC = () => {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Realtime subscription for jobs
   useEffect(() => {
-    // Initial fetch
     const fetchData = async () => {
+        // Fetch Jobs
         const jobsReq = supabase.from('jobs').select('*').order('created_at', { ascending: false });
+        // Fetch Departments
         const deptsReq = supabase.from('departments').select('*').order('created_at', { ascending: true });
 
         const [jobsRes, deptsRes] = await Promise.all([jobsReq, deptsReq]);
@@ -351,43 +220,10 @@ const Careers: React.FC = () => {
         setLoading(false);
     };
     fetchData();
-
-    // Set up realtime subscription for jobs table
-    const subscription = supabase
-      .channel('jobs-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to all events: INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'jobs'
-        },
-        (payload) => {
-          console.log('Job change detected:', payload);
-          
-          // Refetch jobs when any change occurs
-          const refetchJobs = async () => {
-            const { data } = await supabase
-              .from('jobs')
-              .select('*')
-              .order('created_at', { ascending: false });
-            
-            if (data) setJobs(data);
-          };
-          
-          refetchJobs();
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscription
-    return () => {
-      supabase.removeChannel(subscription);
-    };
   }, []);
 
   const handleDepartmentSelect = (deptName: string) => {
-    setSelectedDepts([deptName]);
+    setSelectedDepts([deptName]); // Filter by Name now
     setViewMode('jobs');        
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
   };
@@ -467,76 +303,122 @@ const Careers: React.FC = () => {
   };
 
   const activeFiltersCount = selectedDepts.length + selectedLocs.length + selectedSalaries.length + selectedGenders.length;
-  const isFiltered = selectedDepts.length > 0;
+const isFiltered = selectedDepts.length > 0;
   const activeDept = isFiltered ? selectedDepts[0] : '';
 
+  // 1. Dynamic Page Title
   const pageTitle = isFiltered 
     ? `${activeDept} Jobs in Rajkot | Durable Fastener Careers`
     : 'Careers at Durable Fastener | Manufacturing Jobs in Rajkot';
 
+  // 2. Dynamic Meta Description
   const pageDescription = isFiltered
     ? `Apply for ${filteredJobs.length} open positions in ${activeDept} at Durable Fastener Pvt Ltd. Salary: ${filteredJobs[0]?.salary || 'Best in Industry'}. Apply via WhatsApp.`
     : 'Join Durable Fastener Pvt Ltd. Hiring for Production Engineers, Sales Executives, and Back Office staff. View all current openings.';
 
+  // 3. Dynamic Schema (Google Jobs)
+  // We use "filteredJobs" here so Google sees exactly what the user sees
+  const jobSchema = {
+    "@context": "https://schema.org",
+    "@graph": filteredJobs.map(job => ({
+      "@type": "JobPosting",
+      "title": job.title,
+      "description": job.description.replace(/"/g, '\\"').replace(/\n/g, ' '),
+      "identifier": {
+        "@type": "PropertyValue",
+        "name": "Durable Fastener",
+        "value": job.id
+      },
+      "datePosted": job.created_at,
+      "validThrough": "2026-12-31",
+      "hiringOrganization": {
+        "@type": "Organization",
+        "name": "Durable Fastener Pvt Ltd",
+        "sameAs": "https://durablefastener.com",
+        "logo": "https://durablefastener.com/durablefastener.png"
+      },
+      "jobLocation": {
+        "@type": "Place",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Plot No.16, Ravki",
+          "addressLocality": job.location || "Rajkot",
+          "addressRegion": "Gujarat",
+          "addressCountry": "IN"
+        }
+      },
+      "employmentType": "FULL_TIME",
+      "baseSalary": {
+        "@type": "MonetaryAmount",
+        "currency": "INR",
+        "value": {
+          "@type": "QuantitativeValue",
+          "minValue": job.salary_min || 15000,
+          "maxValue": job.salary_max || 50000,
+          "unitText": "MONTH"
+        }
+      }
+    }))
+  };
   return (
     <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
-      <Helmet>
-        <title>
-          {selectedDepts.length > 0 
-            ? `${selectedDepts[0]} Jobs at Durable Fastener | Apply Now`
-            : 'Careers at Durable Fastener | Manufacturing Jobs in Rajkot'}
-        </title>
-        <link rel="canonical" href="https://durablefastener.com/careers" />
-        <meta 
-          name="description" 
-          content={`Explore ${filteredJobs.length} open positions in ${selectedDepts.length > 0 ? selectedDepts.join(', ') : 'Engineering, Sales, and Admin'}. Join Rajkot's leading fastener manufacturer.`} 
-        />
+    <Helmet>
+  {/* 1. Dynamic Title based on Filter */}
+  <title>
+    {selectedDepts.length > 0 
+      ? `${selectedDepts[0]} Jobs at Durable Fastener | Apply Now`
+      : 'Careers at Durable Fastener | Manufacturing Jobs in Rajkot'}
+  </title>
+  
+  <meta 
+    name="description" 
+    content={`Explore ${filteredJobs.length} open positions in ${selectedDepts.length > 0 ? selectedDepts.join(', ') : 'Engineering, Sales, and Admin'}. Join Rajkot's leading fastener manufacturer.`} 
+  />
+   {/* HERE IS YOUR CANONICAL LINK */}
+  <link rel="canonical" href="https://durablefastener.com/careers" />
 
-        {!loading && filteredJobs.length > 0 && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(
-                filteredJobs.map(job => ({
-                  "@context": "https://schema.org",
-                  "@type": "JobPosting",
-                  "title": job.title,
-                  "description": job.description,
-                  "identifier": {
-                    "@type": "PropertyValue",
-                    "name": "Durable Fastener Pvt Ltd",
-                    "value": job.id
-                  },
-                  "datePosted": new Date(job.created_at).toISOString(),
-                  "validThrough": "2026-12-31",
-                  "employmentType": "FULL_TIME",
-                  "hiringOrganization": {
-                    "@type": "Organization",
-                    "name": "Durable Fastener Pvt Ltd",
-                    "sameAs": "https://durablefastener.com",
-                    "logo": "https://durablefastener.com/durablefastener.png"
-                  },
-                  "jobLocation": {
-                    "@type": "Place",
-                    "address": {
-                      "@type": "PostalAddress",
-                      "addressLocality": job.location || "Rajkot",
-                      "addressRegion": "Gujarat",
-                      "addressCountry": "IN"
-                    }
-                  },
-                  "applicantLocationRequirements": {
-                    "@type": "Country",
-                    "name": "India"
-                  },
-                  "jobLocationType": "ON_SITE"
-                }))
-              )
-            }}
-          />
-        )}
-      </Helmet>
-      
+  {/* 2. DYNAMIC JOB POSTING SCHEMA (Uses 'filteredJobs' instead of all 'jobs') */}
+  {!loading && filteredJobs.length > 0 && (
+    <script type="application/ld+json">
+      {JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": filteredJobs.map(job => ({
+          "@type": "JobPosting",
+          "title": job.title,
+          "description": stripHtml(job.description), // यहाँ साफ़ हो रहा है
+          "datePosted": job.created_at || new Date().toISOString(),
+          "validThrough": "2026-12-31T23:59:59Z",
+          "hiringOrganization": {
+            "@type": "Organization",
+            "name": "Durable Fastener Pvt Ltd",
+            "sameAs": "https://durablefastener.com",
+            "logo": "https://durablefastener.com/durablefastener.png"
+          },
+          "jobLocation": {
+            "@type": "Place",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": job.location || "Rajkot",
+              "addressRegion": "Gujarat",
+              "addressCountry": "IN"
+            }
+          },
+          "employmentType": "FULL_TIME",
+          "baseSalary": {
+            "@type": "MonetaryAmount",
+            "currency": "INR",
+            "value": {
+              "@type": "QuantitativeValue",
+              "minValue": job.salary_min || 15000,
+              "maxValue": job.salary_max || 50000,
+              "unitText": "MONTH"
+            }
+          }
+        }))
+      })}
+    </script>
+  )}
+</Helmet>
       {/* PROFESSIONAL HEADER */}
       <div className="relative bg-slate-900 pt-32 pb-20 px-4 overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
@@ -563,6 +445,9 @@ const Careers: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-12 -mt-10 relative z-20">
         
         {viewMode === 'departments' ? (
+          /* ================================
+             VIEW 1: DEPARTMENT CATEGORIES (Dynamic)
+             ================================ */
           <div className="space-y-12 animate-fadeIn">
             <InternshipCard />
 
@@ -573,9 +458,15 @@ const Careers: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {loading ? (
+                 // Skeleton loading
                  [1,2,3,4].map(i => <div key={i} className="h-48 bg-white rounded-2xl animate-pulse"></div>)
               ) : departmentCategories.map((dept) => {
                  const count = jobs.filter(j => j.department === dept.name).length;
+                 
+                 // Dynamic color class construction is tricky in Tailwind if not safelisted.
+                 // We rely on standard pattern: bg-{color}-50 text-{color}-600
+                 // NOTE: Ensure your tailwind.config includes these colors in safelist or use style attribute if issues arise.
+                 // For now, using inline style for bg/text color is safer for dynamic values without complex safelisting
                  
                  return (
                   <div 
@@ -604,8 +495,12 @@ const Careers: React.FC = () => {
 
         ) : (
 
+          /* ================================
+             VIEW 2: JOB LISTING & FILTERS
+             ================================ */
           <div className="animate-fadeIn">
             
+            {/* Back Button */}
             <button 
               onClick={handleBackToDepartments}
               className="mb-6 inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
@@ -613,6 +508,7 @@ const Careers: React.FC = () => {
               <ArrowLeft size={18} /> Back to Departments
             </button>
 
+            {/* MOBILE FILTER TOGGLE & SEARCH */}
             <div className="lg:hidden mb-6">
                 <div className="bg-white p-2 rounded-xl shadow-lg border border-slate-200 flex gap-2">
                     <div className="relative flex-1">
@@ -637,6 +533,7 @@ const Careers: React.FC = () => {
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">
                 
+                {/* SIDEBAR */}
                 <aside className={`
                     lg:w-72 w-full flex-shrink-0
                     ${showMobileFilters ? 'fixed inset-0 z-50 bg-white p-6 overflow-y-auto animate-fadeIn' : 'hidden lg:block'}
@@ -693,6 +590,7 @@ const Careers: React.FC = () => {
                     </div>
                 </aside>
 
+                {/* JOB LIST AREA */}
                 <main className="flex-1 w-full min-h-[500px]">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -730,23 +628,6 @@ const Careers: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Add Tailwind animation classes if not already present */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob { animation: blob 7s infinite; }
-        .animation-delay-2000 { animation-delay: 2s; }
-      `}</style>
     </div>
   );
 };
