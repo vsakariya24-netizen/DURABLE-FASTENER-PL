@@ -32,16 +32,43 @@ const SALARY_RANGES = [
   { label: '1L+', min: 100000, max: 1000000 },
 ];
 
-// --- COMPONENTS ---
+// --- HELPER FUNCTIONS FOR SCHEMA ---
+const cleanDescriptionForSchema = (html: string) => {
+  if (!html) return '';
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  return temp.textContent?.replace(/\s+/g, ' ').trim() || '';
+};
 
-// Fire Icon Component
+const getValidThrough = (createdDate: string) => {
+  const date = new Date(createdDate);
+  date.setMonth(date.getMonth() + 3);
+  return date.toISOString().split('T')[0];
+};
+
+const extractExperienceMonths = (experience: string) => {
+  if (!experience) return 0;
+  const match = experience.match(/(\d+)/);
+  if (!match) return 0;
+  const years = parseInt(match[1]);
+  return years * 12;
+};
+
+// --- COMPONENTS ---
 const Fire = ({ size = 12, className = '' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
   </svg>
 );
 
-// 1. Job Card with Smart Badge System
+const Calendar = ({ size = 14, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
 
 // 1. Job Card with Smart Badge System & Time Indicator
 const JobCard: React.FC<{ job: any }> = ({ job }) => {
@@ -55,13 +82,9 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
     const createdDate = new Date(job.created_at);
     const updatedDate = job.updated_at ? new Date(job.updated_at) : createdDate;
     
-    // Days since created
     const daysSinceCreated = Math.ceil((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Days since last update
     const daysSinceUpdated = Math.ceil((now.getTime() - updatedDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    // 🆕 NEW OPENING: Created within last 3 days
     if (daysSinceCreated <= 3) {
       return {
         type: 'new',
@@ -71,7 +94,6 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
       };
     }
     
-    // 🔄 RECENTLY REPOSTED: Updated within last 2 days (but not a new job)
     if (daysSinceUpdated <= 2 && job.updated_at && job.updated_at !== job.created_at) {
       return {
         type: 'reposted',
@@ -81,7 +103,6 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
       };
     }
     
-    // 📢 HOT JOB: Updated within last 7 days
     if (daysSinceUpdated <= 7) {
       return {
         type: 'hot',
@@ -94,7 +115,7 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
     return null;
   }, [job.created_at, job.updated_at]);
 
-  // 📅 TIME INDICATOR - Shows when job was posted/updated
+  // 📅 TIME INDICATOR - SHOWS UPDATED DATE WHEN REPOSTED
   const timeIndicator = useMemo(() => {
     if (!job.created_at) return null;
     
@@ -102,8 +123,9 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
     const createdDate = new Date(job.created_at);
     const updatedDate = job.updated_at ? new Date(job.updated_at) : createdDate;
     
-    // Use updated_at if it's different from created_at, otherwise use created_at
-    const displayDate = (job.updated_at && job.updated_at !== job.created_at) ? updatedDate : createdDate;
+    // 🎯 USE UPDATED DATE IF REPOSTED
+    const isReposted = job.updated_at && job.updated_at !== job.created_at;
+    const displayDate = isReposted ? updatedDate : createdDate;
     
     const diffTime = Math.abs(now.getTime() - displayDate.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -111,7 +133,6 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
     const diffMinutes = Math.floor(diffTime / (1000 * 60));
     
     let timeText = '';
-    let isUpdated = job.updated_at && job.updated_at !== job.created_at;
     
     if (diffDays > 0) {
       timeText = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
@@ -125,8 +146,9 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
     
     return {
       text: timeText,
-      isUpdated: isUpdated,
-      label: isUpdated ? 'Updated' : 'Posted'
+      isUpdated: isReposted,
+      label: isReposted ? 'Updated' : 'Posted',
+      displayDate: displayDate
     };
   }, [job.created_at, job.updated_at]);
 
@@ -156,7 +178,6 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
                 </span>
               )}
               
-              {/* 🎯 SMART BADGE - Shows based on recency */}
               {badgeInfo && (
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ring-1 ring-inset ${badgeInfo.className}`}>
                   {badgeInfo.icon}
@@ -172,10 +193,9 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
                 {job.location && (<div className="flex items-center gap-1.5"><MapPin size={14} className="text-slate-400"/><span>{job.location}</span></div>)}
                 <div className="flex items-center gap-1.5"><Clock size={14} className="text-slate-400"/><span>Full Time</span></div>
                 
-                {/* 📅 TIME INDICATOR */}
                 {timeIndicator && (
-                  <div className={`flex items-center gap-1.5 text-xs font-medium ${timeIndicator.isUpdated ? 'text-blue-600' : 'text-slate-400'}`}>
-                    <Clock size={12} className={timeIndicator.isUpdated ? 'text-blue-400' : 'text-slate-400'} />
+                  <div className={`flex items-center gap-1.5 text-xs font-medium ${timeIndicator.isUpdated ? 'text-orange-600' : 'text-slate-400'}`}>
+                    <Clock size={12} className={timeIndicator.isUpdated ? 'text-orange-500' : 'text-slate-400'} />
                     <span>
                       {timeIndicator.isUpdated ? 'Updated' : 'Posted'} {timeIndicator.text}
                     </span>
@@ -210,25 +230,33 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
                 <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Gender</p>
                 <p className="text-sm font-semibold text-slate-900 flex items-center gap-2"><Users size={14} className="text-blue-500"/> {job.gender === 'Any' || !job.gender ? 'Male / Female' : `${job.gender} Only`}</p>
               </div>
-              {/* 📅 ADD TIME INDICATOR IN EXPANDED VIEW */}
               {timeIndicator && (
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 col-span-2 md:col-span-1">
                   <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Status</p>
-                  <p className={`text-sm font-semibold flex items-center gap-2 ${timeIndicator.isUpdated ? 'text-blue-600' : 'text-slate-700'}`}>
-                    <Clock size={14} className={timeIndicator.isUpdated ? 'text-blue-400' : 'text-slate-400'} />
+                  <p className={`text-sm font-semibold flex items-center gap-2 ${timeIndicator.isUpdated ? 'text-orange-600' : 'text-slate-700'}`}>
+                    <Clock size={14} className={timeIndicator.isUpdated ? 'text-orange-400' : 'text-slate-400'} />
                     {timeIndicator.isUpdated ? 'Updated' : 'Posted'} {timeIndicator.text}
                   </p>
                 </div>
               )}
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 col-span-2 md:col-span-1">
-                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Posted Date</p>
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">
+                  {timeIndicator?.isUpdated ? 'Updated Date' : 'Posted Date'}
+                </p>
                 <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Calendar size={14} className="text-slate-400" />
-                  {new Date(job.created_at).toLocaleDateString('en-IN', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                  })}
+                  {timeIndicator?.displayDate 
+                    ? new Date(timeIndicator.displayDate).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                    : new Date(job.created_at).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                  }
                 </p>
               </div>
             </div>
@@ -245,15 +273,6 @@ const JobCard: React.FC<{ job: any }> = ({ job }) => {
   );
 };
 
-// Calendar Icon Component (if not in lucide-react)
-const Calendar = ({ size = 14, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-    <line x1="16" y1="2" x2="16" y2="6"></line>
-    <line x1="8" y1="2" x2="8" y2="6"></line>
-    <line x1="3" y1="10" x2="21" y2="10"></line>
-  </svg>
-);
 // 2. Filter Section
 const FilterSection: React.FC<{ title: string; options: { label: string; count: number }[]; selected: string[]; onChange: (val: string) => void; }> = ({ title, options, selected, onChange }) => {
   if (options.length === 0) return null;
@@ -338,7 +357,6 @@ const Careers: React.FC = () => {
 
   // Realtime subscription for jobs
   useEffect(() => {
-    // Initial fetch
     const fetchData = async () => {
         const jobsReq = supabase.from('jobs').select('*').order('created_at', { ascending: false });
         const deptsReq = supabase.from('departments').select('*').order('created_at', { ascending: true });
@@ -352,20 +370,18 @@ const Careers: React.FC = () => {
     };
     fetchData();
 
-    // Set up realtime subscription for jobs table
     const subscription = supabase
       .channel('jobs-changes')
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events: INSERT, UPDATE, DELETE
+          event: '*',
           schema: 'public',
           table: 'jobs'
         },
         (payload) => {
           console.log('Job change detected:', payload);
           
-          // Refetch jobs when any change occurs
           const refetchJobs = async () => {
             const { data } = await supabase
               .from('jobs')
@@ -380,7 +396,6 @@ const Careers: React.FC = () => {
       )
       .subscribe();
 
-    // Cleanup subscription
     return () => {
       supabase.removeChannel(subscription);
     };
@@ -470,14 +485,6 @@ const Careers: React.FC = () => {
   const isFiltered = selectedDepts.length > 0;
   const activeDept = isFiltered ? selectedDepts[0] : '';
 
-  const pageTitle = isFiltered 
-    ? `${activeDept} Jobs in Rajkot | Durable Fastener Careers`
-    : 'Careers at Durable Fastener | Manufacturing Jobs in Rajkot';
-
-  const pageDescription = isFiltered
-    ? `Apply for ${filteredJobs.length} open positions in ${activeDept} at Durable Fastener Pvt Ltd. Salary: ${filteredJobs[0]?.salary || 'Best in Industry'}. Apply via WhatsApp.`
-    : 'Join Durable Fastener Pvt Ltd. Hiring for Production Engineers, Sales Executives, and Back Office staff. View all current openings.';
-
   return (
     <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
       <Helmet>
@@ -491,30 +498,48 @@ const Careers: React.FC = () => {
           name="description" 
           content={`Explore ${filteredJobs.length} open positions in ${selectedDepts.length > 0 ? selectedDepts.join(', ') : 'Engineering, Sales, and Admin'}. Join Rajkot's leading fastener manufacturer.`} 
         />
+        <meta name="robots" content="index, follow" />
+        <meta name="googlebot" content="index, follow" />
+        
+        <meta property="og:title" content="Careers at Durable Fastener | Manufacturing Jobs" />
+        <meta property="og:description" content={`${filteredJobs.length} jobs available at Durable Fastener. Apply now!`} />
+        <meta property="og:url" content="https://durablefastener.com/careers" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://durablefastener.com/durablefastener.png" />
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Careers at Durable Fastener" />
+        <meta name="twitter:description" content={`${filteredJobs.length} jobs available. Apply via WhatsApp.`} />
+        <meta name="twitter:image" content="https://durablefastener.com/durablefastener.png" />
 
         {!loading && filteredJobs.length > 0 && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(
-                filteredJobs.map(job => ({
-                  "@context": "https://schema.org",
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              "itemListElement": filteredJobs.slice(0, 10).map((job, index) => ({
+                "@type": "ListItem",
+                "position": index + 1,
+                "item": {
                   "@type": "JobPosting",
                   "title": job.title,
-                  "description": job.description,
+                  "description": cleanDescriptionForSchema(job.description),
                   "identifier": {
                     "@type": "PropertyValue",
                     "name": "Durable Fastener Pvt Ltd",
-                    "value": job.id
+                    "value": job.id.toString()
                   },
-                  "datePosted": new Date(job.created_at).toISOString(),
-                  "validThrough": "2026-12-31",
+                  "datePosted": job.updated_at && job.updated_at !== job.created_at 
+                    ? new Date(job.updated_at).toISOString().split('T')[0]
+                    : new Date(job.created_at).toISOString().split('T')[0],
+                  "validThrough": getValidThrough(job.created_at),
                   "employmentType": "FULL_TIME",
                   "hiringOrganization": {
                     "@type": "Organization",
                     "name": "Durable Fastener Pvt Ltd",
                     "sameAs": "https://durablefastener.com",
-                    "logo": "https://durablefastener.com/durablefastener.png"
+                    "logo": "https://durablefastener.com/durablefastener.png",
+                    "url": "https://durablefastener.com"
                   },
                   "jobLocation": {
                     "@type": "Place",
@@ -522,18 +547,45 @@ const Careers: React.FC = () => {
                       "@type": "PostalAddress",
                       "addressLocality": job.location || "Rajkot",
                       "addressRegion": "Gujarat",
-                      "addressCountry": "IN"
+                      "addressCountry": "IN",
+                      "postalCode": "360003"
                     }
                   },
                   "applicantLocationRequirements": {
                     "@type": "Country",
                     "name": "India"
                   },
-                  "jobLocationType": "ON_SITE"
-                }))
-              )
-            }}
-          />
+                  "jobLocationType": "ON_SITE",
+                  "baseSalary": {
+                    "@type": "MonetaryAmount",
+                    "currency": "INR",
+                    "value": {
+                      "@type": "QuantitativeValue",
+                      "minValue": job.salary_min || 0,
+                      "maxValue": job.salary_max || 0,
+                      "unitText": "MONTH"
+                    }
+                  },
+                  "occupationalCategory": job.department || "Manufacturing",
+                  "skills": job.skills ? job.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+                  "experienceRequirements": {
+                    "@type": "OccupationalExperienceRequirements",
+                    "monthsOfExperience": extractExperienceMonths(job.experience)
+                  },
+                  "qualifications": job.experience || "Not specified",
+                  "workHours": "Full Time",
+                  "url": "https://durablefastener.com/careers",
+                  "image": "https://durablefastener.com/durablefastener.png",
+                  "applicationContact": {
+                    "@type": "ContactPoint",
+                    "telephone": "+91 8758700783",
+                    "contactType": "WhatsApp",
+                    "url": "https://wa.me/918758700783"
+                  }
+                }
+              }))
+            })}
+          </script>
         )}
       </Helmet>
       
@@ -731,7 +783,6 @@ const Careers: React.FC = () => {
         )}
       </div>
 
-      {/* Add Tailwind animation classes if not already present */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
