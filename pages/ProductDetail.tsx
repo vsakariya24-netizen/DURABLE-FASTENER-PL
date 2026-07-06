@@ -900,11 +900,7 @@ const ProductDetail: React.FC = () => {
                       animate={{ top: ['-100%', '200%'] }}
                       transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
                     />
-                    <div className="absolute top-6 left-6 z-20">
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-neutral-100 border border-neutral-300 text-[11px] font-mono uppercase text-neutral-600 font-bold tracking-wider">
-                        ISO View
-                      </span>
-                    </div>
+                  
                     {product.technical_drawing ? (
                       <motion.img
                         initial={{ opacity: 0, scale: 0.9 }}
