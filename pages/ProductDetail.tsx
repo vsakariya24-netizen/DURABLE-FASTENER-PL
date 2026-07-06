@@ -154,14 +154,12 @@ const buildProductSchema = (
   selectedLen: string,
   selectedUnit: string,
 ) => {
-  // Ensure images array exists, at least one placeholder
   let images = (product.images || []);
   if (!images.length) {
     images = ['https://via.placeholder.com/600x600?text=No+Image'];
   }
   const cleanedImages = images.map((img: string) => cleanImageUrl(img));
 
-  // Build additionalProperty safely
   const specifications = product.specifications || [];
   const additionalProperties = specifications
     .filter((s: any) => s?.key && !HIDDEN_SPECS.includes(s.key.toLowerCase()))
@@ -171,7 +169,6 @@ const buildProductSchema = (
       "value": s.value,
     }));
 
-  // Build size string only if both dimensions exist
   let size = undefined;
   if (selectedDia && selectedLen) {
     size = `${selectedDia} × ${selectedLen} ${selectedUnit}`;
@@ -207,6 +204,10 @@ const buildProductSchema = (
         "price": "0",
         "priceCurrency": "INR",
         "description": "Contact for bulk pricing",
+        "valueAddedTaxIncluded": false,
+        "minPrice": 0,
+        "maxPrice": 999999,  // Add reasonable max for bulk
+        "priceType": "https://schema.org/ContactForPrice"  // ✅ This tells Google it's contact-based
       },
       "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
       "availability": "https://schema.org/InStock",
@@ -214,6 +215,7 @@ const buildProductSchema = (
       "seller": {
         "@type": "Organization",
         "name": "Durable Fastener Private Limited",
+        "url": "https://durablefastener.com"
       },
     },
   };
