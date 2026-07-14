@@ -39,10 +39,10 @@ const Navbar = () => {
             : 'bg-white border-transparent py-2 md:py-4' 
         }`}
       >
-        <div className="w-full px-4 xs:px-6 lg:px-10">
+        <div className="w-full px-8 xs:px-6 lg:px-10">
           
           {/* ADDED: flex-nowrap to prevent stacking into 3 lines */}
-          <div className="flex flex-nowrap justify-between items-center h-24 md:h-[140px] transition-all duration-300">
+          <div className="flex flex-nowrap justify-between items-center h-24 md:h-[63px] transition-all duration-300">
           
             {/* LOGO SECTION - ADDED: flex-shrink-0 */}
             <div className="flex-shrink-0 flex items-center">
